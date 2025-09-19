@@ -1,0 +1,40 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "permission_type",
+        "roles"
+    ],
+    "fields": [
+        {
+            "fieldname": "permission_type",
+            "fieldtype": "Select",
+            "label": "Permission Type",
+            "options": "Resolve Issue\nClose Issue\nAssign Issue\nCreate Issue\nEdit Issue\nAll",
+            "reqd": 1
+        },
+        {
+            "fieldname": "roles",
+            "fieldtype": "Table MultiSelect",
+            "label": "Allowed Roles",
+            "options": "Role",
+            "reqd": 1
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "istable": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "ERPNext Agile",
+    "name": "Agile Permission Rule",
+    "owner": "Administrator",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "track_changes": 1
+}

@@ -1,0 +1,68 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "name",
+        "color",
+        "sort_order"
+    ],
+    "fields": [
+        {
+            "fieldname": "name",
+            "fieldtype": "Data",
+            "label": "Priority Name",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "color",
+            "fieldtype": "Color",
+            "label": "Color"
+        },
+        {
+            "fieldname": "sort_order",
+            "fieldtype": "Int",
+            "label": "Sort Order",
+            "default": 0
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "ERPNext Agile",
+    "name": "Agile Issue Priority",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "read": 1,
+            "write": 1,
+            "create": 1,
+            "delete": 1,
+            "role": "Project Manager"
+        },
+        {
+            "read": 1,
+            "role": "Employee"
+        }
+    ],
+    "sort_field": "sort_order",
+    "sort_order": "ASC",
+    "track_changes": 1
+}

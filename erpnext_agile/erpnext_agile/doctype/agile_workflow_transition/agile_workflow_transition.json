@@ -1,0 +1,54 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "from_status",
+        "to_status",
+        "transition_name",
+        "required_permission"
+    ],
+    "fields": [
+        {
+            "fieldname": "from_status",
+            "fieldtype": "Link",
+            "label": "From Status",
+            "options": "Agile Issue Status",
+            "reqd": 1
+        },
+        {
+            "fieldname": "to_status",
+            "fieldtype": "Link",
+            "label": "To Status",
+            "options": "Agile Issue Status",
+            "reqd": 1
+        },
+        {
+            "fieldname": "transition_name",
+            "fieldtype": "Data",
+            "label": "Transition Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "required_permission",
+            "fieldtype": "Select",
+            "label": "Required Permission",
+            "options": "\nProject Manager\nDeveloper\nTester\nAll"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "istable": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "ERPNext Agile",
+    "name": "Agile Workflow Transition",
+    "owner": "Administrator",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "track_changes": 1
+}
