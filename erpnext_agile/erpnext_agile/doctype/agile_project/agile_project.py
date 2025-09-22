@@ -110,3 +110,62 @@ class AgileProject(Document):
             total_points += sprint_points
         
         return total_points / len(completed_sprints)
+    
+    def validate(self):
+        """Validate Agile Project settings"""
+        if self.workflow_scheme and not frappe.db.exists("Agile Workflow Scheme", self.workflow_scheme):
+            frappe.throw(f"Workflow Scheme {self.workflow_scheme} does not exist")
+        if self.permission_scheme and not frappe.db.exists("Agile Permission Scheme", self.permission_scheme):
+            frappe.throw(f"Permission Scheme {self.permission_scheme} does not exist")
+        if self.github_repository and self.github_sync_enabled:
+            if not frappe.db.exists("App", "erpnext_github_integration"):
+                frappe.throw("GitHub Sync is enabled but erpnext_github_integration app is not installed")
+
+def get_dashboard_data(data):
+    """Define dashboard data for Agile Project"""
+    data = frappe._dict(data)
+    
+    # Add cards for issue counts by status
+    data.cards = [
+        {
+            "label": "Open Issues",
+            "value": frappe.db.count("Agile Issue", {"agile_project": data.name, "status": "Open"}),
+            "color": "#b3b3b3"
+        },
+        {
+            "label": "In Progress Issues",
+            "value": frappe.db.count("Agile Issue", {"agile_project": data.name, "status": "In Progress"}),
+            "color": "#4a90e2"
+        },
+        {
+            "label": "Resolved Issues",
+            "value": frappe.db.count("Agile Issue", {"agile_project": data.name, "status": "Resolved"}),
+            "color": "#65ba43"
+        }
+    ]
+    
+    # Add chart for issue status distribution
+    statuses = frappe.get_all("Agile Issue Status", fields=["name"], order_by="sort_order")
+    status_counts = [
+        frappe.db.count("Agile Issue", {"agile_project": data.name, "status": status.name})
+        for status in statuses
+    ]
+    data.charts = [
+        {
+            "chart_name": "Issue Status Distribution",
+            "chart_type": "bar",
+            "x_axis": [status.name for status in statuses],
+            "data": [{"values": status_counts, "label": "Issues"}]
+        }
+    ]
+    
+    # Add heatmap for issue creation
+    data.heatmap = {
+        "label": "Issue Creation Activity",
+        "field": "creation",
+        "time_interval": "Daily",
+        "doctype": "Agile Issue",
+        "filters": {"agile_project": data.name}
+    }
+    
+    return data

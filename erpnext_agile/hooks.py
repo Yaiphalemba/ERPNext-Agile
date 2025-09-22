@@ -228,7 +228,7 @@ scheduler_events = {
 # 	"Task": "erpnext_agile.task.get_dashboard_data"
 # }
 override_doctype_dashboards = {
-    "Project": "erpnext_agile.agile_project.dashboard"
+    "Project": "erpnext_agile.erpnext_agile.doctype.agile_project.agile_project.get_dashboard_data"
 }
 
 whitelist = [
