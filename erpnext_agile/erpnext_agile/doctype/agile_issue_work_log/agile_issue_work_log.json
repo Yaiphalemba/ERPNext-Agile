@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "creation": "2025-09-22 10:28:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "time_spent",
+  "description",
+  "logged_by",
+  "date_logged"
+ ],
+ "fields": [
+  {
+   "fieldname": "time_spent",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Time Spent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "logged_by",
+   "fieldtype": "Link",
+   "label": "Logged By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_logged",
+   "fieldtype": "Datetime",
+   "label": "Date Logged",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-22 11:53:12.885408",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Issue Work Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

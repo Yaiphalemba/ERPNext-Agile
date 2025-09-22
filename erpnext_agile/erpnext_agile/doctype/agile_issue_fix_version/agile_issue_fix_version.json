@@ -1,34 +1,31 @@
 {
  "actions": [],
- "allow_rename": 1,
- "creation": "2024-01-01 00:00:00",
+ "creation": "2025-09-22 10:28:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "user"
+  "version_name"
  ],
  "fields": [
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
+   "fieldname": "version_name",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "User",
-   "options": "User",
+   "label": "Version Name",
    "reqd": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-09-22 11:54:41.737548",
+ "modified": "2025-09-22 11:54:27.541346",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
- "name": "Agile Issue Watcher",
+ "name": "Agile Issue Fix Version",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+ "states": []
 }

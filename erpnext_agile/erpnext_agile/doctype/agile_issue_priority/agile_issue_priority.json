@@ -1,18 +1,20 @@
 {
     "actions": [],
     "allow_rename": 1,
+    "autoname": "field:priority_name",
     "creation": "2024-01-01 00:00:00.000000",
     "doctype": "DocType",
     "editable_grid": 1,
     "engine": "InnoDB",
     "field_order": [
-        "name",
+        "priority_name",
         "color",
-        "sort_order"
+        "sort_order",
+        "description"
     ],
     "fields": [
         {
-            "fieldname": "name",
+            "fieldname": "priority_name",
             "fieldtype": "Data",
             "label": "Priority Name",
             "reqd": 1,
@@ -27,7 +29,12 @@
             "fieldname": "sort_order",
             "fieldtype": "Int",
             "label": "Sort Order",
-            "default": 0
+            "default": "0"
+        },
+        {
+            "fieldname": "description",
+            "fieldtype": "Small Text",
+            "label": "Description"
         }
     ],
     "index_web_pages_for_search": 1,
@@ -52,9 +59,6 @@
         },
         {
             "read": 1,
-            "write": 1,
-            "create": 1,
-            "delete": 1,
             "role": "Project Manager"
         },
         {

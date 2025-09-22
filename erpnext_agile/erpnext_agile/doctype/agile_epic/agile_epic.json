@@ -1,30 +1,33 @@
 {
     "actions": [],
     "allow_rename": 1,
-    "autoname": "field:scheme_name",
-    "creation": "2024-01-01 00:00:00.000000",
+    "autoname": "field:epic_name",
+    "creation": "2025-09-22 10:16:00.000000",
     "doctype": "DocType",
     "editable_grid": 1,
     "engine": "InnoDB",
     "field_order": [
-        "scheme_details_section",
-        "scheme_name",
+        "epic_name",
+        "agile_project",
         "description",
-        "transitions_section",
-        "transitions"
+        "status",
+        "start_date",
+        "end_date"
     ],
     "fields": [
         {
-            "fieldname": "scheme_details_section",
-            "fieldtype": "Section Break",
-            "label": "Scheme Details"
-        },
-        {
-            "fieldname": "scheme_name",
+            "fieldname": "epic_name",
             "fieldtype": "Data",
-            "label": "Scheme Name",
+            "label": "Epic Name",
             "reqd": 1,
             "unique": 1
+        },
+        {
+            "fieldname": "agile_project",
+            "fieldtype": "Link",
+            "label": "Agile Project",
+            "options": "Agile Project",
+            "reqd": 1
         },
         {
             "fieldname": "description",
@@ -32,23 +35,29 @@
             "label": "Description"
         },
         {
-            "fieldname": "transitions_section",
-            "fieldtype": "Section Break",
-            "label": "Transitions"
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "label": "Status",
+            "options": "Open\nIn Progress\nCompleted\nClosed",
+            "default": "Open"
         },
         {
-            "fieldname": "transitions",
-            "fieldtype": "Table",
-            "label": "Transitions",
-            "options": "Agile Workflow Transition"
+            "fieldname": "start_date",
+            "fieldtype": "Date",
+            "label": "Start Date"
+        },
+        {
+            "fieldname": "end_date",
+            "fieldtype": "Date",
+            "label": "End Date"
         }
     ],
     "index_web_pages_for_search": 1,
     "links": [],
-    "modified": "2024-01-01 00:00:00.000000",
+    "modified": "2025-09-22 10:16:00.000000",
     "modified_by": "Administrator",
     "module": "ERPNext Agile",
-    "name": "Agile Workflow Scheme",
+    "name": "Agile Epic",
     "owner": "Administrator",
     "permissions": [
         {
@@ -64,14 +73,16 @@
             "write": 1
         },
         {
+            "create": 1,
             "read": 1,
             "write": 1,
-            "create": 1,
-            "delete": 1,
             "role": "Project Manager"
+        },
+        {
+            "read": 1,
+            "role": "Employee"
         }
     ],
-    "quick_entry": 1,
     "sort_field": "modified",
     "sort_order": "DESC",
     "track_changes": 1

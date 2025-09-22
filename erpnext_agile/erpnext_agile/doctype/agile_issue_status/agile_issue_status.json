@@ -1,6 +1,7 @@
 {
     "actions": [],
     "allow_rename": 1,
+    "autoname": "field:status_name",
     "creation": "2024-01-01 00:00:00.000000",
     "doctype": "DocType",
     "editable_grid": 1,
@@ -15,7 +16,7 @@
         {
             "fieldname": "status_name",
             "fieldtype": "Data",
-            "label": "Status Name",
+            "label": "Name",
             "reqd": 1,
             "unique": 1
         },

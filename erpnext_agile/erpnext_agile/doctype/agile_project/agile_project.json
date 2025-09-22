@@ -97,7 +97,7 @@
             "fieldname": "issue_types_allowed",
             "fieldtype": "Table",
             "label": "Issue Types Allowed",
-            "options": "Agile Project Issue Type"
+            "options": "Agile Issue Type"
         },
         {
             "fieldname": "workflow_scheme",
