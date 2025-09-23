@@ -1,230 +1,235 @@
 {
-    "actions": [],
-    "allow_rename": 1,
-    "creation": "2025-09-09 00:00:00.000000",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "project_details_section",
-        "project_name",
-        "project_key",
-        "column_break_3",
-        "project",
-        "project_type",
-        "project_lead",
-        "column_break_7",
-        "default_assignee",
-        "agile_settings_section",
-        "issue_types_allowed",
-        "workflow_scheme",
-        "column_break_12",
-        "permission_scheme",
-        "enable_email_notifications",
-        "github_integration_section",
-        "github_repository",
-        "auto_create_github_issues",
-        "column_break_16",
-        "auto_create_branches",
-        "branch_naming_convention",
-        "sprint_settings_section",
-        "default_sprint_duration",
-        "story_point_scale",
-        "column_break_21",
-        "velocity_tracking",
-        "burndown_enabled"
-    ],
-    "fields": [
-        {
-            "fieldname": "project_details_section",
-            "fieldtype": "Section Break",
-            "label": "Project Details"
-        },
-        {
-            "fieldname": "project_name",
-            "fieldtype": "Data",
-            "label": "Project Name",
-            "reqd": 1
-        },
-        {
-            "fieldname": "project_key",
-            "fieldtype": "Data",
-            "label": "Project Key",
-            "description": "Unique prefix for issue keys (e.g., PROJ)",
-            "reqd": 1,
-            "unique": 1
-        },
-        {
-            "fieldname": "column_break_3",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "project",
-            "fieldtype": "Link",
-            "label": "ERPNext Project",
-            "options": "Project",
-            "read_only": 1
-        },
-        {
-            "fieldname": "project_type",
-            "fieldtype": "Select",
-            "label": "Project Type",
-            "options": "Scrum\nKanban\nBug Tracking\nCustom",
-            "default": "Scrum"
-        },
-        {
-            "fieldname": "project_lead",
-            "fieldtype": "Link",
-            "label": "Project Lead",
-            "options": "User"
-        },
-        {
-            "fieldname": "column_break_7",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "default_assignee",
-            "fieldtype": "Link",
-            "label": "Default Assignee",
-            "options": "User"
-        },
-        {
-            "fieldname": "agile_settings_section",
-            "fieldtype": "Section Break",
-            "label": "Agile Settings"
-        },
-        {
-            "fieldname": "issue_types_allowed",
-            "fieldtype": "Table",
-            "label": "Issue Types Allowed",
-            "options": "Agile Issue Type"
-        },
-        {
-            "fieldname": "workflow_scheme",
-            "fieldtype": "Link",
-            "label": "Workflow Scheme",
-            "options": "Agile Workflow Scheme"
-        },
-        {
-            "fieldname": "column_break_12",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "permission_scheme",
-            "fieldtype": "Link",
-            "label": "Permission Scheme",
-            "options": "Agile Permission Scheme"
-        },
-        {
-            "fieldname": "enable_email_notifications",
-            "fieldtype": "Check",
-            "label": "Enable Email Notifications",
-            "default": 1,
-            "insert_after": "permission_scheme"
-        },
-        {
-            "fieldname": "github_integration_section",
-            "fieldtype": "Section Break",
-            "label": "GitHub Integration",
-            "collapsible": 1
-        },
-        {
-            "fieldname": "github_repository",
-            "fieldtype": "Link",
-            "label": "GitHub Repository",
-            "options": "Repository"
-        },
-        {
-            "fieldname": "auto_create_github_issues",
-            "fieldtype": "Check",
-            "label": "Auto Create GitHub Issues",
-            "default": 1
-        },
-        {
-            "fieldname": "column_break_16",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "auto_create_branches",
-            "fieldtype": "Check",
-            "label": "Auto Create Feature Branches",
-            "default": 1
-        },
-        {
-            "fieldname": "branch_naming_convention",
-            "fieldtype": "Data",
-            "label": "Branch Naming Convention",
-            "default": "feature/{issue_key}-{summary}"
-        },
-        {
-            "fieldname": "sprint_settings_section",
-            "fieldtype": "Section Break",
-            "label": "Sprint Settings"
-        },
-        {
-            "fieldname": "default_sprint_duration",
-            "fieldtype": "Int",
-            "label": "Default Sprint Duration (weeks)",
-            "default": 2
-        },
-        {
-            "fieldname": "story_point_scale",
-            "fieldtype": "Select",
-            "label": "Story Point Scale",
-            "options": "Fibonacci (1,2,3,5,8,13,21)\nPowers of 2 (1,2,4,8,16)\nLinear (1,2,3,4,5,6,7,8,9,10)",
-            "default": "Fibonacci (1,2,3,5,8,13,21)"
-        },
-        {
-            "fieldname": "column_break_21",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "velocity_tracking",
-            "fieldtype": "Check",
-            "label": "Enable Velocity Tracking",
-            "default": 1
-        },
-        {
-            "fieldname": "burndown_enabled",
-            "fieldtype": "Check",
-            "label": "Enable Burndown Charts",
-            "default": 1
-        }
-    ],
-    "index_web_pages_for_search": 1,
-    "links": [],
-    "modified": "2024-01-01 00:00:00.000000",
-    "modified_by": "Administrator",
-    "module": "ERPNext Agile",
-    "name": "Agile Project",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Project Manager",
-            "share": 1,
-            "write": 1
-        }
-    ],
-    "quick_entry": 1,
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "track_changes": 1
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{project_key}-{#####}",
+ "creation": "2025-09-09 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "project_details_section",
+  "project_name",
+  "project_key",
+  "column_break_3",
+  "custom_erpnext_project",
+  "project_type",
+  "project_lead",
+  "column_break_7",
+  "default_assignee",
+  "agile_settings_section",
+  "issue_types_allowed",
+  "workflow_scheme",
+  "column_break_12",
+  "permission_scheme",
+  "enable_email_notifications",
+  "github_integration_section",
+  "github_repository",
+  "auto_create_github_issues",
+  "column_break_16",
+  "auto_create_branches",
+  "branch_naming_convention",
+  "sprint_settings_section",
+  "default_sprint_duration",
+  "story_point_scale",
+  "column_break_21",
+  "velocity_tracking",
+  "burndown_enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "project_details_section",
+   "fieldtype": "Section Break",
+   "label": "Project Details"
+  },
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "reqd": 1
+  },
+  {
+   "description": "Unique prefix for issue keys (e.g., PROJ)",
+   "fieldname": "project_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Key",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Scrum",
+   "fieldname": "project_type",
+   "fieldtype": "Select",
+   "label": "Project Type",
+   "options": "Scrum\nKanban\nBug Tracking\nCustom"
+  },
+  {
+   "fieldname": "project_lead",
+   "fieldtype": "Link",
+   "label": "Project Lead",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_assignee",
+   "fieldtype": "Link",
+   "label": "Default Assignee",
+   "options": "User"
+  },
+  {
+   "fieldname": "agile_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Agile Settings"
+  },
+  {
+   "fieldname": "issue_types_allowed",
+   "fieldtype": "Table",
+   "label": "Issue Types Allowed",
+   "options": "Agile Issue Types Allowed"
+  },
+  {
+   "fieldname": "workflow_scheme",
+   "fieldtype": "Link",
+   "label": "Workflow Scheme",
+   "options": "Agile Workflow Scheme"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "permission_scheme",
+   "fieldtype": "Link",
+   "label": "Permission Scheme",
+   "options": "Agile Permission Scheme"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_email_notifications",
+   "fieldtype": "Check",
+   "label": "Enable Email Notifications"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "github_integration_section",
+   "fieldtype": "Section Break",
+   "label": "GitHub Integration"
+  },
+  {
+   "fieldname": "github_repository",
+   "fieldtype": "Link",
+   "label": "GitHub Repository",
+   "options": "Repository"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_github_issues",
+   "fieldtype": "Check",
+   "label": "Auto Create GitHub Issues"
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_branches",
+   "fieldtype": "Check",
+   "label": "Auto Create Feature Branches"
+  },
+  {
+   "default": "feature/{issue_key}-{summary}",
+   "fieldname": "branch_naming_convention",
+   "fieldtype": "Data",
+   "label": "Branch Naming Convention"
+  },
+  {
+   "fieldname": "sprint_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Sprint Settings"
+  },
+  {
+   "default": "2",
+   "fieldname": "default_sprint_duration",
+   "fieldtype": "Int",
+   "label": "Default Sprint Duration (weeks)"
+  },
+  {
+   "default": "Fibonacci (1,2,3,5,8,13,21)",
+   "fieldname": "story_point_scale",
+   "fieldtype": "Select",
+   "label": "Story Point Scale",
+   "options": "Fibonacci (1,2,3,5,8,13,21)\nPowers of 2 (1,2,4,8,16)\nLinear (1,2,3,4,5,6,7,8,9,10)"
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "velocity_tracking",
+   "fieldtype": "Check",
+   "label": "Enable Velocity Tracking"
+  },
+  {
+   "default": "1",
+   "fieldname": "burndown_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Burndown Charts"
+  },
+  {
+   "fieldname": "custom_erpnext_project",
+   "fieldtype": "Link",
+   "label": "ERPNext Project",
+   "options": "Project",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-23 14:42:04.711987",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Project",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Project Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }
