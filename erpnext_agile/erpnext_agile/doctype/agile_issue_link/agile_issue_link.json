@@ -14,7 +14,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Linked Issue",
-   "options": "Agile Issue",
+   "options": "Task",
    "reqd": 1
   },
   {

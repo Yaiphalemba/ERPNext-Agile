@@ -30,13 +30,13 @@ class AgileSprint(Document):
         self.actual_end_date = frappe.utils.today()
         
         # Move incomplete issues to backlog
-        incomplete_issues = frappe.get_all("Agile Issue", {
+        incomplete_issues = frappe.get_all("Task", {
             "current_sprint": self.name,
             "status": ["not in", ["Resolved", "Closed"]]
         })
         
         for issue in incomplete_issues:
-            frappe.db.set_value("Agile Issue", issue.name, "current_sprint", "")
+            frappe.db.set_value("Task", issue.name, "current_sprint", "")
         
         self.save()
         frappe.msgprint(f"Sprint completed! {len(incomplete_issues)} issues moved to backlog")

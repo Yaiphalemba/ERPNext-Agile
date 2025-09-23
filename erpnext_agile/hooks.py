@@ -158,6 +158,11 @@ permission_query_conditions = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+override_doctype_class = {
+    "Project": "erpnext_agile.overrides.project.AgileProject",
+    "Task": "erpnext_agile.overrides.task.AgileTask"
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -296,3 +301,6 @@ whitelist = [
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+fixtures = [
+    {"doctype": "Custom Field", "filters": [["module" , "in" , ("Erpnext Agile")]]}
+]
