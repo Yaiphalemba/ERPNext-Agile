@@ -37,3 +37,12 @@ def get_agile_project_dashboard():
             }
         ]
     }
+
+def get_dashboard_data(data):
+    def get_indicator(doc):
+        if getattr(doc, "agile_status", None):
+            return (doc.agile_status, "blue", "agile_status,=," + doc.agile_status)
+        return data.get("status", lambda doc: (doc.status, "grey", "status,=," + doc.status))(doc)
+
+    data["status"] = get_indicator
+    return data

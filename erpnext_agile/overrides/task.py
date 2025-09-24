@@ -15,6 +15,8 @@ class AgileTask(Task):
                 self.reporter = frappe.session.user
             if not self.issue_type:
                 self.issue_type = "Task"  # Default issue type
+            if not self.is_agile:
+                self.is_agile = 1  # Mark as agile task
     
     def is_agile_task(self):
         """Check if this task belongs to an agile project"""
@@ -53,6 +55,13 @@ class AgileTask(Task):
             self.validate_agile_fields()
         if self.github_pull_request and self.github_pr_number:
             self.sync_github_pr()
+        # sync agile status → task status
+        if self.agile_status:
+            self.status = map_agile_status_to_task_status(self.agile_status)
+        
+        # sync agile priority → task priority
+        if self.agile_priority:
+            self.priority = map_agile_priority_to_task_priority(self.agile_priority)
 
     # ----------------------
     # GitHub sync controller
@@ -156,3 +165,27 @@ class AgileTask(Task):
             }]
         })
         timesheet.insert()
+        
+def map_agile_status_to_task_status(agile_status):
+    """Map agile status to ERPNext task status"""
+    status_mapping = {
+        "Open": "Open",
+        "In Progress": "Working", 
+        "In Review": "Pending Review",
+        "Testing": "Pending Review",
+        "Resolved": "Completed",
+        "Closed": "Completed",
+        "Reopened": "Open"
+    }
+    return status_mapping.get(agile_status, "Open")
+
+def map_agile_priority_to_task_priority(agile_priority: str) -> str:
+    """Map agile priority scale to ERPNext Task priority."""
+    priority_mapping = {
+        "Lowest": "Low",
+        "Low": "Low",
+        "Medium": "Medium",
+        "High": "High",
+        "Critical": "Urgent"
+    }
+    return priority_mapping.get(agile_priority, "Medium")

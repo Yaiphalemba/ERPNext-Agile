@@ -7,7 +7,6 @@ from erpnext.projects.doctype.project.project import Project
 class AgileProject(Project):
     def before_insert(self):
         """Auto-generate project key and setup agile features"""
-        super().before_insert()
         if self.enable_agile:
             if not self.project_key:
                 self.project_key = self.generate_project_key()

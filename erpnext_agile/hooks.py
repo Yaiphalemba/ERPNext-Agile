@@ -229,12 +229,12 @@ scheduler_events = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "erpnext_agile.task.get_dashboard_data"
-# }
 override_doctype_dashboards = {
-    "Project": "erpnext_agile.erpnext_agile.doctype.agile_project.agile_project.get_dashboard_data"
+	"Task": "erpnext_agile.dashboard.get_dashboard_data"
 }
+# override_doctype_dashboards = {
+#     "Project": "erpnext_agile.erpnext_agile.doctype.agile_project.agile_project.get_dashboard_data"
+# }
 
 whitelist = [
     "erpnext_agile.api.get_board_data",

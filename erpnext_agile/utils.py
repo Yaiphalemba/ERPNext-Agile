@@ -8,7 +8,8 @@ def sync_github_data():
         if not frappe.db.exists("App", "erpnext_github_integration"):
             return  # Skip if GitHub integration app is not installed
         
-        agile_projects = frappe.get_all("Agile Project", {
+        agile_projects = frappe.get_all("Project", {
+            "enable_agile": 1,
             "github_repository": ["!=", ""],
             "github_sync_enabled": 1
         }, ["name", "github_repository"])
@@ -44,7 +45,7 @@ def sync_project_github_data(agile_project, repository):
 def sync_github_issue_to_agile(gh_issue, agile_project):
     """Sync a GitHub issue to an Agile Issue"""
     try:
-        project_key = frappe.db.get_value("Agile Project", agile_project, "project_key")
+        project_key = frappe.db.get_value("Project", agile_project, "project_key")
         issue_key = f"{project_key}-{gh_issue['number']}"
         existing_issue = frappe.db.get_value("Agile Issue", {
             "agile_project": agile_project,
@@ -233,7 +234,7 @@ def check_agile_project_creation(doc, method=None):
         if getattr(doc, "flags", {}).get("ignore_agile_hook"):
             return  # Skip to avoid recursive loop
         
-        if doc.custom_enable_agile and not frappe.db.exists("Agile Project", {"custom_erpnext_project": doc.name}):
+        if doc.custom_enable_agile and not frappe.db.exists("Project", {"custom_erpnext_project": doc.name}):
             # Generate project_key from project_name
             project_key = "".join(c for c in doc.project_name.upper() if c.isalpha())[:10]
             if not project_key or len(project_key) < 2:
