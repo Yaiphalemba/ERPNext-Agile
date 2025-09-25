@@ -1,176 +1,182 @@
 {
-    "actions": [],
-    "allow_rename": 1,
-    "creation": "2024-01-01 00:00:00.000000",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "sprint_details_section",
-        "sprint_name",
-        "agile_project",
-        "column_break_3",
-        "sprint_state",
-        "sprint_goal",
-        "dates_section",
-        "start_date",
-        "end_date",
-        "column_break_7",
-        "actual_start_date",
-        "actual_end_date",
-        "metrics_section",
-        "total_points",
-        "completed_points",
-        "column_break_12",
-        "velocity",
-        "progress_percentage"
-    ],
-    "fields": [
-        {
-            "fieldname": "sprint_details_section",
-            "fieldtype": "Section Break",
-            "label": "Sprint Details"
-        },
-        {
-            "fieldname": "sprint_name",
-            "fieldtype": "Data",
-            "label": "Sprint Name",
-            "reqd": 1
-        },
-        {
-            "fieldname": "agile_project",
-            "fieldtype": "Link",
-            "label": "Agile Project",
-            "options": "Agile Project",
-            "reqd": 1
-        },
-        {
-            "fieldname": "column_break_3",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "sprint_state",
-            "fieldtype": "Select",
-            "label": "Sprint State",
-            "options": "Future\nActive\nCompleted",
-            "default": "Future",
-            "reqd": 1
-        },
-        {
-            "fieldname": "sprint_goal",
-            "fieldtype": "Text",
-            "label": "Sprint Goal"
-        },
-        {
-            "fieldname": "dates_section",
-            "fieldtype": "Section Break",
-            "label": "Dates"
-        },
-        {
-            "fieldname": "start_date",
-            "fieldtype": "Date",
-            "label": "Start Date",
-            "reqd": 1
-        },
-        {
-            "fieldname": "end_date",
-            "fieldtype": "Date",
-            "label": "End Date",
-            "reqd": 1
-        },
-        {
-            "fieldname": "column_break_7",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "actual_start_date",
-            "fieldtype": "Date",
-            "label": "Actual Start Date",
-            "read_only": 1
-        },
-        {
-            "fieldname": "actual_end_date",
-            "fieldtype": "Date",
-            "label": "Actual End Date",
-            "read_only": 1
-        },
-        {
-            "fieldname": "metrics_section",
-            "fieldtype": "Section Break",
-            "label": "Sprint Metrics",
-            "collapsible": 1
-        },
-        {
-            "fieldname": "total_points",
-            "fieldtype": "Float",
-            "label": "Total Story Points",
-            "read_only": 1
-        },
-        {
-            "fieldname": "completed_points",
-            "fieldtype": "Float",
-            "label": "Completed Points",
-            "read_only": 1
-        },
-        {
-            "fieldname": "column_break_12",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "velocity",
-            "fieldtype": "Float",
-            "label": "Velocity",
-            "read_only": 1
-        },
-        {
-            "fieldname": "progress_percentage",
-            "fieldtype": "Percent",
-            "label": "Progress",
-            "read_only": 1
-        }
-    ],
-    "index_web_pages_for_search": 1,
-    "links": [],
-    "modified": "2024-01-01 00:00:00.000000",
-    "modified_by": "Administrator",
-    "module": "ERPNext Agile",
-    "name": "Agile Sprint",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Project Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Employee"
-        }
-    ],
-    "quick_entry": 1,
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "track_changes": 1
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sprint_details_section",
+  "sprint_name",
+  "project",
+  "column_break_3",
+  "sprint_state",
+  "sprint_goal",
+  "dates_section",
+  "start_date",
+  "end_date",
+  "column_break_7",
+  "actual_start_date",
+  "actual_end_date",
+  "metrics_section",
+  "total_points",
+  "completed_points",
+  "column_break_12",
+  "velocity",
+  "progress_percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "sprint_details_section",
+   "fieldtype": "Section Break",
+   "label": "Sprint Details"
+  },
+  {
+   "fieldname": "sprint_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Sprint Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Future",
+   "fieldname": "sprint_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Sprint State",
+   "options": "Future\nActive\nCompleted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sprint_goal",
+   "fieldtype": "Text",
+   "label": "Sprint Goal"
+  },
+  {
+   "fieldname": "dates_section",
+   "fieldtype": "Section Break",
+   "label": "Dates"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_start_date",
+   "fieldtype": "Date",
+   "label": "Actual Start Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_end_date",
+   "fieldtype": "Date",
+   "label": "Actual End Date",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "metrics_section",
+   "fieldtype": "Section Break",
+   "label": "Sprint Metrics"
+  },
+  {
+   "fieldname": "total_points",
+   "fieldtype": "Float",
+   "label": "Total Story Points",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_points",
+   "fieldtype": "Float",
+   "label": "Completed Points",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "velocity",
+   "fieldtype": "Float",
+   "label": "Velocity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "progress_percentage",
+   "fieldtype": "Percent",
+   "label": "Progress",
+   "read_only": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-24 17:14:24.002733",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Sprint",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Project Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee"
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }

@@ -1,8 +1,9 @@
+# Updated jql_parser.py
 import frappe
 import re
 
 class AgileQueryLanguage:
-    """Jira Query Language (JQL) equivalent for agile issues"""
+    """Jira Query Language (JQL) equivalent for agile tasks"""
     
     def __init__(self):
         self.operators = {
@@ -15,14 +16,14 @@ class AgileQueryLanguage:
         }
         
         self.field_mapping = {
-            'project': 'agile_project',
+            'project': 'project',
             'assignee': 'assignee',
             'reporter': 'reporter', 
             'status': 'status',
             'type': 'issue_type',
             'priority': 'priority',
             'key': 'issue_key',
-            'summary': 'summary',
+            'summary': 'subject',
             'sprint': 'current_sprint',
             'epic': 'epic'
         }
@@ -32,7 +33,7 @@ class AgileQueryLanguage:
         # Simple JQL parser - can be enhanced
         # Example: "project = PROJ AND assignee = currentUser() AND status != Closed"
         
-        filters = {}
+        filters = {"project.enable_agile": 1}
         
         # Split by AND/OR (simplified - only AND for now)
         conditions = jql_query.split(' AND ')
@@ -76,18 +77,18 @@ class AgileQueryLanguage:
         return value
 
 @frappe.whitelist()
-def search_issues_jql(jql_query, agile_project=None):
-    """Search issues using JQL-like syntax"""
+def search_tasks_jql(jql_query, project=None):
+    """Search tasks using JQL-like syntax"""
     parser = AgileQueryLanguage()
     filters = parser.parse_jql(jql_query)
     
-    if agile_project:
-        filters['agile_project'] = agile_project
+    if project:
+        filters['project'] = project
     
-    issues = frappe.get_all("Agile Issue",
+    tasks = frappe.get_all("Task",
         filters=filters,
-        fields=["name", "issue_key", "summary", "status", "assignee", "priority", "issue_type"],
+        fields=["name", "issue_key", "subject", "status", "assignee", "priority", "issue_type"],
         limit=50
     )
     
-    return issues
+    return tasks

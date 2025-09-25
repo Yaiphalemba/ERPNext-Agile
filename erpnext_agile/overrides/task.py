@@ -3,11 +3,11 @@ import frappe
 from frappe import _
 import re
 from erpnext.projects.doctype.task.task import Task
+from erpnext_agile.utils import sync_agile_task_changes
 
 class AgileTask(Task):
     def before_insert(self):
         """Auto-generate issue key if agile project"""
-        super().before_insert()
         if self.is_agile_task():
             if not self.issue_key:
                 self.issue_key = self.generate_issue_key()
@@ -56,12 +56,12 @@ class AgileTask(Task):
         if self.github_pull_request and self.github_pr_number:
             self.sync_github_pr()
         # sync agile status → task status
-        if self.agile_status:
-            self.status = map_agile_status_to_task_status(self.agile_status)
+        if self.issue_status:
+            self.status = map_agile_status_to_task_status(self.issue_status)
         
         # sync agile priority → task priority
-        if self.agile_priority:
-            self.priority = map_agile_priority_to_task_priority(self.agile_priority)
+        if self.issue_priority:
+            self.priority = map_agile_priority_to_task_priority(self.issue_priority)
 
     # ----------------------
     # GitHub sync controller
@@ -87,7 +87,7 @@ class AgileTask(Task):
     def on_update(self):
         super().on_update()
         if self.is_agile_task():
-            self.sync_to_github()
+            sync_agile_task_changes(self, "manual")
     
     @frappe.whitelist()
     def start_work(self):

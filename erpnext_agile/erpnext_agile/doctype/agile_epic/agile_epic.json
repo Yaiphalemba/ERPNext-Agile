@@ -1,89 +1,93 @@
 {
-    "actions": [],
-    "allow_rename": 1,
-    "autoname": "field:epic_name",
-    "creation": "2025-09-22 10:16:00.000000",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "epic_name",
-        "agile_project",
-        "description",
-        "status",
-        "start_date",
-        "end_date"
-    ],
-    "fields": [
-        {
-            "fieldname": "epic_name",
-            "fieldtype": "Data",
-            "label": "Epic Name",
-            "reqd": 1,
-            "unique": 1
-        },
-        {
-            "fieldname": "agile_project",
-            "fieldtype": "Link",
-            "label": "Agile Project",
-            "options": "Agile Project",
-            "reqd": 1
-        },
-        {
-            "fieldname": "description",
-            "fieldtype": "Text",
-            "label": "Description"
-        },
-        {
-            "fieldname": "status",
-            "fieldtype": "Select",
-            "label": "Status",
-            "options": "Open\nIn Progress\nCompleted\nClosed",
-            "default": "Open"
-        },
-        {
-            "fieldname": "start_date",
-            "fieldtype": "Date",
-            "label": "Start Date"
-        },
-        {
-            "fieldname": "end_date",
-            "fieldtype": "Date",
-            "label": "End Date"
-        }
-    ],
-    "index_web_pages_for_search": 1,
-    "links": [],
-    "modified": "2025-09-22 10:16:00.000000",
-    "modified_by": "Administrator",
-    "module": "ERPNext Agile",
-    "name": "Agile Epic",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "read": 1,
-            "write": 1,
-            "role": "Project Manager"
-        },
-        {
-            "read": 1,
-            "role": "Employee"
-        }
-    ],
-    "sort_field": "modified",
-    "sort_order": "DESC",
-    "track_changes": 1
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:epic_name",
+ "creation": "2025-09-22 10:16:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "epic_name",
+  "project",
+  "description",
+  "status",
+  "start_date",
+  "end_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "epic_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Epic Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nIn Progress\nCompleted\nClosed"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-24 17:13:58.289575",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Epic",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Project Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }

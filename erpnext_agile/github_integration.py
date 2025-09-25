@@ -1,7 +1,8 @@
+# Updated github_integration.py
 import frappe
 
 def process_github_webhook(payload):
-    """Enhanced webhook processing for agile issues"""
+    """Enhanced webhook processing for agile tasks"""
     event_type = payload.get('action')
     
     if 'issue' in payload:
@@ -21,15 +22,15 @@ def process_github_issue_event(payload):
     if not issue_key:
         return
     
-    agile_issue = frappe.db.get_value("Agile Issue", {"issue_key": issue_key})
-    if not agile_issue:
+    agile_task = frappe.db.get_value("Task", {"issue_key": issue_key})
+    if not agile_task:
         return
     
     # Update status based on GitHub issue state
     if payload['action'] == 'closed':
-        frappe.db.set_value("Agile Issue", agile_issue, "status", "Resolved")
+        frappe.db.set_value("Task", agile_task, "status", "Resolved")
     elif payload['action'] == 'reopened':
-        frappe.db.set_value("Agile Issue", agile_issue, "status", "Open")
+        frappe.db.set_value("Task", agile_task, "status", "Open")
 
 def process_github_pr_event(payload):
     """Process GitHub pull request events"""
@@ -41,20 +42,20 @@ def process_github_pr_event(payload):
     if not issue_key:
         return
     
-    agile_issue = frappe.get_doc("Agile Issue", {"issue_key": issue_key})
-    if not agile_issue:
+    agile_task = frappe.get_doc("Task", {"issue_key": issue_key})
+    if not agile_task:
         return
     
-    # Update issue based on PR state
+    # Update task based on PR state
     if payload['action'] == 'opened':
-        agile_issue.github_pull_request = pr['number']
-        agile_issue.status = "In Review"
+        agile_task.github_pull_request = pr['number']
+        agile_task.status = "In Review"
     elif payload['action'] == 'merged':
-        agile_issue.status = "Resolved"
+        agile_task.status = "Resolved"
     elif payload['action'] == 'closed' and not pr['merged']:
-        agile_issue.status = "In Progress"  # PR rejected, back to work
+        agile_task.status = "In Progress"  # PR rejected, back to work
     
-    agile_issue.save()
+    agile_task.save()
 
 def process_github_push_event(payload):
     """Process GitHub push events to link commits"""
@@ -65,23 +66,23 @@ def process_github_push_event(payload):
         issue_keys = extract_all_issue_keys(commit_message)
         
         for issue_key in issue_keys:
-            link_commit_to_issue(issue_key, commit)
+            link_commit_to_task(issue_key, commit)
 
-def link_commit_to_issue(issue_key, commit_data):
-    """Link commit to agile issue"""
-    agile_issue = frappe.db.get_value("Agile Issue", {"issue_key": issue_key})
-    if not agile_issue:
+def link_commit_to_task(issue_key, commit_data):
+    """Link commit to agile task"""
+    agile_task = frappe.db.get_value("Task", {"issue_key": issue_key})
+    if not agile_task:
         return
     
-    # Add commit to linked commits table
-    issue_doc = frappe.get_doc("Agile Issue", agile_issue)
-    issue_doc.append("linked_commits", {
-        "commit_sha": commit_data['id'],
+    # Add commit to linked commits table (assuming child table on Task)
+    task_doc = frappe.get_doc("Task", agile_task)
+    task_doc.append("linked_commits", {
+        "commit_hash": commit_data['id'],
         "commit_message": commit_data['message'],
         "author": commit_data['author']['name'],
         "commit_date": commit_data['timestamp']
     })
-    issue_doc.save()
+    task_doc.save()
 
 def extract_issue_key(text):
     """Extract issue key from text (PROJ-123 format)"""
