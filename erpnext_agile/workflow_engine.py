@@ -1,18 +1,22 @@
+# Updated workflow_engine.py
 import frappe
 
 class AgileWorkflowEngine:
     """Jira-style workflow engine"""
     
     @staticmethod
-    def get_available_transitions(issue_name, user=None):
+    def get_available_transitions(task_name, user=None):
         """Get available status transitions for user"""
-        issue = frappe.get_doc("Agile Issue", issue_name)
-        current_status = issue.status
+        task = frappe.get_doc("Task", task_name)
+        current_status = task.status
         user = user or frappe.session.user
         
         # Get workflow scheme
-        agile_project = frappe.get_doc("Agile Project", issue.agile_project)
-        workflow_scheme = agile_project.workflow_scheme
+        project = frappe.get_doc("Project", task.project)
+        if not project.enable_agile:
+            return []
+        
+        workflow_scheme = project.workflow_scheme
         
         if not workflow_scheme:
             # Default transitions
@@ -27,33 +31,33 @@ class AgileWorkflowEngine:
         # Filter by user permissions
         allowed_transitions = []
         for transition in transitions:
-            if has_transition_permission(user, transition.required_permission, issue):
+            if has_transition_permission(user, transition.required_permission, task):
                 allowed_transitions.append(transition)
         
         return allowed_transitions
     
     @staticmethod
-    def transition_issue(issue_name, to_status, comment=None):
-        """Transition issue with validation"""
-        issue = frappe.get_doc("Agile Issue", issue_name)
-        from_status = issue.status
+    def transition_task(task_name, to_status, comment=None):
+        """Transition task with validation"""
+        task = frappe.get_doc("Task", task_name)
+        from_status = task.status
         
         # Validate transition is allowed
-        available_transitions = AgileWorkflowEngine.get_available_transitions(issue_name)
+        available_transitions = AgileWorkflowEngine.get_available_transitions(task_name)
         if to_status not in [t.to_status for t in available_transitions]:
             frappe.throw(f"Transition from {from_status} to {to_status} not allowed")
         
         # Perform transition
-        issue.status = to_status
+        task.status = to_status
         
         # Execute post-functions
-        execute_post_functions(issue, from_status, to_status)
+        execute_post_functions(task, from_status, to_status)
         
         # Add comment if provided
         if comment:
-            issue.add_comment("Comment", comment)
+            task.add_comment("Comment", comment)
         
-        issue.save()
+        task.save()
 
 def get_default_transitions(current_status):
     """Default workflow transitions"""
@@ -69,77 +73,90 @@ def get_default_transitions(current_status):
     return [{"to_status": status, "transition_name": f"Move to {status}"} 
             for status in transitions.get(current_status, [])]
 
-def execute_post_functions(issue, from_status, to_status):
+def execute_post_functions(task, from_status, to_status):
     """Execute post-transition functions"""
     # Auto-assign when moving to In Progress
-    if to_status == "In Progress" and not issue.assignee:
-        issue.assignee = frappe.session.user
+    if to_status == "In Progress" and not task.assignee:
+        task.assignee = frappe.session.user
     
     # Update GitHub issue status
-    if issue.github_issue_number:
-        sync_status_to_github(issue, to_status)
+    if task.github_issue_number:
+        sync_status_to_github(task, to_status)
     
     # Create timesheet when resolving
-    if to_status in ["Resolved", "Closed"] and issue.remaining_estimate:
-        create_completion_timesheet(issue)
+    if to_status in ["Resolved", "Closed"] and task.remaining_estimate:
+        create_completion_timesheet(task)
 
-def sync_status_to_github(issue, status):
+def sync_status_to_github(task, status):
     """Sync status changes to GitHub"""
     # Map agile status to GitHub actions
     if status in ["Resolved", "Closed"]:
         # Close GitHub issue
         frappe.call(
             'erpnext_github_integration.github_api.close_issue',
-            repository=issue.get_github_repository(),
-            issue_number=issue.github_issue_number
+            repository=task.github_repo,
+            issue_number=task.github_issue_number
         )
 
-def create_completion_timesheet(issue):
-    """Create ERPNext Timesheet entry when issue is resolved or closed"""
-    agile_project = frappe.get_doc("Agile Project", issue.agile_project)
+def create_completion_timesheet(task):
+    """Create ERPNext Timesheet entry when task is resolved or closed"""
+    project = frappe.get_doc("Project", task.project)
     
-    # Get employee linked to the assignee
-    employee = frappe.db.get_value("Employee", {"user_id": issue.assignee}, "name")
+    # Get assignees using the get_document_assignees function
+    assignees = get_document_assignees("Task", task.name)
+    
+    if not assignees:
+        frappe.msgprint(f"No assignees found for task {task.name}")
+        return
     
     # Convert remaining_estimate (duration in seconds) to hours
-    hours = frappe.utils.time_diff_in_hours(issue.remaining_estimate, "00:00:00") if issue.remaining_estimate else 0
+    hours = frappe.utils.time_diff_in_hours(task.remaining_estimate, "00:00:00") if task.remaining_estimate else 0
     
     if hours <= 0:
         return
     
     try:
-        timesheet = frappe.get_doc({
-            "doctype": "Timesheet",
-            "employee": employee,
-            "time_logs": [{
-                "activity_type": "Development",
-                "hours": hours,
-                "project": agile_project.project,
-                "task": issue.task,
-                "description": f"Completed {issue.issue_key}: {issue.summary}"
-            }]
-        })
-        timesheet.insert()
+        # Create timesheet for each assignee
+        for assignee in assignees:
+            # Get employee linked to the assignee
+            employee = frappe.db.get_value("Employee", {"user": assignee}, "name")
+            
+            if not employee:
+                frappe.msgprint(f"No employee found for user {assignee}")
+                continue
+            
+            timesheet = frappe.get_doc({
+                "doctype": "Timesheet",
+                "employee": employee,
+                "time_logs": [{
+                    "activity_type": "Development",
+                    "hours": hours,
+                    "project": project.name,
+                    "task": task.name,
+                    "description": f"Completed {task.issue_key}: {task.subject}"
+                }]
+            })
+            timesheet.insert()
         
         # Clear remaining estimate
-        issue.remaining_estimate = None
-        frappe.msgprint(f"Timesheet created for {issue.issue_key} with {hours} hours")
+        task.remaining_estimate = None
+        frappe.msgprint(f"Timesheet created for {task.issue_key} with {hours} hours for {len(assignees)} assignee(s)")
         
     except Exception as e:
-        frappe.log_error(f"Failed to create timesheet for {issue.issue_key}: {str(e)}")
+        frappe.log_error(f"Failed to create timesheet for {task.issue_key}: {str(e)}")
 
-def has_transition_permission(user, required_permission, issue):
+def has_transition_permission(user, required_permission, task):
     """Check if user has permission for workflow transition"""
     if not required_permission:
         return True  # No specific permission required
     
     # Get permission scheme from project
-    agile_project = frappe.get_doc("Agile Project", issue.agile_project)
-    permission_scheme = agile_project.permission_scheme
+    project = frappe.get_doc("Project", task.project)
+    permission_scheme = project.permission_scheme
     
     if not permission_scheme:
         # Fallback to standard Frappe permissions
-        return frappe.has_permission("Agile Issue", "write", user=user, doc=issue.name)
+        return frappe.has_permission("Task", "write", user=user, doc=task.name)
     
     # Check if user has the required permission role
     user_roles = frappe.get_roles(user)
@@ -155,3 +172,16 @@ def has_transition_permission(user, required_permission, issue):
     
     # Check if any user role matches the required permission roles
     return any(role in user_roles for role in permission_roles.get(required_permission, []))
+
+def get_document_assignees(doctype, name):
+    # Query the ToDo doctype to find assignments for the given document
+    assignees = frappe.get_list(
+        "ToDo",
+        filters={
+            "reference_type": doctype,
+            "reference_name": name,
+            "status":"Open"
+        },
+        fields=["allocated_to"]
+    )
+    return [d.allocated_to for d in assignees]

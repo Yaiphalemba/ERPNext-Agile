@@ -176,11 +176,11 @@ override_doctype_class = {
 # }
 doc_events = {
     "Task": {
-        "after_insert": "erpnext_agile.utils.create_agile_issue_from_task",
-        "on_update": "erpnext_agile.utils.sync_task_to_agile_issue"
+        "after_insert": "erpnext_agile.notifications.on_task_update",
+        "on_update": "erpnext_agile.notifications.on_task_update"
     },
-    "Project": {
-        "after_insert": "erpnext_agile.utils.check_agile_project_creation"
+    "Agile Sprint": {
+        "on_update": "erpnext_agile.notifications.on_sprint_update"
     }
 }
 

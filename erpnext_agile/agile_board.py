@@ -1,3 +1,4 @@
+# Updated agile_board.py
 import frappe
 
 def get_context(context):
@@ -11,7 +12,7 @@ def get_context(context):
     # Get current project from URL or default
     project_key = frappe.form_dict.get('project')
     if project_key:
-        context.current_project = frappe.db.get_value("Agile Project", {"project_key": project_key})
+        context.current_project = frappe.db.get_value("Project", {"project_key": project_key, "enable_agile": 1})
     elif user_projects:
         context.current_project = user_projects[0].name
     
@@ -19,7 +20,7 @@ def get_context(context):
 
 def get_user_agile_projects():
     """Get agile projects user has access to"""
-    return frappe.get_all("Agile Project", 
-        filters={}, # Add permission filters
+    return frappe.get_all("Project", 
+        filters={"enable_agile": 1}, # Add permission filters
         fields=["name", "project_name", "project_key"]
     )
