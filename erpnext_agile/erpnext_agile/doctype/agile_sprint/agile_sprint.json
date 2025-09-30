@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{project}-{sprint_name}",
  "creation": "2024-01-01 00:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -135,10 +136,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 17:14:24.002733",
+ "modified": "2025-09-30 14:32:16.914871",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Sprint",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

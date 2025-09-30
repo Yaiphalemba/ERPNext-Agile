@@ -1,53 +1,71 @@
 {
  "actions": [],
- "creation": "2025-09-22 10:28:00",
+ "allow_rename": 1,
+ "creation": "2025-09-29 10:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "time_spent",
+  "user",
+  "work_date",
+  "time_spent_seconds",
+  "time_spent_display",
   "description",
-  "logged_by",
-  "date_logged"
+  "logged_at"
  ],
  "fields": [
   {
-   "fieldname": "time_spent",
-   "fieldtype": "Duration",
-   "in_list_view": 1,
-   "label": "Time Spent",
-   "reqd": 1
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Text",
-   "in_list_view": 1,
-   "label": "Description"
-  },
-  {
-   "fieldname": "logged_by",
+   "fieldname": "user",
    "fieldtype": "Link",
-   "label": "Logged By",
+   "in_list_view": 1,
+   "label": "User",
    "options": "User",
    "reqd": 1
   },
   {
-   "fieldname": "date_logged",
-   "fieldtype": "Datetime",
-   "label": "Date Logged",
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Work Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "time_spent_seconds",
+   "fieldtype": "Int",
+   "label": "Time Spent (seconds)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "time_spent_display",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Time Spent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "logged_at",
+   "fieldtype": "Datetime",
+   "label": "Logged At",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-09-22 11:53:12.885408",
+ "modified": "2025-09-29 10:00:00",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Issue Work Log",
  "owner": "Administrator",
  "permissions": [],
- "row_format": "Dynamic",
- "sort_field": "modified",
+ "sort_field": "work_date",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

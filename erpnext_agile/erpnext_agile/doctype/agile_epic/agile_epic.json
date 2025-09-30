@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:epic_name",
+ "autoname": "format:{project}-{epic_name}",
  "creation": "2025-09-22 10:16:00",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -56,10 +56,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 17:13:58.289575",
+ "modified": "2025-09-30 14:31:48.851003",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Epic",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
