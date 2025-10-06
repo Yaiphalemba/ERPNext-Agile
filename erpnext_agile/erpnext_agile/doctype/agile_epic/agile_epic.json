@@ -9,10 +9,11 @@
  "field_order": [
   "epic_name",
   "project",
-  "description",
   "status",
   "start_date",
-  "end_date"
+  "end_date",
+  "column_break_pvex",
+  "description"
  ],
  "fields": [
   {
@@ -52,11 +53,15 @@
    "label": "Project",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_pvex",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-30 14:31:48.851003",
+ "modified": "2025-09-30 17:02:33.823538",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Epic",

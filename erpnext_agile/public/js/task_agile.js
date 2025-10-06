@@ -61,6 +61,7 @@ function get_agile_status_color(status) {
         "Testing": "blue",
         "Resolved": "green",
         "Closed": "green",
+        "Done": "green",
         "Reopened": "red",
         "Blocked": "grey",
         "To Do": "orange"
@@ -68,12 +69,7 @@ function get_agile_status_color(status) {
     return colors[status] || "blue";
 }
 
-function add_agile_buttons(frm) {
-    // Quick Actions
-    frm.add_custom_button(__('Quick Actions'), function() {
-        show_quick_actions_dialog(frm);
-    }, __('Agile'));
-    
+function add_agile_buttons(frm) {    
     // Log Work
     frm.add_custom_button(__('Log Work'), function() {
         show_log_work_dialog(frm);
@@ -115,32 +111,6 @@ function add_agile_buttons(frm) {
     frm.add_custom_button(__('View Activity'), function() {
         show_activity_dialog(frm);
     });
-}
-
-function show_quick_actions_dialog(frm) {
-    let d = new frappe.ui.Dialog({
-        title: __('Quick Actions'),
-        fields: [
-            {
-                label: __('Action'),
-                fieldname: 'action',
-                fieldtype: 'Select',
-                options: [
-                    'Assign to Me',
-                    'Watch This Issue',
-                    'Clone Issue',
-                    'Split Story',
-                    'Link to Epic'
-                ]
-            }
-        ],
-        primary_action_label: __('Execute'),
-        primary_action: function(values) {
-            execute_quick_action(frm, values.action);
-            d.hide();
-        }
-    });
-    d.show();
 }
 
 function show_log_work_dialog(frm) {
@@ -196,7 +166,7 @@ function show_log_work_dialog(frm) {
 function show_transition_dialog(frm) {
     // Get available transitions
     frappe.call({
-        method: 'erpnext_agile.api.get_available_transitions',
+        method: 'erpnext_agile.utils.get_available_transitions_api',
         args: {
             task_name: frm.doc.name,
             from_status: frm.doc.issue_status

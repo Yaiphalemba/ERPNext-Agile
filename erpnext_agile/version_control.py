@@ -50,7 +50,6 @@ class IssueVersionControl:
         return (last_version or 0) + 1
     
     def get_version_data(self, task_doc):
-        assigned_to = get_allocated_to(task_doc.name)
         """Extract versionable data from task"""
         return {
             'subject': task_doc.subject,
@@ -64,7 +63,7 @@ class IssueVersionControl:
             'parent_issue': task_doc.parent_issue,
             'original_estimate': task_doc.original_estimate,
             'remaining_estimate': task_doc.remaining_estimate,
-            'assigned_to': [assigned_to],
+            'assigned_to': [{'user': a.user} for a in task_doc.get('assigned_to_users', [])],
             'watchers': [{'user': w.user} for w in task_doc.get('watchers', [])],
             'fix_versions': [{'version': v.version} for v in task_doc.get('fix_versions', [])],
             'modified': str(task_doc.modified)
@@ -129,6 +128,10 @@ class IssueVersionControl:
             for watcher in version_data['watchers']:
                 task_doc.append('watchers', watcher)
         
+        if 'assigned_to' in version_data:
+            task_doc.set('assigned_to_users', [])
+            for assignee in version_data['assigned_to']:
+                task_doc.append('assigned_to_users', assignee)
         task_doc.save()
         frappe.db.commit()
         

@@ -8,9 +8,10 @@
  "field_order": [
   "sprint",
   "date",
-  "remaining_points",
-  "ideal_remaining",
   "completed_points",
+  "remaining_points",
+  "column_break_iavb",
+  "ideal_remaining",
   "added_points",
   "removed_points"
  ],
@@ -51,23 +52,27 @@
    "precision": "2"
   },
   {
+   "description": "Points added to sprint during sprint (scope change)",
    "fieldname": "added_points",
    "fieldtype": "Float",
    "label": "Added Points",
-   "precision": "2",
-   "description": "Points added to sprint during sprint (scope change)"
+   "precision": "2"
   },
   {
+   "description": "Points removed from sprint during sprint",
    "fieldname": "removed_points",
    "fieldtype": "Float",
    "label": "Removed Points",
-   "precision": "2",
-   "description": "Points removed from sprint during sprint"
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_iavb",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-29 10:00:00",
+ "modified": "2025-09-30 17:04:39.235473",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Sprint Burndown",
@@ -90,9 +95,8 @@
    "role": "All"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "date",
  "sort_order": "ASC",
- "states": [],
- "track_changes": 0,
- "track_views": 0
+ "states": []
 }

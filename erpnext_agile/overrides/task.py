@@ -52,6 +52,7 @@ def map_agile_status_to_task_status(agile_status):
         "Reopened": "Open",
         "Blocked": "Open",
         "To Do": "Open",
+        "Done": "Completed"
     }
     return status_mapping.get(agile_status, "Open")
 

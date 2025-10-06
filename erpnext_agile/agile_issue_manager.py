@@ -142,10 +142,6 @@ class AgileIssueManager:
             'comment': comment
         })
         
-        # Update GitHub issue status if linked
-        if task_doc.get('github_issue_doc'):
-            self.sync_status_to_github(task_doc)
-        
         # Send notifications
         self.send_issue_notifications(task_doc, 'transitioned', {
             'from_status': from_status,
@@ -175,15 +171,6 @@ class AgileIssueManager:
     def assign_issue(self, task_name, assignees, notify=True):
         """Assign issue to users (Jira-style multi-assignment)"""
         task_doc = frappe.get_doc('Task', task_name)
-        
-        # Clear existing assignments
-        frappe.db.sql("DELETE FROM `tabTask Assigned To` WHERE parent = %s", task_name)
-        
-        # Add new assignments
-        for assignee in assignees:
-            task_doc.append('assigned_to_users', {'user': assignee})
-        
-        task_doc.save()
         
         # Update GitHub issue assignees if linked
         if task_doc.get('github_repo') and task_doc.get('github_issue_number'):
