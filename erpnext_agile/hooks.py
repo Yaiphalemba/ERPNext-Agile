@@ -24,14 +24,11 @@ app_license = "mit"
 # Includes in <head>
 # ------------------
 
-app_include_css = [
-    "/assets/erpnext_agile/css/agile.css"
-]
-
-app_include_js = [
-    "/assets/erpnext_agile/js/agile_board.js",
-    "/assets/erpnext_agile/js/issue_quick_actions.js"
-]
+# app_include_css = "/assets/erpnext_agile/css/erpnext_agile.css"
+# app_include_js = [
+#     "/assets/erpnext_agile/js/agile_board.js",
+#     "/assets/erpnext_agile/js/agile_utils.js"
+# ]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/erpnext_agile/css/erpnext_agile.css"
@@ -50,19 +47,19 @@ app_include_js = [
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
-page_js = {
-    "agile-board": "public/js/agile_board_page.js"
-}
+# page_js = {
+#     "agile-board": "public/js/agile_board_page.js"
+# }
 
-website_route_rules = [
-    {"from_route": "/agile/<path:app_path>", "to_route": "agile"},
-]
+# website_route_rules = [
+#     {"from_route": "/agile/<path:app_path>", "to_route": "agile"},
+# ]
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
-    "Task": "public/js/task_agile_integration.js",
-    "Project": "public/js/project_agile_integration.js"
+    "Task": "public/js/task_agile.js",
+    "Project": "public/js/project_agile.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -104,7 +101,7 @@ doctype_js = {
 
 # before_install = "erpnext_agile.install.before_install"
 # after_install = "erpnext_agile.install.after_install"
-after_install = "erpnext_agile.after_install.after_install"
+after_install = "erpnext_agile.after_install.setup_agile"
 
 # Uninstallation
 # ------------
@@ -142,9 +139,9 @@ after_install = "erpnext_agile.after_install.after_install"
 # 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
 # }
 
-permission_query_conditions = {
-    "Agile Issue": "erpnext_agile.permissions.get_agile_issue_permission_query_conditions"
-}
+# permission_query_conditions = {
+#     "Agile Issue": "erpnext_agile.permissions.get_agile_issue_permission_query_conditions"
+# }
 #
 # has_permission = {
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
@@ -176,11 +173,16 @@ override_doctype_class = {
 # }
 doc_events = {
     "Task": {
-        "after_insert": "erpnext_agile.notifications.on_task_update",
-        "on_update": "erpnext_agile.notifications.on_task_update"
-    },
-    "Agile Sprint": {
-        "on_update": "erpnext_agile.notifications.on_sprint_update"
+        "validate": "erpnext_agile.agile_doctype_controllers.task_validate",
+        "on_update": [
+            "erpnext_agile.agile_doctype_controllers.task_on_update",
+            # "erpnext_agile.version_control.task_on_update_version_control"
+        ],
+        "after_insert": [
+            "erpnext_agile.agile_doctype_controllers.task_after_insert",
+            # "erpnext_agile.version_control.task_after_insert_version_control"
+        ],
+        "on_trash": "erpnext_agile.agile_doctype_controllers.task_on_trash"
     }
 }
 
@@ -206,11 +208,17 @@ doc_events = {
 # }
 
 scheduler_events = {
-    "daily": [
-        "erpnext_agile.utils.sync_github_data"
-    ],
     "hourly": [
-        "erpnext_agile.utils.update_sprint_progress"
+        "erpnext_agile.scheduler_events.hourly.update_sprint_metrics",
+        "erpnext_agile.scheduler_events.hourly.create_burndown_entries"
+    ],
+    "daily": [
+        "erpnext_agile.scheduler_events.daily.send_sprint_digest",
+        "erpnext_agile.scheduler_events.daily.cleanup_old_timers"
+    ],
+    "weekly": [
+        "erpnext_agile.version_control.cleanup_all_old_versions",
+        "erpnext_agile.scheduler_events.weekly.generate_team_velocity_report"
     ]
 }
 
@@ -229,19 +237,16 @@ scheduler_events = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-override_doctype_dashboards = {
-	"Task": "erpnext_agile.dashboard.get_dashboard_data"
-}
 # override_doctype_dashboards = {
-#     "Project": "erpnext_agile.erpnext_agile.doctype.agile_project.agile_project.get_dashboard_data"
+# 	"Task": "erpnext_agile.dashboard.get_dashboard_data"
 # }
 
-whitelist = [
-    "erpnext_agile.api.get_board_data",
-    "erpnext_agile.api.update_issue_status",
-    "erpnext_agile.api.create_github_branch",
-    "erpnext_agile.api.link_pull_request"
-]
+# whitelist = [
+#     "erpnext_agile.api.get_board_data",
+#     "erpnext_agile.api.update_issue_status",
+#     "erpnext_agile.api.create_github_branch",
+#     "erpnext_agile.api.link_pull_request"
+# ]
 
 
 # exempt linked doctypes from being automatically cancelled

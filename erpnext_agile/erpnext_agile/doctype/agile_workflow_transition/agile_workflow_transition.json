@@ -7,8 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "from_status",
-  "to_status",
   "transition_name",
+  "column_break_hxsn",
+  "to_status",
   "required_permission"
  ],
  "fields": [
@@ -41,11 +42,15 @@
    "in_list_view": 1,
    "label": "Required Permission",
    "options": "\nProject Manager\nDeveloper\nTester\nAll"
+  },
+  {
+   "fieldname": "column_break_hxsn",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-09-22 11:58:08.833783",
+ "modified": "2025-09-30 17:05:29.206281",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Workflow Transition",
