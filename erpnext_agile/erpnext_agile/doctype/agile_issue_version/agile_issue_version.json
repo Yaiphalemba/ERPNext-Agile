@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{issue}-v{version_number}",
+ "creation": "2025-09-29 10:00:00",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "issue",
+  "issue_key",
+  "version_number",
+  "column_break_1",
+  "created_by",
+  "created_at",
+  "section_break_2",
+  "change_description",
+  "data",
+  "section_break_3",
+  "is_backup",
+  "restored_from_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "issue",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Issue",
+   "options": "Task",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issue_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Issue Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Created At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Version Details"
+  },
+  {
+   "fieldname": "change_description",
+   "fieldtype": "Text",
+   "label": "Change Description"
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "Long Text",
+   "label": "Version Data",
+   "read_only": 1,
+   "description": "JSON snapshot of issue state"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_backup",
+   "fieldtype": "Check",
+   "label": "Is Backup",
+   "description": "Created as backup before restore operation"
+  },
+  {
+   "fieldname": "restored_from_version",
+   "fieldtype": "Int",
+   "label": "Restored From Version",
+   "description": "If this is a restore, which version was restored"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-29 10:00:00",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Issue Version",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "sort_field": "version_number",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_views": 0
+}

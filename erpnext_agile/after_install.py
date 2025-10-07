@@ -1,456 +1,515 @@
+# erpnext_agile/patches/after_install.py
+"""
+Setup script to run after app installation
+Creates necessary configurations, custom fields, and default data
+"""
+
 import frappe
+from frappe import _
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-def after_install():
-    """Setup default data after app installation"""
-    create_default_statuses()
-    frappe.db.commit()
+def setup_agile():
+    """Main setup function"""
+    print("Setting up ERPNext Agile...")
+    
+    # Create custom fields
+    create_agile_custom_fields()
+    
+    # Create default statuses, priorities, and types
+    create_default_issue_statuses()
+    create_default_issue_priorities()
     create_default_issue_types()
-    frappe.db.commit()
-    create_default_priorities()
-    frappe.db.commit()
-    create_default_roles()
-    frappe.db.commit()
-    create_default_workflows()
-    frappe.db.commit()
-    create_default_permission_scheme()
-    frappe.db.commit()
-    setup_custom_fields()
-    frappe.db.commit()
-    create_sample_project()
-    frappe.db.commit()
-    print("ERPNext Agile installed successfully!")
+    
+    # Create roles
+    create_agile_roles()
+    
+    # Setup permissions
+    setup_agile_permissions()
+    
+    # Create email templates
+    create_email_templates()
+    
+    # Create default workflow scheme
+    create_default_workflow_scheme()
+    
+    print("ERPNext Agile setup completed successfully!")
 
-def create_default_roles():
-    """Create required roles for agile projects"""
-    try:
-        roles = ["Project Manager", "Developer", "Tester", "Employee"]
-        for role in roles:
-            if not frappe.db.exists("Role", role):
-                frappe.get_doc({
-                    "doctype": "Role",
-                    "role_name": role
-                }).insert()
-        frappe.msgprint("Default roles created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default roles: {str(e)}"[:140], "Role Creation Error")
-
-def create_default_workflows():
-    """Create default Jira-style workflow scheme"""
-    try:
-        # Validate that required statuses exist
-        required_statuses = [
-            "Open", "In Progress", "In Review", "Testing", 
-            "Resolved", "Closed", "Reopened"
-        ]
-        for status in required_statuses:
-            if not frappe.db.exists("Agile Issue Status", status):
-                frappe.log_error(f"Missing required status: {status}"[:140], "Workflow Creation Error")
-                return
-        
-        if not frappe.db.exists("Agile Workflow Scheme", "Default Agile Workflow"):
-            workflow_scheme = frappe.get_doc({
-                "doctype": "Agile Workflow Scheme",
-                "scheme_name": "Default Agile Workflow",
-                "description": "Default Jira-style workflow scheme for agile projects",
-                "transitions": [
-                    {
-                        "from_status": "Open",
-                        "to_status": "In Progress",
-                        "transition_name": "Start Progress",
-                        "required_permission": "All"
-                    },
-                    {
-                        "from_status": "Open",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Open",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "In Review",
-                        "transition_name": "Send to Review",
-                        "required_permission": "Developer"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "In Progress",
-                        "transition_name": "Return to Progress",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "Testing",
-                        "transition_name": "Send to Testing",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "In Review",
-                        "transition_name": "Return to Review",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Resolved",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Resolved",
-                        "to_status": "Reopened",
-                        "transition_name": "Reopen",
-                        "required_permission": "All"
-                    },
-                    {
-                        "from_status": "Closed",
-                        "to_status": "Reopened",
-                        "transition_name": "Reopen",
-                        "required_permission": "All"
-                    }
-                ]
-            })
-            workflow_scheme.insert()
-            frappe.msgprint("Default workflow scheme 'Default Agile Workflow' created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default workflow scheme: {str(e)}"[:140], "Workflow Creation Error")
-
-def create_default_permission_scheme():
-    """Create default permission scheme for agile projects"""
-    try:
-        if not frappe.db.exists("Agile Permission Scheme", "Default Permission Scheme"):
-            # Validate roles
-            valid_roles = []
-            required_roles = ["Project Manager", "Developer", "Tester", "Employee"]
-            for role in required_roles:
-                if frappe.db.exists("Role", role):
-                    valid_roles.append(role)
-                else:
-                    frappe.log_error(f"Role {role} not found, skipping in permission scheme"[:140], "Permission Scheme Role Error")
-            
-            if not valid_roles:
-                frappe.log_error("No valid roles found for permission scheme"[:140], "Permission Scheme Creation Error")
-                return
-
-            permission_scheme = frappe.get_doc({
-                "doctype": "Agile Permission Scheme",
-                "scheme_name": "Default Permission Scheme",
-                "description": "Default permission scheme for agile projects",
-                "permissions": [
-                    {
-                        "permission_type": "Resolve Issue",
-                        "roles": [role for role in ["Project Manager"] if role in valid_roles]
-                    },
-                    {
-                        "permission_type": "Close Issue",
-                        "roles": [role for role in ["Project Manager"] if role in valid_roles]
-                    },
-                    {
-                        "permission_type": "Assign Issue",
-                        "roles": [role for role in ["Project Manager", "Developer"] if role in valid_roles]
-                    },
-                    {
-                        "permission_type": "Create Issue",
-                        "roles": [role for role in ["Project Manager", "Developer", "Tester"] if role in valid_roles]
-                    },
-                    {
-                        "permission_type": "Edit Issue",
-                        "roles": [role for role in ["Project Manager", "Developer", "Tester"] if role in valid_roles]
-                    },
-                    {
-                        "permission_type": "All",
-                        "roles": [role for role in valid_roles]
-                    }
-                ]
-            })
-            permission_scheme.insert()
-            frappe.msgprint("Default permission scheme 'Default Permission Scheme' created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default permission scheme: {str(e)}"[:140], "Permission Scheme Creation Error")
-
-def setup_custom_fields():
-    """Add custom fields to existing doctypes"""
-    try:
-        # Add fields to Project doctype
-        project_fields = [
+def create_agile_custom_fields():
+    """Create custom fields for Task and Project doctypes"""
+    
+    custom_fields = {
+        'Task': [
             {
-                "fieldname": "custom_agile_project",
-                "fieldtype": "Link",
-                "label": "Agile Project",
-                "options": "Agile Project",
-                "insert_after": "project_name"
+                'fieldname': 'is_agile',
+                'label': 'Is Agile Issue',
+                'fieldtype': 'Check',
+                'insert_after': 'type',
+                'default': '0'
             },
             {
-                "fieldname": "custom_enable_agile",
-                "fieldtype": "Check", 
-                "label": "Enable Agile Features",
-                "insert_after": "custom_agile_project"
+                'fieldname': 'column_break_agile',
+                'fieldtype': 'Column Break',
+                'insert_after': 'is_agile'
+            },
+            {
+                'fieldname': 'agile_details_section',
+                'label': 'Agile Issue Details',
+                'fieldtype': 'Section Break',
+                'insert_after': 'description',
+                'collapsible': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'issue_key',
+                'label': 'Issue Key',
+                'fieldtype': 'Data',
+                'insert_after': 'agile_details_section',
+                'read_only': 1,
+                'unique': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'issue_type',
+                'label': 'Issue Type',
+                'fieldtype': 'Link',
+                'options': 'Agile Issue Type',
+                'insert_after': 'issue_key',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'column_break_issue_details',
+                'fieldtype': 'Column Break',
+                'insert_after': 'issue_type'
+            },
+            {
+                'fieldname': 'issue_status',
+                'label': 'Issue Status',
+                'fieldtype': 'Link',
+                'options': 'Agile Issue Status',
+                'insert_after': 'column_break_issue_details',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'issue_priority',
+                'label': 'Issue Priority',
+                'fieldtype': 'Link',
+                'options': 'Agile Issue Priority',
+                'insert_after': 'issue_status',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'reporter',
+                'label': 'Reporter',
+                'fieldtype': 'Link',
+                'options': 'User',
+                'insert_after': 'issue_priority',
+                'default': '__user',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'agile_planning_section',
+                'label': 'Agile Planning',
+                'fieldtype': 'Section Break',
+                'insert_after': 'reporter',
+                'collapsible': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'story_points',
+                'label': 'Story Points',
+                'fieldtype': 'Int',
+                'insert_after': 'agile_planning_section',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'current_sprint',
+                'label': 'Sprint',
+                'fieldtype': 'Link',
+                'options': 'Agile Sprint',
+                'insert_after': 'story_points',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'column_break_planning',
+                'fieldtype': 'Column Break',
+                'insert_after': 'current_sprint'
+            },
+            {
+                'fieldname': 'epic',
+                'label': 'Epic',
+                'fieldtype': 'Link',
+                'options': 'Agile Epic',
+                'insert_after': 'column_break_planning',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'parent_issue',
+                'label': 'Parent Issue',
+                'fieldtype': 'Link',
+                'options': 'Task',
+                'insert_after': 'epic',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'time_tracking_section',
+                'label': 'Time Tracking',
+                'fieldtype': 'Section Break',
+                'insert_after': 'parent_issue',
+                'collapsible': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'original_estimate',
+                'label': 'Original Estimate',
+                'fieldtype': 'Int',
+                'insert_after': 'time_tracking_section',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'remaining_estimate',
+                'label': 'Remaining Estimate',
+                'fieldtype': 'Int',
+                'insert_after': 'original_estimate',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'time_spent',
+                'label': 'Time Spent',
+                'fieldtype': 'Int',
+                'insert_after': 'remaining_estimate',
+                'read_only': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'work_logs',
+                'label': 'Work Logs',
+                'fieldtype': 'Table',
+                'options': 'Agile Issue Work Log',
+                'insert_after': 'time_spent',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'watchers',
+                'label': 'Watchers',
+                'fieldtype': 'Table',
+                'options': 'Agile Issue Watcher',
+                'insert_after': 'work_logs',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'github_integration_section',
+                'label': 'GitHub Integration',
+                'fieldtype': 'Section Break',
+                'insert_after': 'watchers',
+                'collapsible': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'github_repo',
+                'label': 'GitHub Repository',
+                'fieldtype': 'Link',
+                'options': 'Repository',
+                'insert_after': 'github_integration_section',
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'github_issue_number',
+                'label': 'GitHub Issue #',
+                'fieldtype': 'Int',
+                'insert_after': 'github_repo',
+                'read_only': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            },
+            {
+                'fieldname': 'github_issue_doc',
+                'label': 'GitHub Issue Doc',
+                'fieldtype': 'Link',
+                'options': 'Repository Issue',
+                'insert_after': 'github_issue_number',
+                'read_only': 1,
+                'depends_on': 'eval:doc.is_agile==1'
+            }
+        ],
+        'Project': [
+            {
+                'fieldname': 'agile_section',
+                'label': 'Agile Configuration',
+                'fieldtype': 'Section Break',
+                'insert_after': 'project_name'
+            },
+            {
+                'fieldname': 'enable_agile',
+                'label': 'Enable Agile Features',
+                'fieldtype': 'Check',
+                'insert_after': 'agile_section',
+                'default': '0'
+            },
+            {
+                'fieldname': 'project_key',
+                'label': 'Project Key',
+                'fieldtype': 'Data',
+                'insert_after': 'enable_agile',
+                'unique': 1,
+                'depends_on': 'enable_agile',
+                'mandatory_depends_on': 'enable_agile',
+                'description': 'Unique prefix for issue keys (e.g., PROJ)'
+            },
+            {
+                'fieldname': 'column_break_agile',
+                'fieldtype': 'Column Break',
+                'insert_after': 'project_key'
+            },
+            {
+                'fieldname': 'project_type_agile',
+                'label': 'Agile Project Type',
+                'fieldtype': 'Select',
+                'options': 'Scrum\nKanban\nBug Tracking\nCustom',
+                'insert_after': 'column_break_agile',
+                'default': 'Scrum',
+                'depends_on': 'enable_agile'
+            },
+            {
+                'fieldname': 'workflow_section',
+                'label': 'Workflow & Permissions',
+                'fieldtype': 'Section Break',
+                'insert_after': 'project_type_agile',
+                'collapsible': 1,
+                'depends_on': 'enable_agile'
+            },
+            {
+                'fieldname': 'workflow_scheme',
+                'label': 'Workflow Scheme',
+                'fieldtype': 'Link',
+                'options': 'Agile Workflow Scheme',
+                'insert_after': 'workflow_section',
+                'depends_on': 'enable_agile'
+            },
+            {
+                'fieldname': 'permission_scheme',
+                'label': 'Permission Scheme',
+                'fieldtype': 'Link',
+                'options': 'Agile Permission Scheme',
+                'insert_after': 'workflow_scheme',
+                'depends_on': 'enable_agile'
+            },
+            {
+                'fieldname': 'issue_types_allowed',
+                'label': 'Issue Types Allowed',
+                'fieldtype': 'Table',
+                'options': 'Agile Issue Types Allowed',
+                'insert_after': 'permission_scheme',
+                'depends_on': 'enable_agile'
             }
         ]
-        
-        for field in project_fields:
-            create_custom_field("Project", field)
-        
-        # Add fields to Task doctype
-        task_fields = [
-            {
-                "fieldname": "custom_agile_issue",
-                "fieldtype": "Link",
-                "label": "Agile Issue", 
-                "options": "Agile Issue",
-                "insert_after": "subject"
-            },
-            {
-                "fieldname": "custom_issue_key",
-                "fieldtype": "Data",
-                "label": "Issue Key",
-                "read_only": 1,
-                "insert_after": "custom_agile_issue"
-            },
-            {
-                "fieldname": "custom_story_points",
-                "fieldtype": "Int",
-                "label": "Story Points",
-                "insert_after": "custom_issue_key"
-            }
-        ]
-        
-        for field in task_fields:
-            create_custom_field("Task", field)
-        
-        # Add GitHub username to User doctype
-        user_fields = [
-            {
-                "fieldname": "github_username",
-                "fieldtype": "Data",
-                "label": "GitHub Username",
-                "insert_after": "email"
-            }
-        ]
-        
-        for field in user_fields:
-            create_custom_field("User", field)
-    except Exception as e:
-        frappe.log_error(f"Failed to setup custom fields: {str(e)}"[:140], "Custom Field Creation Error")
+    }
+    
+    create_custom_fields(custom_fields, update=True)
+    print("Custom fields created successfully")
 
-def create_custom_field(doctype, field_config):
-    """Create custom field if it doesn't exist"""
-    if not frappe.db.exists("Custom Field", {"dt": doctype, "fieldname": field_config["fieldname"]}):
-        custom_field = frappe.get_doc({
-            "doctype": "Custom Field",
-            "dt": doctype,
-            **field_config
-        })
-        custom_field.insert()
-
-def create_sample_project():
-    """Create a sample agile project for demonstration"""
-    try:
-        if not frappe.db.exists("Agile Project", "Sample Agile Project"):
-            # Validate workflow and permission schemes
-            if not frappe.db.exists("Agile Workflow Scheme", "Default Agile Workflow"):
-                frappe.log_error("Default Agile Workflow not found, skipping sample project creation"[:140], "Sample Project Creation Error")
-                return
-            if not frappe.db.exists("Agile Permission Scheme", "Default Permission Scheme"):
-                frappe.log_error("Default Permission Scheme not found, skipping sample project creation"[:140], "Sample Project Creation Error")
-                return
-
-            sample_project = frappe.get_doc({
-                "doctype": "Agile Project",
-                "project_name": "Sample Agile Project",
-                "project_key": "SAMPLE",
-                "project_type": "Scrum",
-                "project_lead": "Administrator",
-                "workflow_scheme": "Default Agile Workflow",
-                "permission_scheme": "Default Permission Scheme",
-                "enable_email_notifications": 1
+def create_default_issue_statuses():
+    """Create default issue statuses"""
+    
+    statuses = [
+        {'status_name': 'To Do', 'status_category': 'To Do', 'color': '#808080', 'sort_order': 1},
+        {'status_name': 'In Progress', 'status_category': 'In Progress', 'color': '#0066ff', 'sort_order': 2},
+        {'status_name': 'In Review', 'status_category': 'In Progress', 'color': '#9966ff', 'sort_order': 3},
+        {'status_name': 'Done', 'status_category': 'Done', 'color': '#00aa00', 'sort_order': 4},
+        {'status_name': 'Blocked', 'status_category': 'To Do', 'color': '#ff0000', 'sort_order': 5}
+    ]
+    
+    for status in statuses:
+        if not frappe.db.exists('Agile Issue Status', {'status_name': status['status_name']}):
+            doc = frappe.get_doc({
+                'doctype': 'Agile Issue Status',
+                **status
             })
-            sample_project.insert()
-            
-            # Create sample epic
-            if not frappe.db.exists("Agile Epic", "Sample Epic"):
-                sample_epic = frappe.get_doc({
-                    "doctype": "Agile Epic",
-                    "epic_name": "Sample Epic",
-                    "agile_project": sample_project.name,
-                    "description": "Sample epic for demonstration",
-                    "status": "Open"
-                })
-                sample_epic.insert()
-            
-            # Create sample issues
-            create_sample_issues(sample_project.name, sample_epic.name)
-            frappe.msgprint("Sample Agile Project created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create sample project: {str(e)}"[:140], "Sample Project Creation Error")
+            doc.insert(ignore_permissions=True)
+    
+    print("Default issue statuses created")
 
-def create_sample_issues(agile_project, epic=None):
-    """Create sample issues for demonstration"""
-    try:
-        project_key = frappe.db.get_value("Agile Project", agile_project, "project_key")
-        # Get the last issue number for this project to generate unique issue_key
-        last_issue = frappe.db.sql("""
-            SELECT issue_key FROM `tabAgile Issue`
-            WHERE agile_project = %s
-            ORDER BY creation DESC LIMIT 1
-        """, agile_project)
-        start_number = int(last_issue[0][0].split('-')[-1]) + 1 if last_issue else 1
-
-        sample_issues = [
-            {
-                "issue_key": f"{project_key}-{start_number}",
-                "summary": "User authentication system",
-                "issue_type": "Story",
-                "priority": "High",
-                "status": "Open",
-                "epic": epic,
-                "agile_project": agile_project,
-                "story_points": 8,
-                "description": "Implement user login and registration functionality",
-                "assignee": "Administrator",
-                "reporter": "Administrator",
-                "watchers": [{"user": "Administrator"}]
-            },
-            {
-                "issue_key": f"{project_key}-{start_number + 1}",
-                "summary": "Fix login validation bug",
-                "issue_type": "Bug",
-                "priority": "Critical",
-                "status": "Open",
-                "epic": epic,
-                "agile_project": agile_project,
-                "story_points": 3,
-                "description": "Login form doesn't validate email format properly",
-                "assignee": "Administrator",
-                "reporter": "Administrator",
-                "watchers": [{"user": "Administrator"}]
-            },
-            {
-                "issue_key": f"{project_key}-{start_number + 2}",
-                "summary": "Add dark mode toggle",
-                "issue_type": "Task",
-                "priority": "Medium",
-                "status": "Open",
-                "epic": epic,
-                "agile_project": agile_project,
-                "story_points": 5,
-                "description": "Allow users to switch between light and dark themes",
-                "assignee": "Administrator",
-                "reporter": "Administrator",
-                "watchers": [{"user": "Administrator"}]
-            }
-        ]
-        
-        for issue_data in sample_issues:
-            issue = frappe.get_doc({
-                "doctype": "Agile Issue",
-                **issue_data
+def create_default_issue_priorities():
+    """Create default issue priorities"""
+    
+    priorities = [
+        {'priority_name': 'Critical', 'color': '#ff0000', 'sort_order': 1, 'description': 'Highest priority'},
+        {'priority_name': 'High', 'color': '#ff9900', 'sort_order': 2, 'description': 'High priority'},
+        {'priority_name': 'Medium', 'color': '#ffcc00', 'sort_order': 3, 'description': 'Medium priority'},
+        {'priority_name': 'Low', 'color': '#0066ff', 'sort_order': 4, 'description': 'Low priority'}
+    ]
+    
+    for priority in priorities:
+        if not frappe.db.exists('Agile Issue Priority', {'priority_name': priority['priority_name']}):
+            doc = frappe.get_doc({
+                'doctype': 'Agile Issue Priority',
+                **priority
             })
-            issue.insert()
-        frappe.msgprint("Sample issues created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create sample issues: {str(e)}"[:140], "Sample Issue Creation Error")
+            doc.insert(ignore_permissions=True)
+    
+    print("Default issue priorities created")
 
 def create_default_issue_types():
-    """Create Jira-style issue types"""
-    try:
-        issue_types = [
-            {"issue_type_name": "Story", "icon": "📖", "color": "#65ba43", "description": "User story"},
-            {"issue_type_name": "Bug", "icon": "🐛", "color": "#d73027", "description": "Software bug"},
-            {"issue_type_name": "Task", "icon": "✓", "color": "#4a90e2", "description": "General task"},
-            {"issue_type_name": "Epic", "icon": "🏛️", "color": "#998dd9", "description": "Large feature"},
-            {"issue_type_name": "Sub-task", "icon": "⚡", "color": "#707070", "description": "Subtask"},
-            {"issue_type_name": "Spike", "icon": "🔍", "color": "#f79232", "description": "Research task"}
-        ]
-        
-        for issue_type in issue_types:
-            if not frappe.db.exists("Agile Issue Type", issue_type["issue_type_name"]):
-                doc = frappe.get_doc({
-                    "doctype": "Agile Issue Type",
-                    **issue_type
-                })
-                doc.insert()
-        frappe.msgprint("Default issue types created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default issue types: {str(e)}"[:140], "Issue Type Creation Error")
+    """Create default issue types"""
+    
+    types = [
+        {'issue_type_name': 'Story', 'icon': '📖', 'color': '#4CAF50', 'description': 'User story'},
+        {'issue_type_name': 'Task', 'icon': '✓', 'color': '#2196F3', 'description': 'General task'},
+        {'issue_type_name': 'Bug', 'icon': '🐛', 'color': '#F44336', 'description': 'Bug or defect'},
+        {'issue_type_name': 'Epic', 'icon': '🎯', 'color': '#9C27B0', 'description': 'Large feature or initiative'},
+        {'issue_type_name': 'Spike', 'icon': '🔬', 'color': '#FF9800', 'description': 'Research or investigation'},
+        {'issue_type_name': 'Sub-task', 'icon': '📝', 'color': '#607D8B', 'description': 'Sub-task of another issue'}
+    ]
+    
+    for issue_type in types:
+        if not frappe.db.exists('Agile Issue Type', {'issue_type_name': issue_type['issue_type_name']}):
+            doc = frappe.get_doc({
+                'doctype': 'Agile Issue Type',
+                **issue_type
+            })
+            doc.insert(ignore_permissions=True)
+    
+    print("Default issue types created")
 
-def create_default_priorities():
-    """Create Jira-style priorities"""
-    try:
-        priorities = [
-            {"priority_name": "Critical", "color": "#d73027", "sort_order": 1},
-            {"priority_name": "High", "color": "#fc8d59", "sort_order": 2},
-            {"priority_name": "Medium", "color": "#fee08b", "sort_order": 3},
-            {"priority_name": "Low", "color": "#99d594", "sort_order": 4},
-            {"priority_name": "Lowest", "color": "#91bfdb", "sort_order": 5}
-        ]
-        
-        for priority in priorities:
-            if not frappe.db.exists("Agile Issue Priority", {"priority_name": priority["priority_name"]}):
-                doc = frappe.get_doc({
-                    "doctype": "Agile Issue Priority",
-                    **priority
-                })
-                doc.insert()
-        frappe.msgprint("Default priorities created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default priorities: {str(e)}"[:140], "Priority Creation Error")
+def create_agile_roles():
+    """Create agile-specific roles"""
+    
+    roles = [
+        {
+            'role_name': 'Agile Admin',
+            'desk_access': 1
+        },
+        {
+            'role_name': 'Scrum Master',
+            'desk_access': 1
+        },
+        {
+            'role_name': 'Product Owner',
+            'desk_access': 1
+        }
+    ]
+    
+    for role_data in roles:
+        if not frappe.db.exists('Role', role_data['role_name']):
+            doc = frappe.get_doc({
+                'doctype': 'Role',
+                **role_data
+            })
+            doc.insert(ignore_permissions=True)
+    
+    print("Agile roles created")
 
-def create_default_statuses():
-    """Create Jira-style statuses"""
-    try:
-        statuses = [
-            {"status_name": "Open", "status_category": "To Do", "color": "#b3b3b3", "sort_order": 1},
-            {"status_name": "In Progress", "status_category": "In Progress", "color": "#4a90e2", "sort_order": 2},
-            {"status_name": "In Review", "status_category": "In Progress", "color": "#f79232", "sort_order": 3},
-            {"status_name": "Testing", "status_category": "In Progress", "color": "#998dd9", "sort_order": 4},
-            {"status_name": "Resolved", "status_category": "Done", "color": "#65ba43", "sort_order": 5},
-            {"status_name": "Closed", "status_category": "Done", "color": "#999999", "sort_order": 6},
-            {"status_name": "Reopened", "status_category": "To Do", "color": "#d73027", "sort_order": 7}
+def setup_agile_permissions():
+    """Setup permissions for agile doctypes"""
+    
+    doctypes = [
+        'Agile Sprint',
+        'Agile Epic',
+        'Agile Issue Status',
+        'Agile Issue Priority',
+        'Agile Issue Type',
+        'Agile Workflow Scheme',
+        'Agile Permission Scheme'
+    ]
+    
+    for doctype in doctypes:
+        # System Manager - full access
+        if not frappe.db.exists('Custom DocPerm', {'parent': doctype, 'role': 'System Manager'}):
+            add_permission(doctype, 'System Manager', 0, read=1, write=1, create=1, delete=1, submit=0, cancel=0, amend=0)
+        
+        # Agile Admin - full access
+        if not frappe.db.exists('Custom DocPerm', {'parent': doctype, 'role': 'Agile Admin'}):
+            add_permission(doctype, 'Agile Admin', 0, read=1, write=1, create=1, delete=1, submit=0, cancel=0, amend=0)
+        
+        # Project Manager - read/write
+        if not frappe.db.exists('Custom DocPerm', {'parent': doctype, 'role': 'Project Manager'}):
+            add_permission(doctype, 'Project Manager', 0, read=1, write=1, create=1, delete=0, submit=0, cancel=0, amend=0)
+    
+    frappe.db.commit()
+    print("Agile permissions setup completed")
+
+def add_permission(doctype, role, perm_level, read=0, write=0, create=0, delete=0, submit=0, cancel=0, amend=0):
+    """Add custom permission"""
+    perm = frappe.get_doc({
+        'doctype': 'Custom DocPerm',
+        'parent': doctype,
+        'role': role,
+        'permlevel': perm_level,
+        'read': read,
+        'write': write,
+        'create': create,
+        'delete': delete,
+        'submit': submit,
+        'cancel': cancel,
+        'amend': amend
+    })
+    perm.insert(ignore_permissions=True)
+
+def create_email_templates():
+    """Create email templates for notifications"""
+    
+    templates = [
+        {
+            'name': 'Agile Issue Notification',
+            'subject': '[{{ task.issue_key }}] {{ event_type }} - {{ task.subject }}',
+            'response': '''
+                <p>Hello,</p>
+                <p>Issue <strong>{{ task.issue_key }}</strong> has been {{ event_type }}.</p>
+                <h3>{{ task.subject }}</h3>
+                <p><strong>Type:</strong> {{ task.issue_type }}</p>
+                <p><strong>Priority:</strong> {{ task.issue_priority }}</p>
+                <p><strong>Status:</strong> {{ task.issue_status }}</p>
+                <p><strong>Reporter:</strong> {{ task.reporter }}</p>
+                <p><a href="{{ site_url }}/app/task/{{ task.name }}">View Issue</a></p>
+            '''
+        },
+        {
+            'name': 'Agile Sprint Notification',
+            'subject': 'Sprint {{ event_type }}: {{ sprint.sprint_name }}',
+            'response': '''
+                <p>Hello,</p>
+                <p>Sprint <strong>{{ sprint.sprint_name }}</strong> has been {{ event_type }}.</p>
+                <p><strong>Sprint Goal:</strong> {{ sprint.sprint_goal }}</p>
+                <p><strong>Start Date:</strong> {{ sprint.start_date }}</p>
+                <p><strong>End Date:</strong> {{ sprint.end_date }}</p>
+                <p><a href="{{ site_url }}/app/agile-sprint/{{ sprint.name }}">View Sprint</a></p>
+            '''
+        }
+    ]
+    
+    for template in templates:
+        if not frappe.db.exists('Email Template', template['name']):
+            doc = frappe.get_doc({
+                'doctype': 'Email Template',
+                **template
+            })
+            doc.insert(ignore_permissions=True)
+    
+    print("Email templates created")
+
+def create_default_workflow_scheme():
+    """Create a default workflow scheme"""
+    
+    if not frappe.db.exists('Agile Workflow Scheme', 'Default Scrum Workflow'):
+        workflow = frappe.get_doc({
+            'doctype': 'Agile Workflow Scheme',
+            'scheme_name': 'Default Scrum Workflow',
+            'description': 'Standard Scrum workflow with common transitions'
+        })
+        
+        # Add transitions
+        transitions = [
+            {'from_status': 'To Do', 'to_status': 'In Progress', 'transition_name': 'Start Progress'},
+            {'from_status': 'To Do', 'to_status': 'Blocked', 'transition_name': 'Block'},
+            {'from_status': 'In Progress', 'to_status': 'In Review', 'transition_name': 'Submit for Review'},
+            {'from_status': 'In Progress', 'to_status': 'Blocked', 'transition_name': 'Block'},
+            {'from_status': 'In Progress', 'to_status': 'To Do', 'transition_name': 'Stop Progress'},
+            {'from_status': 'In Review', 'to_status': 'Done', 'transition_name': 'Approve'},
+            {'from_status': 'In Review', 'to_status': 'In Progress', 'transition_name': 'Request Changes'},
+            {'from_status': 'Blocked', 'to_status': 'To Do', 'transition_name': 'Unblock'},
+            {'from_status': 'Done', 'to_status': 'In Progress', 'transition_name': 'Reopen'}
         ]
         
-        for status in statuses:
-            if not frappe.db.exists("Agile Issue Status", status["status_name"]):
-                doc = frappe.get_doc({
-                    "doctype": "Agile Issue Status",
-                    **status
-                })
-                doc.insert()
-        frappe.msgprint("Default statuses created successfully")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default statuses: {str(e)}"[:140], "Status Creation Error")
+        for trans in transitions:
+            workflow.append('transitions', trans)
+        
+        workflow.insert(ignore_permissions=True)
+        print("Default workflow scheme created")

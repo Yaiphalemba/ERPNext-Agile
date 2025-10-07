@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-29 10:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sprint",
+  "date",
+  "completed_points",
+  "remaining_points",
+  "column_break_iavb",
+  "ideal_remaining",
+  "added_points",
+  "removed_points"
+ ],
+ "fields": [
+  {
+   "fieldname": "sprint",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sprint",
+   "options": "Agile Sprint",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remaining_points",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Remaining Points",
+   "precision": "2"
+  },
+  {
+   "fieldname": "ideal_remaining",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Ideal Remaining",
+   "precision": "2"
+  },
+  {
+   "fieldname": "completed_points",
+   "fieldtype": "Float",
+   "label": "Completed Points",
+   "precision": "2"
+  },
+  {
+   "description": "Points added to sprint during sprint (scope change)",
+   "fieldname": "added_points",
+   "fieldtype": "Float",
+   "label": "Added Points",
+   "precision": "2"
+  },
+  {
+   "description": "Points removed from sprint during sprint",
+   "fieldname": "removed_points",
+   "fieldtype": "Float",
+   "label": "Removed Points",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_iavb",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-30 17:04:39.235473",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Agile Sprint Burndown",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "date",
+ "sort_order": "ASC",
+ "states": []
+}

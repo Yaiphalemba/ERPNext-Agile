@@ -5,14 +5,15 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "version_name"
+  "version"
  ],
  "fields": [
   {
-   "fieldname": "version_name",
-   "fieldtype": "Data",
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "options": "Agile Issue Version",
    "in_list_view": 1,
-   "label": "Version Name",
+   "label": "Version",
    "reqd": 1
   }
  ],

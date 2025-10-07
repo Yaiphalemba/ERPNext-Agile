@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:epic_name",
+ "autoname": "format:{project}-{epic_name}",
  "creation": "2025-09-22 10:16:00",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -9,10 +9,11 @@
  "field_order": [
   "epic_name",
   "project",
-  "description",
   "status",
   "start_date",
-  "end_date"
+  "end_date",
+  "column_break_pvex",
+  "description"
  ],
  "fields": [
   {
@@ -52,14 +53,19 @@
    "label": "Project",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_pvex",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 17:13:58.289575",
+ "modified": "2025-09-30 17:02:33.823538",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Epic",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
