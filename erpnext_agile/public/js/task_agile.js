@@ -97,8 +97,6 @@ function add_agile_buttons(frm) {
             frm.add_custom_button(__('View on GitHub'), function() {
                 window.open(get_github_issue_url(frm), '_blank');
             }, __('GitHub'));
-        } else {
-            frappe.msgprint(__('This Task is linked to a GitHub Repo but does not have an Issue Number set. You can create a GitHub issue for this task.'), __('GitHub'));
         }
     }
     
