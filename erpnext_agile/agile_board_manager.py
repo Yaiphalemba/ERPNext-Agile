@@ -28,13 +28,12 @@ class AgileBoardManager:
             filters['current_sprint'] = sprint
         elif view_type == 'backlog':
             filters['current_sprint'] = ['in', ['', None]]
-        
         # Get all issues
         issues = frappe.get_all('Task',
             filters=filters,
             fields=[
                 'name', 'subject', 'issue_key', 'issue_type', 'issue_priority',
-                'issue_status', 'story_points', 'epic', 'assigned_to_users',
+                'issue_status', 'story_points', 'epic',
                 'reporter', 'github_issue_number', 'github_pr_number'
             ]
         )
@@ -53,7 +52,7 @@ class AgileBoardManager:
             status = issue.get('issue_status')
             if status and status in board_columns:
                 # Get assignees
-                assignees = frappe.get_all('Task Assigned To',
+                assignees = frappe.get_all('Assigned To Users',
                     filters={'parent': issue['name']},
                     fields=['user'],
                     pluck='user'
@@ -63,12 +62,20 @@ class AgileBoardManager:
                 board_columns[status]['issues'].append(issue)
                 board_columns[status]['total_points'] += issue.get('story_points', 0)
         
+        active_sprint = frappe.get_all('Agile Sprint',
+            filters={'project': project, 'sprint_state': 'Active'},
+            fields=['name', 'sprint_name', 'start_date', 'end_date'],
+            limit_page_length=1
+        )
+        active_sprint = active_sprint[0] if active_sprint else None
+
         return {
             'columns': board_columns,
             'statuses': workflow_statuses,
             'view_type': view_type,
             'project': project,
-            'sprint': sprint
+            'sprint': sprint,
+            'active_sprint': active_sprint
         }
     
     def get_workflow_statuses(self, project):

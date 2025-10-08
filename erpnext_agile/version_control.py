@@ -154,6 +154,8 @@ class IssueVersionControl:
     @frappe.whitelist()
     def compare_with_current(self, version_number):
         """Compare a version with current state"""
+        if not frappe.has_permission("Task", "write", self.task_name):
+            frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
         version_doc = frappe.get_doc('Agile Issue Version', {
             'issue': self.task_name,
             'version_number': version_number
@@ -256,6 +258,8 @@ class IssueVersionControl:
 @frappe.whitelist()
 def create_issue_version(task_name, change_description=None):
     """API method to create version"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     version = vc.create_version(change_description)
     return version.as_dict()
@@ -263,12 +267,16 @@ def create_issue_version(task_name, change_description=None):
 @frappe.whitelist()
 def get_version_history(task_name):
     """API method to get version history"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.get_version_history()
 
 @frappe.whitelist()
 def restore_issue_version(task_name, version_number):
     """API method to restore version"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     task_doc = vc.restore_version(int(version_number))
     return task_doc.as_dict()
@@ -276,30 +284,40 @@ def restore_issue_version(task_name, version_number):
 @frappe.whitelist()
 def compare_versions(task_name, version1, version2):
     """API method to compare versions"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.get_version_diff(version1, version2)
 
 @frappe.whitelist()
 def compare_with_current(task_name, version_number):
     """API method to compare version with current state"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.compare_with_current(int(version_number))
 
 @frappe.whitelist()
 def get_version_details(task_name, version_number):
     """API method to get version details"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.get_version_details(int(version_number))
 
 @frappe.whitelist()
 def delete_version(task_name, version_number):
     """API method to delete version"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.delete_version(int(version_number))
 
 @frappe.whitelist()
 def cleanup_old_versions(task_name, keep_latest=10):
     """API method to cleanup old versions"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     return vc.cleanup_old_versions(int(keep_latest))
 
@@ -368,6 +386,8 @@ def get_version_statistics(task_name):
 @frappe.whitelist()
 def batch_create_versions(task_names, change_description=None):
     """Create versions for multiple issues at once"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     if isinstance(task_names, str):
         task_names = json.loads(task_names)
     
@@ -396,6 +416,8 @@ def batch_create_versions(task_names, change_description=None):
 @frappe.whitelist()
 def export_version_history(task_name, format='json'):
     """Export version history in different formats"""
+    if not frappe.has_permission("Task", "write", task_name):
+        frappe.throw(_("No permission to restore this task"), frappe.PermissionError)
     vc = IssueVersionControl(task_name)
     history = vc.get_version_history()
     

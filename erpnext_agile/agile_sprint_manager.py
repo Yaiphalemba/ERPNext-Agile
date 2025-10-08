@@ -304,7 +304,7 @@ class AgileSprintManager:
             filters={'current_sprint': sprint_name, 'is_agile': 1},
             fields=[
                 'name', 'subject', 'issue_key', 'issue_type', 'issue_priority',
-                'issue_status', 'story_points', 'assigned_to_users', 'reporter'
+                'issue_status', 'story_points', 'reporter'
             ]
         )
         

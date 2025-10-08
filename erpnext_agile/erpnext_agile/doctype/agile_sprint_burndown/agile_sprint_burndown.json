@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:sprint",
  "creation": "2025-09-29 10:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -22,7 +23,8 @@
    "in_list_view": 1,
    "label": "Sprint",
    "options": "Agile Sprint",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "date",
@@ -72,10 +74,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-30 17:04:39.235473",
+ "modified": "2025-10-07 12:14:35.304092",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Sprint Burndown",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
