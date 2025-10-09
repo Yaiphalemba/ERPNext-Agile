@@ -122,7 +122,7 @@ class AgileSprintManager:
         sprint_doc.save()
         
         # Create final burndown entry
-        self.create_burndown_entry(sprint_doc, is_final=True)
+        self.update_burndown_entry(sprint_doc, is_final=True)
         
         # Send notifications
         self.send_sprint_notifications(sprint_doc, 'completed', {
@@ -282,6 +282,57 @@ class AgileSprintManager:
         })
         
         burndown_doc.insert()
+        
+    def update_burndown_entry(self, sprint_doc, is_final=False):
+        """Update today's burndown chart entry or create if missing"""
+        if not frappe.db.get_value('Project', sprint_doc.project, 'burndown_enabled'):
+            return
+
+        # Recalculate metrics
+        metrics = self.calculate_sprint_metrics(sprint_doc)
+
+        # Compute remaining and ideal work
+        remaining_points = metrics['total_points'] - metrics['completed_points']
+
+        if sprint_doc.sprint_state == 'Active':
+            total_days = date_diff(sprint_doc.end_date, sprint_doc.start_date) or 1
+            days_passed = date_diff(today(), sprint_doc.actual_start_date or sprint_doc.start_date)
+            days_remaining = total_days - days_passed
+            ideal_remaining = (days_remaining / total_days) * metrics['total_points'] if total_days > 0 else 0
+        else:
+            ideal_remaining = 0 if is_final else metrics['total_points']
+
+        # Check if today's burndown entry already exists
+        existing_entry = frappe.db.exists(
+            'Agile Sprint Burndown',
+            {
+                'sprint': sprint_doc.name,
+                'date': today()
+            }
+        )
+
+        if existing_entry:
+            # Update existing entry
+            frappe.db.set_value('Agile Sprint Burndown', existing_entry, {
+                'remaining_points': remaining_points,
+                'ideal_remaining': max(0, ideal_remaining),
+                'completed_points': metrics['completed_points']
+            })
+            frappe.db.commit()
+            frappe.logger().info(f"Updated burndown entry for sprint {sprint_doc.name} on {today()}")
+        else:
+            # Create a new one if missing (safety fallback)
+            burndown_doc = frappe.get_doc({
+                'doctype': 'Agile Sprint Burndown',
+                'sprint': sprint_doc.name,
+                'date': today(),
+                'remaining_points': remaining_points,
+                'ideal_remaining': max(0, ideal_remaining),
+                'completed_points': metrics['completed_points'],
+                'added_points': 0
+            })
+            burndown_doc.insert()
+            frappe.logger().info(f"Created new burndown entry for sprint {sprint_doc.name} on {today()}")
         
     @frappe.whitelist()
     def get_sprint_burndown(self, sprint_name):

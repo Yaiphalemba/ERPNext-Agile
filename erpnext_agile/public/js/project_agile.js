@@ -384,10 +384,6 @@ function show_sprint_planning(frm) {
                 }
             },
             {
-                fieldname: 'col_break_1',
-                fieldtype: 'Column Break'
-            },
-            {
                 fieldname: 'create_sprint_btn',
                 fieldtype: 'Button',
                 label: 'Create New Sprint',
@@ -396,6 +392,10 @@ function show_sprint_planning(frm) {
                         d.set_value('sprint', new_sprint.name);
                     });
                 }
+            },
+            {
+                fieldname: 'planning_section',
+                fieldtype: 'Section Break'
             },
             {
                 fieldname: 'planning_html',
