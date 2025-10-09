@@ -241,7 +241,6 @@ function get_activity_icon(activity_type) {
         'estimation_changed': '📊',
         'sprint_added': '🏃',
         'sprint_removed': '🏁',
-        'epic_linked': '🎯',
         'github_synced': '🔗',
         'version_restored': '↺'
     };
@@ -275,7 +274,6 @@ function get_activity_description(activity_type, data, comment) {
         'estimation_changed': `updated estimate from ${data.old_value || '0m'} to ${data.new_value || '0m'}`,
         'sprint_added': `added to sprint <strong>${data.sprint || 'Unknown'}</strong>`,
         'sprint_removed': 'removed from sprint',
-        'epic_linked': `linked to epic <strong>${data.epic || 'Unknown'}</strong>`,
         'github_synced': 'synced with GitHub',
         'version_restored': `restored to version ${data.version_number || '?'}`
     };

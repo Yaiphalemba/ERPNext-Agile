@@ -32,8 +32,6 @@ class AgileIssueActivity(Document):
             'estimation_changed': f"Estimate changed from {data.get('old_value')} to {data.get('new_value')}",
             'sprint_added': f"Added to sprint {data.get('sprint')}",
             'sprint_removed': 'Removed from sprint',
-            'epic_linked': f"Linked to epic {data.get('epic')}",
-            'epic_unlinked': 'Unlinked from epic',
             'attachment_added': 'Added attachment',
             'watcher_added': 'Added watcher',
             'watcher_removed': 'Removed watcher',

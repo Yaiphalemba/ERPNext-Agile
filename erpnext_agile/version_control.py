@@ -59,7 +59,6 @@ class IssueVersionControl:
             'issue_status': task_doc.issue_status,
             'story_points': task_doc.story_points,
             'current_sprint': task_doc.current_sprint,
-            'epic': task_doc.epic,
             'parent_issue': task_doc.parent_issue,
             'original_estimate': task_doc.original_estimate,
             'remaining_estimate': task_doc.remaining_estimate,
@@ -112,7 +111,7 @@ class IssueVersionControl:
         
         # Restore simple fields
         for field in ['subject', 'description', 'issue_type', 'issue_priority', 
-                      'issue_status', 'story_points', 'current_sprint', 'epic', 
+                      'issue_status', 'story_points', 'current_sprint', 
                       'parent_issue', 'original_estimate', 'remaining_estimate']:
             if field in version_data:
                 setattr(task_doc, field, version_data[field])
@@ -335,7 +334,7 @@ def task_on_update_version_control(doc, method):
     # Check if significant fields changed
     significant_fields = [
         'subject', 'description', 'issue_type', 'issue_priority',
-        'issue_status', 'story_points', 'current_sprint', 'epic'
+        'issue_status', 'story_points', 'current_sprint'
     ]
     
     changed_fields = []

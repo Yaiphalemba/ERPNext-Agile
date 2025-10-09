@@ -22,7 +22,6 @@ Versions are automatically created when these fields change:
 - Issue Status
 - Story Points
 - Sprint
-- Epic
 
 ### 2. Manual Version Creation
 

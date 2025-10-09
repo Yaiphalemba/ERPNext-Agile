@@ -236,20 +236,6 @@ function show_backlog(frm) {
                 label: 'Filters'
             },
             {
-                fieldname: 'epic_filter',
-                fieldtype: 'Link',
-                label: 'Epic',
-                options: 'Agile Epic',
-                get_query: function() {
-                    return {
-                        filters: { project: frm.doc.name }
-                    };
-                },
-                onchange: function() {
-                    load_backlog_data(d, frm);
-                }
-            },
-            {
                 fieldname: 'type_filter',
                 fieldtype: 'Link',
                 label: 'Issue Type',
@@ -286,9 +272,6 @@ function load_backlog_data(dialog, frm) {
     `);
     
     let filters = {};
-    if (dialog.get_value('epic_filter')) {
-        filters.epic = dialog.get_value('epic_filter');
-    }
     if (dialog.get_value('type_filter')) {
         filters.issue_type = dialog.get_value('type_filter');
     }
@@ -330,7 +313,6 @@ function render_backlog(container, backlog_items, frm) {
                 <th>Type</th>
                 <th>Priority</th>
                 <th>Story Points</th>
-                <th>Epic</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -345,7 +327,6 @@ function render_backlog(container, backlog_items, frm) {
                 <td><span class="badge badge-light">${item.issue_type || '-'}</span></td>
                 <td>${item.issue_priority ? `<span class="badge badge-${get_priority_badge_class(item.issue_priority)}">${item.issue_priority}</span>` : '-'}</td>
                 <td>${item.story_points || '-'}</td>
-                <td>${item.epic ? frappe.utils.get_form_link('Agile Epic', item.epic, true) : '-'}</td>
                 <td>
                     <button class="btn btn-xs btn-default open-issue" data-issue="${item.name}">
                         <i class="fa fa-external-link"></i>
@@ -786,7 +767,6 @@ function show_agile_reports_menu(frm) {
                     'Sprint Velocity',
                     'Team Time Report',
                     'Backlog Health',
-                    'Epic Progress',
                     'Burndown Chart'
                 ],
                 reqd: 1

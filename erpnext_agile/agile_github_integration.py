@@ -89,12 +89,6 @@ class AgileGitHubIntegration:
                 sprint_label = re.sub(r'[^a-zA-Z0-9-]', '-', sprint_name.lower())
                 labels.append(f"sprint:{sprint_label}")
         
-        if task_doc.epic:
-            epic_name = frappe.db.get_value('Agile Epic', task_doc.epic, 'epic_name')
-            if epic_name:
-                epic_label = re.sub(r'[^a-zA-Z0-9-]', '-', epic_name.lower())
-                labels.append(f"epic:{epic_label}")
-        
         # Add component labels
         for component_row in task_doc.get('components', []):
             if component_row.component:
@@ -122,10 +116,6 @@ class AgileGitHubIntegration:
         
         if task_doc.story_points:
             body += f"**Story Points:** {task_doc.story_points}\n"
-        
-        if task_doc.epic:
-            epic_name = frappe.db.get_value('Agile Epic', task_doc.epic, 'epic_name')
-            body += f"**Epic:** {epic_name}\n"
         
         if task_doc.current_sprint:
             sprint_name = frappe.db.get_value('Agile Sprint', task_doc.current_sprint, 'sprint_name')

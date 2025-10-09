@@ -30,7 +30,10 @@ class AgileTask(Task):
     def sync_expected_time(self):
         """Sync original_estimate to expected_time"""
         if self.original_estimate:
-            self.expected_time = self.original_estimate
+            self.expected_time = self.original_estimate/3600  # convert seconds to hours
+            
+        if self.expected_time:
+            self.original_estimate = self.expected_time*3600  # convert hours to seconds
     
     def validate_agile_fields(self):
         """Validate agile-specific fields"""

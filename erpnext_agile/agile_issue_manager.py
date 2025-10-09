@@ -38,7 +38,6 @@ class AgileIssueManager:
             'issue_status': issue_data.get('issue_status') or self.get_default_status(project_doc),
             'reporter': issue_data.get('reporter') or frappe.session.user,
             'story_points': issue_data.get('story_points', 0),
-            'epic': issue_data.get('epic'),
             'current_sprint': issue_data.get('sprint'),
             'parent_issue': issue_data.get('parent_issue'),
             
@@ -223,8 +222,6 @@ class AgileIssueManager:
         description += f"**Reporter:** {task_doc.reporter}\n"
         if task_doc.story_points:
             description += f"**Story Points:** {task_doc.story_points}\n"
-        if task_doc.epic:
-            description += f"**Epic:** {task_doc.epic}\n"
         description += f"\n---\n\n{task_doc.description or ''}"
         return description
     
