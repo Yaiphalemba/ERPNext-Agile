@@ -12,7 +12,7 @@ class AgileTask(Task):
         if self.parent_issue:
             self.sync_parent_task()
         # sync original_estimate → expected_time
-        if self.original_estimate:
+        if self.original_estimate or self.expected_time:
             self.sync_expected_time()
         # sync agile status → task status
         if self.issue_status:
@@ -24,13 +24,16 @@ class AgileTask(Task):
 
     def sync_parent_task(self):
         """Keep parent_task and parent_issue in sync"""
-        if self.parent_issue and not self.parent_task:
+        if self.parent_issue:
             self.parent_task = self.parent_issue
             
     def sync_expected_time(self):
         """Sync original_estimate to expected_time"""
         if self.original_estimate:
-            self.expected_time = self.original_estimate
+            self.expected_time = self.original_estimate/3600  # convert seconds to hours
+            
+        if self.expected_time:
+            self.original_estimate = self.expected_time*3600  # convert hours to seconds
     
     def validate_agile_fields(self):
         """Validate agile-specific fields"""

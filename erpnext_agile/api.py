@@ -158,13 +158,6 @@ def get_backlog_metrics(project):
     manager = AgileBacklogManager()
     return manager.get_backlog_metrics(project)
 
-@frappe.whitelist()
-def get_epic_progress(epic_name):
-    """Get epic progress"""
-    from erpnext_agile.agile_backlog_manager import AgileBacklogManager
-    manager = AgileBacklogManager()
-    return manager.get_epic_progress(epic_name)
-
 # ====================
 # BOARD MANAGEMENT
 # ====================
@@ -211,7 +204,7 @@ def filter_board(project, sprint=None, filters=None):
     return manager.filter_board(project, sprint, filters)
 
 @frappe.whitelist()
-def get_swimlane_data(project, sprint=None, swimlane_by='epic'):
+def get_swimlane_data(project, sprint=None, swimlane_by='issue_type'):
     """Get swimlane data"""
     from erpnext_agile.agile_board_manager import AgileBoardManager
     manager = AgileBoardManager()
@@ -322,12 +315,6 @@ def get_project_overview(project):
         'current_sprint': ['in', ['', None]]
     })
     
-    # Epic progress
-    epics = frappe.get_all('Agile Epic',
-        filters={'project': project},
-        fields=['name', 'epic_name', 'status']
-    )
-    
     return {
         'project': project_doc.as_dict(),
         'active_sprint': active_sprint,
@@ -336,8 +323,7 @@ def get_project_overview(project):
             'completed_issues': completed_issues,
             'completion_percentage': (completed_issues / total_issues * 100) if total_issues > 0 else 0,
             'backlog_size': backlog_size
-        },
-        'epics': epics
+        }
     }
 
 @frappe.whitelist()
@@ -355,8 +341,6 @@ def search_issues(query, project=None, filters=None):
     if filters:
         if filters.get('sprint'):
             search_filters['current_sprint'] = filters['sprint']
-        if filters.get('epic'):
-            search_filters['epic'] = filters['epic']
         if filters.get('status'):
             search_filters['issue_status'] = filters['status']
         if filters.get('assignee'):

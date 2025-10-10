@@ -33,7 +33,7 @@ class AgileBoardManager:
             filters=filters,
             fields=[
                 'name', 'subject', 'issue_key', 'issue_type', 'issue_priority',
-                'issue_status', 'story_points', 'epic',
+                'issue_status', 'story_points',
                 'reporter', 'github_issue_number', 'github_pr_number'
             ]
         )
@@ -166,14 +166,6 @@ class AgileBoardManager:
                     if assignee in issue.get('assignees', [])
                 ]
         
-        if filters.get('epic'):
-            epic = filters['epic']
-            for status, column in board_data['columns'].items():
-                column['issues'] = [
-                    issue for issue in column['issues']
-                    if issue.get('epic') == epic
-                ]
-        
         if filters.get('issue_type'):
             issue_type = filters['issue_type']
             for status, column in board_data['columns'].items():
@@ -193,7 +185,7 @@ class AgileBoardManager:
         return board_data
     
     @frappe.whitelist()
-    def get_swimlane_data(self, project, sprint=None, swimlane_by='epic'):
+    def get_swimlane_data(self, project, sprint=None, swimlane_by='issue_type'):
         """Get board data organized by swimlanes"""
         
         board_data = self.get_board_data(project, sprint)

@@ -135,19 +135,11 @@ def create_agile_custom_fields():
                 'insert_after': 'current_sprint'
             },
             {
-                'fieldname': 'epic',
-                'label': 'Epic',
-                'fieldtype': 'Link',
-                'options': 'Agile Epic',
-                'insert_after': 'column_break_planning',
-                'depends_on': 'eval:doc.is_agile==1'
-            },
-            {
                 'fieldname': 'parent_issue',
                 'label': 'Parent Issue',
                 'fieldtype': 'Link',
                 'options': 'Task',
-                'insert_after': 'epic',
+                'insert_after': 'sprint',
                 'depends_on': 'eval:doc.is_agile==1'
             },
             {
@@ -402,7 +394,6 @@ def setup_agile_permissions():
     
     doctypes = [
         'Agile Sprint',
-        'Agile Epic',
         'Agile Issue Status',
         'Agile Issue Priority',
         'Agile Issue Type',

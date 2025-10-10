@@ -27,7 +27,7 @@ class AgileBacklogManager:
         backlog_items = frappe.db.sql("""
             SELECT 
                 name, subject, issue_key, issue_type, issue_priority,
-                issue_status, story_points, epic, parent_issue,
+                issue_status, story_points, parent_issue,
                 reporter, creation, modified
             FROM `tabTask`
             WHERE project = %s 
@@ -45,37 +45,7 @@ class AgileBacklogManager:
                 creation DESC
         """, (project,), as_dict=True)
         
-        # Group by epic if requested
-        if filters.get('group_by') == 'epic':
-            grouped_backlog = self.group_backlog_by_epic(backlog_items)
-            return grouped_backlog
-        
         return backlog_items
-    
-    def group_backlog_by_epic(self, backlog_items):
-        """Group backlog items by epic"""
-        grouped = {
-            'with_epic': {},
-            'without_epic': []
-        }
-        
-        for item in backlog_items:
-            if item.get('epic'):
-                epic_name = item['epic']
-                if epic_name not in grouped['with_epic']:
-                    epic_doc = frappe.get_doc('Agile Epic', epic_name)
-                    grouped['with_epic'][epic_name] = {
-                        'epic': epic_doc,
-                        'items': [],
-                        'total_points': 0
-                    }
-                
-                grouped['with_epic'][epic_name]['items'].append(item)
-                grouped['with_epic'][epic_name]['total_points'] += flt(item.get('story_points', 0))
-            else:
-                grouped['without_epic'].append(item)
-        
-        return grouped
     
     @frappe.whitelist()
     def rank_backlog_item(self, task_name, new_rank):
@@ -228,7 +198,6 @@ class AgileBacklogManager:
                 'issue_priority': parent_task.issue_priority,
                 'reporter': frappe.session.user,
                 'story_points': split.get('story_points', 0),
-                'epic': parent_task.epic,
                 'parent_issue': parent_task.name
             }
             
@@ -265,7 +234,6 @@ class AgileBacklogManager:
             'unestimated_items': sum(1 for item in backlog_items if not item.get('story_points') or item.get('story_points') == 0),
             'by_priority': {},
             'by_type': {},
-            'by_epic': {},
             'ready_for_sprint': 0
         }
         
@@ -278,10 +246,6 @@ class AgileBacklogManager:
             # By type
             issue_type = item.get('issue_type') or 'Untyped'
             metrics['by_type'][issue_type] = metrics['by_type'].get(issue_type, 0) + 1
-            
-            # By epic
-            if item.get('epic'):
-                metrics['by_epic'][item['epic']] = metrics['by_epic'].get(item['epic'], 0) + 1
             
             # Ready for sprint (has story points and acceptance criteria)
             if item.get('story_points', 0) > 0 and item.get('description'):
@@ -300,59 +264,6 @@ class AgileBacklogManager:
         )
         
         return metrics
-    
-    @frappe.whitelist()
-    def get_epic_progress(self, epic_name):
-        """Get progress of all issues in an epic"""
-        
-        epic_doc = frappe.get_doc('Agile Epic', epic_name)
-        
-        # Get all issues in this epic
-        epic_issues = frappe.get_all('Task',
-            filters={'epic': epic_name, 'is_agile': 1, 'status': ['!=', 'Cancelled']},
-            fields=['name', 'issue_key', 'issue_status', 'story_points', 'current_sprint']
-        )
-        
-        # Get done statuses
-        done_statuses = [status.name for status in frappe.get_all(
-            'Agile Issue Status',
-            filters={'status_category': 'Done'},
-            fields=['name']
-        )]
-        
-        progress = {
-            'epic': epic_doc,
-            'total_issues': len(epic_issues),
-            'total_points': sum(flt(issue.get('story_points', 0)) for issue in epic_issues),
-            'completed_issues': 0,
-            'completed_points': 0,
-            'in_sprint': 0,
-            'in_backlog': 0,
-            'issues': epic_issues
-        }
-        
-        for issue in epic_issues:
-            if issue.get('issue_status') in done_statuses:
-                progress['completed_issues'] += 1
-                progress['completed_points'] += flt(issue.get('story_points', 0))
-            
-            if issue.get('current_sprint'):
-                progress['in_sprint'] += 1
-            else:
-                progress['in_backlog'] += 1
-        
-        # Calculate percentages
-        progress['completion_percentage'] = (
-            (progress['completed_issues'] / progress['total_issues'] * 100)
-            if progress['total_issues'] > 0 else 0
-        )
-        
-        progress['points_completion_percentage'] = (
-            (progress['completed_points'] / progress['total_points'] * 100)
-            if progress['total_points'] > 0 else 0
-        )
-        
-        return progress
     
     @frappe.whitelist()
     def prioritize_backlog(self, project, prioritization_method='value_effort'):

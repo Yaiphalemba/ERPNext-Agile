@@ -29,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Activity Type",
-   "options": "created\ntransitioned\nstatus_changed\nassigned\nunassigned\ncommented\nwork_logged\nestimation_changed\nsprint_added\nsprint_removed\nepic_linked\nepic_unlinked\nattachment_added\nwatcher_added\nwatcher_removed\ngithub_synced\nversion_restored",
+   "options": "created\ntransitioned\nstatus_changed\nassigned\nunassigned\ncommented\nwork_logged\nestimation_changed\nsprint_added\nsprint_removed\nattachment_added\nwatcher_added\nwatcher_removed\ngithub_synced\nversion_restored",
    "reqd": 1
   },
   {
