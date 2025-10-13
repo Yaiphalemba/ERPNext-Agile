@@ -3,6 +3,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime, time_diff_in_seconds, get_datetime
 import json
+from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
+    log_issue_activity,
+)
+
 
 class AgileTimeTracking:
     """Core class for Jira-style time tracking and work logs"""
@@ -39,11 +43,16 @@ class AgileTimeTracking:
         
         task_doc.save()
         
-        # Log activity
-        self.log_time_tracking_activity(task_doc, 'work_logged', {
-            'time_spent': time_spent,
-            'description': work_description
-        })
+        # Log activity using new helper function
+        log_issue_activity(
+            task_doc.name,
+            f"logged {self.format_time_display(time_seconds)} of work",
+            data={
+                'time_spent': self.format_time_display(time_seconds),
+                'description': work_description
+            },
+            comment=work_description
+        )
         
         return {
             'success': True,
@@ -133,12 +142,16 @@ class AgileTimeTracking:
         
         task_doc.save()
         
-        # Log activity
-        self.log_time_tracking_activity(task_doc, 'estimate_updated', {
-            'estimate_type': estimate_type,
-            'old_value': self.format_time_display(old_value) if old_value else '0m',
-            'new_value': self.format_time_display(time_seconds)
-        })
+        # Log activity using new helper function
+        log_issue_activity(
+            task_doc.name,
+            f"updated {estimate_type} estimate from {self.format_time_display(old_value) if old_value else '0m'} to {self.format_time_display(time_seconds)}",
+            data={
+                'estimate_type': estimate_type,
+                'old_value': self.format_time_display(old_value) if old_value else '0m',
+                'new_value': self.format_time_display(time_seconds)
+            }
+        )
         
         return {
             'success': True,
@@ -286,11 +299,20 @@ class AgileTimeTracking:
         work_logs = task_doc.get('work_logs', [])
         if work_log_idx < len(work_logs):
             deleted_log = work_logs[work_log_idx]
+            deleted_time = self.format_time_display(deleted_log.get('time_spent_seconds', 0))
+            
             task_doc.remove(deleted_log)
             
             # Update time tracking
             self.update_time_tracking(task_doc)
             task_doc.save()
+            
+            # Log activity
+            log_issue_activity(
+                task_doc.name,
+                f"deleted work log entry ({deleted_time})",
+                data={'time_spent': deleted_time}
+            )
             
             return {
                 'success': True,
@@ -306,13 +328,18 @@ class AgileTimeTracking:
         # Check if user already has an active timer
         active_timer = frappe.db.get_value('Agile Work Timer',
             {'user': frappe.session.user, 'status': 'Running'},
-            ['name', 'task']
+            ['name', 'task', 'start_time'],
+            as_dict=True
         )
         
         if active_timer:
-            frappe.throw(_(
-                "You already have an active timer running for {0}"
-            ).format(active_timer[1]))
+            # Return info about existing timer instead of throwing error
+            return {
+                'success': False,
+                'error': 'timer_already_running',
+                'message': f"You already have an active timer running for {active_timer.task}",
+                'existing_timer': active_timer
+            }
         
         # Create timer
         timer_doc = frappe.get_doc({
@@ -322,26 +349,35 @@ class AgileTimeTracking:
             'start_time': now_datetime(),
             'status': 'Running'
         })
-        timer_doc.insert()
+        timer_doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        
+        # Update task timer status directly in database (no document save)
+        frappe.db.set_value('Task', task_name, 'custom_timer_status', 1, update_modified=False)
+        frappe.db.commit()
+        
+        # Log activity
+        log_issue_activity(
+            task_name,
+            "started work timer"
+        )
         
         return {
             'success': True,
             'timer': timer_doc.name,
-            'start_time': timer_doc.start_time
+            'start_time': timer_doc.start_time,
+            'task': task_name
         }
-    
+
+
     @frappe.whitelist()
     def stop_timer(self, timer_name, work_description=''):
         """Stop work timer and log work"""
         
         timer_doc = frappe.get_doc('Agile Work Timer', timer_name)
-        task_doc = frappe.get_doc('Task', timer_doc.task)
         
         if timer_doc.status != 'Running':
             frappe.throw(_("Timer is not running"))
-            
-        task_doc.custom_timer_status = 0
-        task_doc.save()
         
         # Calculate time spent
         end_time = now_datetime()
@@ -351,32 +387,71 @@ class AgileTimeTracking:
         timer_doc.end_time = end_time
         timer_doc.time_spent_seconds = time_seconds
         timer_doc.status = 'Stopped'
-        timer_doc.save()
+        timer_doc.save(ignore_permissions=True)
+        frappe.db.commit()
         
-        # Log work
-        self.log_work(
+        # Update task timer status directly in database (no document save)
+        frappe.db.set_value('Task', timer_doc.task, 'custom_timer_status', 0, update_modified=False)
+        frappe.db.commit()
+        
+        # Log work - this will save the task
+        result = self.log_work(
             timer_doc.task,
             self.format_time_display(time_seconds),
-            work_description or f"Work logged via timer",
+            work_description or "Work logged via timer",
             frappe.utils.today()
         )
         
         return {
             'success': True,
             'time_spent': self.format_time_display(time_seconds),
-            'time_spent_seconds': time_seconds
+            'time_spent_seconds': time_seconds,
+            'work_log_created': True
         }
-    
-    def log_time_tracking_activity(self, task_doc, activity_type, data):
-        """Log time tracking activity"""
-        try:
-            activity_doc = frappe.get_doc({
-                'doctype': 'Agile Issue Activity',
-                'issue': task_doc.name,
-                'activity_type': activity_type,
-                'user': frappe.session.user,
-                'data': json.dumps(data)
-            })
-            activity_doc.insert()
-        except:
-            pass  # Fail silently
+
+
+    @frappe.whitelist()
+    def get_active_timer(self, task_name=None):
+        """Get active timer for current user or specific task"""
+        filters = {
+            'user': frappe.session.user,
+            'status': 'Running'
+        }
+        
+        if task_name:
+            filters['task'] = task_name
+        
+        timer = frappe.db.get_value('Agile Work Timer',
+            filters,
+            ['name', 'task', 'start_time'],
+            as_dict=True
+        )
+        
+        if timer:
+            # Calculate elapsed time
+            elapsed_seconds = time_diff_in_seconds(now_datetime(), get_datetime(timer.start_time))
+            timer['elapsed_time'] = format_time_display(elapsed_seconds)
+            timer['elapsed_seconds'] = elapsed_seconds
+            
+            # Get task info
+            task = frappe.db.get_value('Task', timer.task, ['subject', 'issue_key'], as_dict=True)
+            timer['task_subject'] = task.subject if task else None
+            timer['task_issue_key'] = task.issue_key if task else None
+        
+        return timer
+
+
+def format_time_display(seconds):
+        """Format seconds to display format (e.g., "2h 30m")"""
+        if not seconds:
+            return "0m"
+        
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        
+        if hours > 0 and minutes > 0:
+            return f"{hours}h {minutes}m"
+        elif hours > 0:
+            return f"{hours}h"
+        else:
+            return f"{minutes}m"

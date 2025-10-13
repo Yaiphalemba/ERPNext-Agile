@@ -766,8 +766,7 @@ function show_agile_reports_menu(frm) {
                 options: [
                     'Sprint Velocity',
                     'Team Time Report',
-                    'Backlog Health',
-                    'Burndown Chart'
+                    'Backlog Health'
                 ],
                 reqd: 1
             },
@@ -776,7 +775,7 @@ function show_agile_reports_menu(frm) {
                 fieldtype: 'Link',
                 label: 'Sprint (for Sprint Reports)',
                 options: 'Agile Sprint',
-                depends_on: 'eval:["Sprint Velocity", "Burndown Chart"].includes(doc.report_type)',
+                depends_on: 'eval:["Sprint Velocity"].includes(doc.report_type)',
                 get_query: function() {
                     return {
                         filters: { project: frm.doc.name }

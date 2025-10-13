@@ -1,5 +1,19 @@
 // erpnext_agile/public/js/task_agile.js
 frappe.ui.form.on('Task', {
+    onload: function(frm) {
+        frm._timer_interval = setInterval(() => {
+            console.log('Tick...');
+        }, 2000);
+
+        register_form_cleanup(frm, () => {
+            if (frm._timer_interval) {
+                clearInterval(frm._timer_interval);
+                frm._timer_interval = null;
+                console.log('Timer cleared');
+            }
+        });
+    },
+
     refresh: function(frm) {
         if (frm.doc.is_agile) {
             // Add Version Control buttons
@@ -149,7 +163,7 @@ function show_activity_dialog(frm) {
             },
             fields: ['name', 'activity_type', 'user', 'timestamp', 'data', 'comment'],
             order_by: 'timestamp desc',
-            limit: 50
+            limit: 100  // Increased from 50
         },
         callback: function(r) {
             if (r.message) {
@@ -163,63 +177,83 @@ function render_activity_timeline(container, activities) {
     if (!activities || activities.length === 0) {
         container.html(`
             <div class="text-center text-muted" style="padding: 40px;">
-                <p>No activity recorded yet</p>
+                <i class="fa fa-inbox" style="font-size: 48px; opacity: 0.3;"></i>
+                <p class="mt-3">No activity recorded yet</p>
             </div>
         `);
         return;
     }
     
-    let html = '<div class="activity-timeline" style="max-height: 500px; overflow-y: auto;">';
+    let html = '<div class="activity-timeline" style="max-height: 600px; overflow-y: auto; padding: 10px;">';
     
     activities.forEach((activity, index) => {
         let data = {};
         try {
             data = activity.data ? JSON.parse(activity.data) : {};
         } catch(e) {
+            console.error('Failed to parse activity data:', e);
             data = {};
         }
         
         let icon = get_activity_icon(activity.activity_type);
-        let description = get_activity_description(activity.activity_type, data, activity.comment);
+        let description = get_activity_description(activity);
         let color = get_activity_color(activity.activity_type);
+        let details = render_activity_details(activity.activity_type, data);
         
         html += `
             <div class="activity-item" style="
                 display: flex;
                 gap: 15px;
-                padding: 15px;
-                border-left: 2px solid ${color};
+                padding: 15px 15px 15px 25px;
+                border-left: 3px solid ${color};
                 margin-left: 20px;
                 position: relative;
-                ${index < activities.length - 1 ? 'margin-bottom: 10px;' : ''}
+                background: ${index % 2 === 0 ? '#fafbfc' : 'white'};
+                border-radius: 0 4px 4px 0;
+                ${index < activities.length - 1 ? 'margin-bottom: 15px;' : ''}
             ">
                 <div style="
                     position: absolute;
-                    left: -11px;
+                    left: -12px;
                     top: 15px;
-                    width: 20px;
-                    height: 20px;
+                    width: 24px;
+                    height: 24px;
                     border-radius: 50%;
                     background: ${color};
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: white;
-                    font-size: 10px;
+                    font-size: 11px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 ">
                     ${icon}
                 </div>
                 
                 <div style="flex: 1; margin-left: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
-                            <strong>${frappe.user_info(activity.user).fullname}</strong>
-                            <span class="text-muted"> ${description}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                        <div style="flex: 1;">
+                            <strong style="color: #2c3e50;">${frappe.user_info(activity.user).fullname}</strong>
+                            <span style="color: #7f8c8d;"> ${description}</span>
                         </div>
-                        <small class="text-muted">${frappe.datetime.prettyDate(activity.timestamp)}</small>
+                        <small style="color: #95a5a6; white-space: nowrap; margin-left: 10px;">
+                            ${frappe.datetime.prettyDate(activity.timestamp)}
+                        </small>
                     </div>
-                    ${activity.comment ? `<div class="text-muted mt-2" style="font-style: italic;">"${activity.comment}"</div>` : ''}
-                    ${render_activity_details(activity.activity_type, data)}
+                    ${activity.comment ? `
+                        <div style="
+                            margin-top: 8px;
+                            padding: 10px;
+                            background: white;
+                            border-left: 3px solid #e0e0e0;
+                            border-radius: 4px;
+                            font-style: italic;
+                            color: #555;
+                        ">
+                            "${frappe.utils.escape_html(activity.comment)}"
+                        </div>
+                    ` : ''}
+                    ${details}
                 </div>
             </div>
         `;
@@ -242,7 +276,10 @@ function get_activity_icon(activity_type) {
         'sprint_added': '🏃',
         'sprint_removed': '🏁',
         'github_synced': '🔗',
-        'version_restored': '↺'
+        'version_restored': '↺',
+        'watcher_added': '👁',
+        'watcher_removed': '👁',
+        'attachment_added': '📎'
     };
     return icons[activity_type] || '•';
 }
@@ -253,38 +290,150 @@ function get_activity_color(activity_type) {
         'transitioned': '#007bff',
         'status_changed': '#007bff',
         'assigned': '#17a2b8',
+        'unassigned': '#dc3545',
         'work_logged': '#6610f2',
         'estimation_changed': '#fd7e14',
         'sprint_added': '#20c997',
+        'sprint_removed': '#ffc107',
         'github_synced': '#6c757d',
-        'version_restored': '#e83e8c'
+        'version_restored': '#e83e8c',
+        'watcher_added': '#17a2b8',
+        'watcher_removed': '#dc3545',
+        'commented': '#6c757d'
     };
     return colors[activity_type] || '#6c757d';
 }
 
-function get_activity_description(activity_type, data, comment) {
+function get_activity_description(activity) {
+    // The action string is now stored in the activity, not constructed from type
+    // But for backward compatibility, we can extract it from the data or construct it
+    
+    let data = {};
+    try {
+        data = activity.data ? JSON.parse(activity.data) : {};
+    } catch(e) {
+        data = {};
+    }
+    
+    const activity_type = activity.activity_type;
+    
+    // Check if we have specific data to build a better description
+    if (activity_type === 'status_changed' && data.from_status && data.to_status) {
+        return `changed status from <span class="badge" style="background: #e0e0e0;">${data.from_status}</span> to <span class="badge" style="background: #007bff; color: white;">${data.to_status}</span>`;
+    }
+    
+    if (activity_type === 'assigned' && data.assignees) {
+        let assignees = Array.isArray(data.assignees) ? data.assignees : [data.assignees];
+        return `assigned to <strong>${assignees.join(', ')}</strong>`;
+    }
+    
+    if (activity_type === 'unassigned' && data.unassigned) {
+        let unassigned = Array.isArray(data.unassigned) ? data.unassigned : [data.unassigned];
+        return `unassigned from <strong>${unassigned.join(', ')}</strong>`;
+    }
+    
+    if (activity_type === 'work_logged' && data.time_spent) {
+        return `logged <span class="badge" style="background: #6610f2; color: white;">${data.time_spent}</span> of work`;
+    }
+    
+    if (activity_type === 'estimation_changed' && data.old_value && data.new_value) {
+        return `updated estimate from <span class="badge" style="background: #e0e0e0;">${data.old_value}</span> to <span class="badge" style="background: #fd7e14; color: white;">${data.new_value}</span>`;
+    }
+    
+    if (activity_type === 'sprint_added' && data.sprint) {
+        return `added to sprint <span class="badge" style="background: #20c997; color: white;">${data.sprint}</span>`;
+    }
+    
+    if (activity_type === 'sprint_removed' && data.sprint) {
+        return `removed from sprint <span class="badge" style="background: #ffc107;">${data.sprint}</span>`;
+    }
+    
+    if (activity_type === 'watcher_added') {
+        return `added watcher <strong>${data.watcher}</strong>`;
+    }
+    
+    if (activity_type === 'watcher_removed') {
+        return `removed watcher <strong>${data.unwatcher}</strong>`;
+    }
+    
+    // Generic descriptions based on activity type
     const descriptions = {
         'created': 'created this issue',
-        'transitioned': `changed status from <strong>${data.from_status || 'Unknown'}</strong> to <strong>${data.to_status || 'Unknown'}</strong>`,
-        'status_changed': `changed status from <strong>${data.from_status || 'Unknown'}</strong> to <strong>${data.to_status || 'Unknown'}</strong>`,
-        'assigned': `assigned to ${data.assignees ? data.assignees.join(', ') : 'someone'}`,
-        'unassigned': 'unassigned',
         'commented': 'added a comment',
-        'work_logged': `logged <strong>${data.time_spent || '0m'}</strong> of work`,
-        'estimation_changed': `updated estimate from ${data.old_value || '0m'} to ${data.new_value || '0m'}`,
-        'sprint_added': `added to sprint <strong>${data.sprint || 'Unknown'}</strong>`,
-        'sprint_removed': 'removed from sprint',
         'github_synced': 'synced with GitHub',
-        'version_restored': `restored to version ${data.version_number || '?'}`
+        'version_restored': `restored to version ${data.version_number || '?'}`,
+        'attachment_added': 'added an attachment'
     };
+    
     return descriptions[activity_type] || activity_type.replace(/_/g, ' ');
 }
 
 function render_activity_details(activity_type, data) {
+    let html = '';
+    
+    // Show work description for work logs
     if (activity_type === 'work_logged' && data.description) {
-        return `<div class="mt-2 p-2" style="background: #f8f9fa; border-radius: 4px; font-size: 0.9em;">${data.description}</div>`;
+        html += `
+            <div style="
+                margin-top: 8px;
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 4px;
+                font-size: 0.9em;
+                border-left: 3px solid #6610f2;
+            ">
+                <strong>Work Description:</strong><br>
+                ${frappe.utils.escape_html(data.description)}
+            </div>
+        `;
     }
-    return '';
+    
+    // Show sprint transitions
+    if (activity_type === 'sprint_added' || activity_type === 'sprint_removed') {
+        if (data.from_sprint && data.to_sprint) {
+            html += `
+                <div style="
+                    margin-top: 8px;
+                    padding: 8px;
+                    background: #fff3cd;
+                    border-radius: 4px;
+                    font-size: 0.85em;
+                ">
+                    <i class="fa fa-arrow-right"></i> 
+                    Moved from <strong>${data.from_sprint}</strong> to <strong>${data.to_sprint}</strong>
+                </div>
+            `;
+        }
+    }
+    
+    // Show old and new values for field changes
+    if (data.old_value && data.new_value && activity_type !== 'estimation_changed') {
+        html += `
+            <div style="
+                margin-top: 8px;
+                padding: 8px;
+                background: #e7f3ff;
+                border-radius: 4px;
+                font-size: 0.85em;
+                display: flex;
+                gap: 10px;
+            ">
+                <div style="flex: 1;">
+                    <div style="color: #666; font-size: 0.9em;">Old:</div>
+                    <code>${frappe.utils.escape_html(data.old_value)}</code>
+                </div>
+                <div style="display: flex; align-items: center; color: #999;">
+                    <i class="fa fa-arrow-right"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="color: #666; font-size: 0.9em;">New:</div>
+                    <code>${frappe.utils.escape_html(data.new_value)}</code>
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
 }
 
 function show_log_work_dialog(frm) {
@@ -479,55 +628,101 @@ function remove_from_sprint(frm) {
 }
 
 function start_work_timer(frm) {
+    // First check if timer is already running
     frappe.call({
-        method: 'erpnext_agile.api.start_timer',
+        method: 'erpnext_agile.api.get_active_timer',
         args: {
             task_name: frm.doc.name
         },
         callback: function(r) {
-            if (r.message && r.message.success) {
-                frappe.show_alert({
-                    message: __('Timer started'),
-                    indicator: 'green'
+            if (r.message) {
+                // Timer already running
+                frappe.msgprint({
+                    title: __('Timer Already Running'),
+                    message: __('You already have a timer running for this task. Elapsed time: {0}', 
+                        [r.message.elapsed_time]),
+                    indicator: 'orange'
                 });
-                frm.set_value('custom_timer_status', 1);
-                frm.save();
+                return;
             }
-        },
-        error: function(r) {
-            frappe.msgprint({
-                title: __('Timer Error'),
-                message: r.message || __('Could not start timer'),
-                indicator: 'red'
+            
+            // No timer running, start new one
+            frappe.call({
+                method: 'erpnext_agile.api.start_timer',
+                args: {
+                    task_name: frm.doc.name
+                },
+                callback: function(r) {
+                    if (r.message && r.message.success) {
+                        frappe.show_alert({
+                            message: __('Timer started'),
+                            indicator: 'green'
+                        });
+                        
+                        // Just reload the form - no manual field updates
+                        frm.reload_doc();
+                    } else if (r.message && r.message.error === 'timer_already_running') {
+                        frappe.msgprint({
+                            title: __('Timer Already Running'),
+                            message: r.message.message,
+                            indicator: 'orange'
+                        });
+                    }
+                },
+                error: function(r) {
+                    frappe.msgprint({
+                        title: __('Timer Error'),
+                        message: r.message || __('Could not start timer'),
+                        indicator: 'red'
+                    });
+                }
             });
         }
     });
 }
 
 function stop_timer(frm) {
-    frappe.db.get_value(
-        'Agile Work Timer',
-        { 'user': frappe.session.user, 'status': 'Running', 'task': frm.doc.name },
-        'name'
-    ).then(res => {
-        if (res && res.message && res.message.name) {
+    // Get active timer
+    frappe.call({
+        method: 'erpnext_agile.api.get_active_timer',
+        args: {
+            task_name: frm.doc.name
+        },
+        callback: function(r) {
+            if (!r.message) {
+                frappe.msgprint(__('No running timer found for this task.'));
+                return;
+            }
+            
+            let timer = r.message;
+            
             // Ask for work description
             let d = new frappe.ui.Dialog({
                 title: __('Stop Timer'),
                 fields: [
                     {
+                        fieldtype: 'HTML',
+                        fieldname: 'timer_info',
+                        options: `
+                            <div class="alert alert-info">
+                                <strong>Elapsed Time:</strong> ${timer.elapsed_time}
+                            </div>
+                        `
+                    },
+                    {
                         label: __('Work Description'),
                         fieldname: 'work_description',
                         fieldtype: 'Small Text',
-                        reqd: 1
+                        reqd: 1,
+                        description: 'Describe what you worked on'
                     }
                 ],
-                primary_action_label: __('Stop & Log'),
+                primary_action_label: __('Stop & Log Work'),
                 primary_action: function(values) {
                     frappe.call({
                         method: 'erpnext_agile.api.stop_timer',
                         args: {
-                            timer_name: res.message.name,
+                            timer_name: timer.name,
                             work_description: values.work_description
                         },
                         callback: function(r) {
@@ -536,31 +731,89 @@ function stop_timer(frm) {
                                     message: __('Timer stopped. Logged: {0}', [r.message.time_spent]),
                                     indicator: 'green'
                                 });
+                                
+                                // Reload to see work log
                                 frm.reload_doc();
                             }
                         }
                     });
                     d.hide();
+                },
+                secondary_action_label: __('Cancel Timer'),
+                secondary_action: function() {
+                    frappe.confirm(
+                        __('Are you sure you want to cancel the timer without logging work?'),
+                        function() {
+                            frappe.call({
+                                method: 'erpnext_agile.api.cancel_timer',
+                                args: {
+                                    timer_name: timer.name
+                                },
+                                callback: function(r) {
+                                    if (r.message && r.message.success) {
+                                        frappe.show_alert({
+                                            message: __('Timer cancelled'),
+                                            indicator: 'orange'
+                                        });
+                                        frm.reload_doc();
+                                    }
+                                }
+                            });
+                            d.hide();
+                        }
+                    );
                 }
             });
             d.show();
-        } else {
-            frappe.msgprint(__('No running timer found for this task.'));
         }
     });
 }
 
 function show_timer_indicator(frm) {
-    // Set the red "Timer Running" indicator in the form header
-    frm.page.set_indicator(__('Timer Running'), 'red');
+    // Get current timer info
+    frappe.call({
+        method: 'erpnext_agile.api.get_active_timer',
+        args: {
+            task_name: frm.doc.name
+        },
+        callback: function(r) {
+            if (r.message) {
+                let timer = r.message;
+                
+                // Set the red "Timer Running" indicator
+                frm.page.set_indicator(
+                    __('Timer Running: {0}', [timer.elapsed_time]), 
+                    'red'
+                );
 
-    // Remove any existing Stop Timer button (avoid duplicates on refresh)
-    frm.page.clear_inner_toolbar();
-
-    // Add a Stop Timer button in the header toolbar
-    frm.page.add_inner_button(__('Stop Timer'), function() {
-        stop_timer(frm);
+                // Clear and add Stop Timer button
+                frm.page.clear_inner_toolbar();
+                frm.page.add_inner_button(__('Stop Timer'), function() {
+                    stop_timer(frm);
+                });
+                
+                // Update indicator every minute
+                if (!frm._timer_interval) {
+                    frm._timer_interval = setInterval(function() {
+                        if (frm.doc.custom_timer_status === 1) {
+                            show_timer_indicator(frm);
+                        } else {
+                            clearInterval(frm._timer_interval);
+                            frm._timer_interval = null;
+                        }
+                    }, 60000); // Update every minute
+                }
+            }
+        }
     });
+}
+
+function register_form_cleanup(frm, cleanup_fn) {
+    // Browser unload
+    window.addEventListener('beforeunload', cleanup_fn);
+
+    // Frappe navigation change
+    $(document).on('page-change', cleanup_fn);
 }
 
 function sync_to_github(frm) {
