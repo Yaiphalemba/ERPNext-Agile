@@ -64,7 +64,11 @@ function show_agile_board(frm) {
 
     d.show();
 
-    load_board(frm, frm.doc.name, null, d.fields_dict.board_html.$wrapper);
+    // Store references for later use
+    d.board_container = d.fields_dict.board_html.$wrapper;
+    d.current_frm = frm;
+
+    load_board(frm, frm.doc.name, null, d.board_container);
 }
 
 function load_board(frm, project, sprint, container) {
@@ -77,13 +81,13 @@ function load_board(frm, project, sprint, container) {
         },
         callback: function(r) {
             if (r.message) {
-                render_board(container, r.message, frm);
+                render_board(container, r.message, frm, project, sprint);
             }
         }
     });
 }
 
-function render_board(container, board_data, frm) {
+function render_board(container, board_data, frm, current_project, current_sprint) {
     let html = '';
 
     // Project + Sprint Filters UI
@@ -118,19 +122,96 @@ function render_board(container, board_data, frm) {
 
     container.html(html);
 
-    populate_project_and_sprint_filters(board_data, frm);
+    // Wait for DOM to be ready before populating filters
+    setTimeout(() => {
+        populate_project_and_sprint_filters(board_data, frm, current_project, current_sprint, container);
+    }, 100);
 
     make_columns_sortable(frm, board_data);
-
-    $("#project_filter, #sprint_filter").change(function() {
-        let selected_project = $("#project_filter").val();
-        let selected_sprint = $("#sprint_filter").val() || null;
-        load_board(frm, selected_project, selected_sprint, container);
-    });
 
     container.find('.issue-card').on('click', function() {
         frappe.set_route('Form', 'Task', $(this).data('issue-name'));
     });
+}
+
+function populate_project_and_sprint_filters(board_data, frm, current_project, current_sprint, container) {
+    // Get the filter elements from the container, not global DOM
+    const $projectFilter = container.find('#project_filter');
+    const $sprintFilter = container.find('#sprint_filter');
+
+    if ($projectFilter.length === 0 || $sprintFilter.length === 0) {
+        console.warn('Filter elements not found in container');
+        return;
+    }
+
+    // Clear existing options
+    $projectFilter.empty();
+    $sprintFilter.empty();
+
+    // Set current project immediately
+    $projectFilter.append(`<option value="${current_project}">${board_data.project_name || current_project}</option>`);
+    
+    // Set sprint filter immediately
+    if (board_data.sprint && board_data.active_sprint) {
+        $sprintFilter.append(`<option value="${board_data.sprint}">${board_data.active_sprint.sprint_name}</option>`);
+    } else {
+        $sprintFilter.append('<option value="">All Sprints</option>');
+    }
+
+    // Load all projects
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: { 
+            doctype: "Project", 
+            fields: ["name", "project_name"], 
+            limit_page_length: 100 
+        },
+        callback: function(r) {
+            if (r.message) {
+                r.message.forEach(proj => {
+                    if (proj.name !== current_project) {
+                        $projectFilter.append(`<option value="${proj.name}">${proj.project_name}</option>`);
+                    }
+                });
+
+                // Set up project filter change event
+                $projectFilter.off('change').on('change', function() {
+                    let selected_project = $(this).val();
+                    let selected_sprint = $sprintFilter.val() || null;
+                    load_board(frm, selected_project, selected_sprint, container);
+                });
+            }
+        }
+    });
+
+    // Load all sprints for the current project
+    if (current_project) {
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: { 
+                doctype: "Agile Sprint", 
+                filters: { project: current_project }, 
+                fields: ["name", "sprint_name"], 
+                limit_page_length: 100 
+            },
+            callback: function(r) {
+                if (r.message) {
+                    r.message.forEach(s => {
+                        if (!board_data.sprint || s.name !== board_data.sprint) {
+                            $sprintFilter.append(`<option value="${s.name}">${s.sprint_name}</option>`);
+                        }
+                    });
+
+                    // Set up sprint filter change event
+                    $sprintFilter.off('change').on('change', function() {
+                        let selected_project = $projectFilter.val();
+                        let selected_sprint = $(this).val() || null;
+                        load_board(frm, selected_project, selected_sprint, container);
+                    });
+                }
+            }
+        });
+    }
 }
 
 function render_board_column(status, column) {
@@ -169,38 +250,6 @@ function render_board_column(status, column) {
 function get_priority_badge_class(priority) {
     const classes = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'secondary' };
     return classes[priority] || 'secondary';
-}
-
-function populate_project_and_sprint_filters(board_data, frm) {
-    frappe.call({
-        method: "frappe.client.get_list",
-        args: { doctype: "Project", fields: ["name", "project_name"], limit_page_length: 100 },
-        callback: function(r) {
-            if (r.message) {
-                $("#project_filter").html('');
-                r.message.forEach(proj => {
-                    $("#project_filter").append(`<option value="${proj.name}">${proj.project_name}</option>`);
-                });
-                $("#project_filter").val(board_data.project);
-            }
-        }
-    });
-
-    frappe.call({
-        method: "frappe.client.get_list",
-        args: { doctype: "Agile Sprint", filters: { project: board_data.project }, fields: ["name", "sprint_name"], limit_page_length: 100 },
-        callback: function(r) {
-            if (r.message) {
-                $("#sprint_filter").html(`<option value="">All Sprints</option>`);
-                r.message.forEach(s => {
-                    $("#sprint_filter").append(`<option value="${s.name}">${s.sprint_name}</option>`);
-                });
-                if (board_data.sprint) {
-                    $("#sprint_filter").val(board_data.sprint);
-                }
-            }
-        }
-    });
 }
 
 function make_columns_sortable(frm, board_data) {
@@ -766,8 +815,7 @@ function show_agile_reports_menu(frm) {
                 options: [
                     'Sprint Velocity',
                     'Team Time Report',
-                    'Backlog Health',
-                    'Burndown Chart'
+                    'Backlog Health'
                 ],
                 reqd: 1
             },
@@ -776,7 +824,7 @@ function show_agile_reports_menu(frm) {
                 fieldtype: 'Link',
                 label: 'Sprint (for Sprint Reports)',
                 options: 'Agile Sprint',
-                depends_on: 'eval:["Sprint Velocity", "Burndown Chart"].includes(doc.report_type)',
+                depends_on: 'eval:["Sprint Velocity"].includes(doc.report_type)',
                 get_query: function() {
                     return {
                         filters: { project: frm.doc.name }

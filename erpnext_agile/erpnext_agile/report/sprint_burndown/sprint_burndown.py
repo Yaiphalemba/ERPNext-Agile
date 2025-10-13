@@ -32,23 +32,29 @@ def get_data(filters):
     else:
         sprint = frappe.get_doc("Agile Sprint", filters.get("sprint"))
 
+    project_filter = ""
+    project_value = None
+    if filters.get("project"):
+        project_filter = " AND project = %s"
+        project_value = filters.get("project")
+
     # Total story points
-    total_points = frappe.db.sql("""
+    total_points = frappe.db.sql(f"""
         SELECT SUM(story_points) FROM `tabTask`
-        WHERE current_sprint = %s
-    """, sprint.name)[0][0] or 0
+        WHERE current_sprint = %s {project_filter}
+    """, (sprint.name,) + ((project_value,) if project_value else ()))[0][0] or 0
 
     # Total number of tasks
-    total_tasks = frappe.db.sql("""
+    total_tasks = frappe.db.sql(f"""
         SELECT COUNT(*) FROM `tabTask`
-        WHERE current_sprint = %s
-    """, sprint.name)[0][0] or 0
+        WHERE current_sprint = %s {project_filter}
+    """, (sprint.name,) + ((project_value,) if project_value else ()))[0][0] or 0
 
-    # Calculate daily burndown
+    # ... rest of your code remains unchanged, just pass project_filter to other queries as well
     current_date = getdate(sprint.start_date)
     end_date = getdate(sprint.end_date)
     sprint_days = date_diff(end_date, current_date) + 1
-    daily_ideal = total_points / sprint_days
+    daily_ideal = total_points / sprint_days if sprint_days else 0
 
     data = []
     remaining_points = total_points
@@ -56,20 +62,17 @@ def get_data(filters):
 
     while current_date <= end_date:
         # Points completed today
-        completed_today = frappe.db.sql("""
+        completed_today = frappe.db.sql(f"""
             SELECT SUM(story_points) FROM `tabTask`
-            WHERE current_sprint = %s 
-            AND status = 'Completed'
-            AND completed_on = %s
-        """, (sprint.name, current_date))[0][0] or 0
+            WHERE current_sprint = %s AND status = 'Completed'
+            AND completed_on = %s {project_filter}
+        """, (sprint.name, current_date) + ((project_value,) if project_value else ()))[0][0] or 0
 
-        # Count of tasks completed today
-        tasks_completed = frappe.db.sql("""
+        tasks_completed = frappe.db.sql(f"""
             SELECT COUNT(*) FROM `tabTask`
-            WHERE current_sprint = %s
-            AND status = 'Completed'
-            AND completed_on = %s
-        """, (sprint.name, current_date))[0][0] or 0
+            WHERE current_sprint = %s AND status = 'Completed'
+            AND completed_on = %s {project_filter}
+        """, (sprint.name, current_date) + ((project_value,) if project_value else ()))[0][0] or 0
 
         remaining_points -= completed_today
         remaining_tasks -= tasks_completed

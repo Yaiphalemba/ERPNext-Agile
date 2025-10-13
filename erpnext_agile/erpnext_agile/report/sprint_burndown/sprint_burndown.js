@@ -37,6 +37,12 @@ frappe.query_reports["Sprint Burndown"] = {
     get_chart_data: function(columns, result) {
         if (!result || !result.length) return null;
 
+        let filters = frappe.query_report.get_filter_values();
+        
+        let chartTitle = "Sprint Burndown";
+        if (filters.sprint) chartTitle += ` - ${filters.sprint}`;
+        if (filters.project) chartTitle += ` (${filters.project})`;
+
         return {
             data: {
                 labels: result.map(d => d.date),
@@ -55,7 +61,8 @@ frappe.query_reports["Sprint Burndown"] = {
             },
             type: "line",
             height: 300,
-            colors: ["#fc8d59", "#91bfdb"]
+            colors: ["#fc8d59", "#91bfdb"],
+            title: chartTitle
         };
     }
 };
