@@ -1,15 +1,15 @@
 {
  "charts": [
   {
-   "chart_name": "Burndown Chart",
-   "label": "Burndown Chart"
+   "chart_name": "Sprint Burndown",
+   "label": "Sprint Burndown"
   },
   {
    "chart_name": "Project Summary",
    "label": "Project Summary"
   }
  ],
- "content": "[{\"id\":\"ylXrELGA7W\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Rapifuzz Project</span>\",\"col\":12}},{\"id\":\"NVOJsFQFrg\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"qPou3RcvRj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Project Summary\",\"col\":12}},{\"id\":\"z7CMIkwo3e\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OA-RJ2LwF0\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Burndown Chart\",\"col\":12}},{\"id\":\"aH0EmEKS2R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"J8bM92uVRm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"K888fRPY-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":4}},{\"id\":\"O4sBZjMJMI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":4}},{\"id\":\"vVM36L9SDk\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint\",\"col\":4}},{\"id\":\"PeozJZNeOH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Type\",\"col\":4}},{\"id\":\"T-TrtOtLjt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Status\",\"col\":4}},{\"id\":\"fSlSPuyu8V\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Priority\",\"col\":4}},{\"id\":\"SjjlqgJnkl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint Burndown\",\"col\":4}},{\"id\":\"C-gR0uUTt3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Workflow Scheme\",\"col\":4}},{\"id\":\"S7AYNLpiO-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Permission Scheme\",\"col\":4}}]",
+ "content": "[{\"id\":\"ylXrELGA7W\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Rapifuzz Project</span>\",\"col\":12}},{\"id\":\"NVOJsFQFrg\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"qPou3RcvRj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Project Summary\",\"col\":12}},{\"id\":\"z7CMIkwo3e\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"h2ciKMPZTL\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sprint Burndown\",\"col\":12}},{\"id\":\"aH0EmEKS2R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"J8bM92uVRm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"K888fRPY-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":4}},{\"id\":\"O4sBZjMJMI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":4}},{\"id\":\"vVM36L9SDk\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint\",\"col\":4}},{\"id\":\"PeozJZNeOH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Type\",\"col\":4}},{\"id\":\"T-TrtOtLjt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Status\",\"col\":4}},{\"id\":\"fSlSPuyu8V\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Priority\",\"col\":4}},{\"id\":\"SjjlqgJnkl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint Burndown\",\"col\":4}},{\"id\":\"C-gR0uUTt3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Workflow Scheme\",\"col\":4}},{\"id\":\"S7AYNLpiO-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Permission Scheme\",\"col\":4}}]",
  "creation": "2025-09-22 12:03:39.871687",
  "custom_blocks": [],
  "docstatus": 0,
@@ -22,7 +22,7 @@
  "is_hidden": 0,
  "label": "Agile Project",
  "links": [],
- "modified": "2025-10-10 10:16:50.916400",
+ "modified": "2025-10-14 11:00:22.175130",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Project",
@@ -32,7 +32,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 12.0,
+ "sequence_id": 7.0,
  "shortcuts": [
   {
    "color": "Grey",
@@ -43,15 +43,7 @@
    "type": "Report"
   },
   {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Project",
-   "link_to": "Project",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
+   "color": "Green",
    "doc_view": "List",
    "label": "Task",
    "link_to": "Task",
@@ -61,13 +53,13 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Issue Type",
-   "link_to": "Agile Issue Type",
+   "label": "Project",
+   "link_to": "Project",
    "stats_filter": "[]",
    "type": "DocType"
   },
   {
-   "color": "Grey",
+   "color": "Green",
    "doc_view": "List",
    "label": "Sprint",
    "link_to": "Agile Sprint",
@@ -75,7 +67,15 @@
    "type": "DocType"
   },
   {
-   "color": "Grey",
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Issue Type",
+   "link_to": "Agile Issue Type",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
    "doc_view": "List",
    "label": "Issue Status",
    "link_to": "Agile Issue Status",
@@ -83,15 +83,7 @@
    "type": "DocType"
   },
   {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Agile Workflow Scheme",
-   "link_to": "Agile Workflow Scheme",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
+   "color": "Green",
    "doc_view": "List",
    "label": "Issue Priority",
    "link_to": "Agile Issue Priority",
@@ -99,7 +91,15 @@
    "type": "DocType"
   },
   {
-   "color": "Grey",
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Agile Workflow Scheme",
+   "link_to": "Agile Workflow Scheme",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
    "doc_view": "List",
    "label": "Agile Permission Scheme",
    "link_to": "Agile Permission Scheme",
