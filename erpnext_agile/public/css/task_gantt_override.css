@@ -1,0 +1,11 @@
+/* styles.css or custom app's public/css */
+.color-ff4d4f { fill: #ff4d4f !important; } /* red for overdue */
+.color-52c41a { fill: #52c41a !important; } /* green for completed */
+.color-8c8c8c { fill: #8c8c8c !important; } /* grey for cancelled */
+.color-faad14 { fill: #f0e513 !important; } /* yellow for ongoing */
+.color-1890ff { fill: #1890ff !important; } /* default blue */
+.color-ff0000 { fill: #a8071a !important; } /* dark red for overdue body*/
+.color-ff0000 { fill: #029c07 !important; } /* dark green for completed body */
+.color-ff0000 { fill: #666967 !important; } /* dark grey for cancelled body */
+.color-ff0000 { fill: #c9a606 !important; } /* dark yellow for ongoing body */
+.color-ff0000 { fill: #0251bf !important; } /* dark blue for default body */
