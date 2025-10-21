@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-21 12:18:32.775096",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_number",
+  "action",
+  "expected_result",
+  "test_data"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_number",
+   "fieldtype": "Int",
+   "label": "Step #",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Small Text",
+   "label": "Action",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "expected_result",
+   "fieldtype": "Small Text",
+   "label": "Expected Result",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "test_data",
+   "fieldtype": "Data",
+   "label": "Test Data",
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-21 12:18:32.775096",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

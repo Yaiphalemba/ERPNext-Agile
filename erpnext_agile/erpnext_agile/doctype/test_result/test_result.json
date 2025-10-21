@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-21 15:52:44.065057",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_number",
+  "action",
+  "expected_result",
+  "column_break_1",
+  "actual_result",
+  "step_status",
+  "screenshot"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_number",
+   "fieldtype": "Int",
+   "label": "Step #",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Small Text",
+   "label": "Action",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "expected_result",
+   "fieldtype": "Small Text",
+   "label": "Expected Result",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_result",
+   "fieldtype": "Small Text",
+   "label": "Actual Result",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "step_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Run\nPass\nFail\nBlocked",
+   "default": "Not Run",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "screenshot",
+   "fieldtype": "Attach",
+   "label": "Screenshot"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-21 15:52:44.065057",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

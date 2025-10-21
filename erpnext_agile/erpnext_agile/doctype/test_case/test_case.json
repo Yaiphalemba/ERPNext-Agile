@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TC-{#####}",
+ "creation": "2025-10-21 12:17:21.249588",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "test_case_details",
+  "test_case_id",
+  "title",
+  "test_type",
+  "column_break_1",
+  "priority",
+  "status",
+  "estimated_time",
+  "section_break_2",
+  "description",
+  "preconditions",
+  "section_break_3",
+  "test_steps",
+  "section_break_4",
+  "project",
+  "tags",
+  "section_break_5",
+  "linked_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_case_details",
+   "fieldtype": "Section Break",
+   "label": "Test Case Details"
+  },
+  {
+   "fieldname": "test_case_id",
+   "fieldtype": "Data",
+   "label": "Test Case ID",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "test_type",
+   "fieldtype": "Select",
+   "label": "Test Type",
+   "options": "Manual\nAutomated\nPerformance\nSecurity\nRegression\nSmoke",
+   "default": "Manual",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Critical\nHigh\nMedium\nLow",
+   "default": "Medium",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nDeprecated",
+   "default": "Draft",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "estimated_time",
+   "fieldtype": "Duration",
+   "label": "Estimated Time"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "preconditions",
+   "fieldtype": "Text",
+   "label": "Preconditions"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Test Steps"
+  },
+  {
+   "fieldname": "test_steps",
+   "fieldtype": "Table",
+   "label": "Test Steps",
+   "options": "Test Step"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Project & Tags"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "tags",
+   "fieldtype": "Data",
+   "label": "Tags"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Traceability"
+  },
+  {
+   "fieldname": "linked_items",
+   "fieldtype": "Table",
+   "label": "Linked Items",
+   "options": "Test Case Link"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Test Execution",
+   "link_fieldname": "test_case"
+  }
+ ],
+ "grid_page_length": 50,
+ "modified": "2025-10-21 12:17:21.249588",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Case",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Lead",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Tester",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Viewer"
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "states": []
+}

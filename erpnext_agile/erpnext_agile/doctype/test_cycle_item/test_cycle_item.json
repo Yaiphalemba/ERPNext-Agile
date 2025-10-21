@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-21 12:32:57.665606",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "test_case",
+  "assigned_to",
+  "execution_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_case",
+   "fieldtype": "Link",
+   "label": "Test Case",
+   "options": "Test Case",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "execution_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Run\nPass\nFail\nBlocked\nSkipped",
+   "default": "Not Run",
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-21 12:32:57.665606",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Cycle Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
