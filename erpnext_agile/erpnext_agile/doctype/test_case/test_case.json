@@ -21,7 +21,9 @@
   "test_steps",
   "section_break_4",
   "project",
-  "tags",
+  "column_break_zykl",
+  "tags_labels",
+  "components",
   "section_break_5",
   "linked_items"
  ],
@@ -34,47 +36,47 @@
   {
    "fieldname": "test_case_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Test Case ID",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Title",
-   "reqd": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Title",
+   "reqd": 1
   },
   {
+   "default": "Manual",
    "fieldname": "test_type",
    "fieldtype": "Select",
-   "label": "Test Type",
-   "options": "Manual\nAutomated\nPerformance\nSecurity\nRegression\nSmoke",
-   "default": "Manual",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Test Type",
+   "options": "Manual\nAutomated\nPerformance\nSecurity\nRegression\nSmoke"
   },
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
   },
   {
+   "default": "Medium",
    "fieldname": "priority",
    "fieldtype": "Select",
-   "label": "Priority",
-   "options": "Critical\nHigh\nMedium\nLow",
-   "default": "Medium",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "options": "Critical\nHigh\nMedium\nLow"
   },
   {
+   "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nActive\nDeprecated",
-   "default": "Draft",
-   "in_standard_filter": 1
+   "options": "Draft\nActive\nDeprecated"
   },
   {
    "fieldname": "estimated_time",
@@ -84,7 +86,7 @@
   {
    "fieldname": "section_break_2",
    "fieldtype": "Section Break",
-   "label": "Description"
+   "label": "Description/Objective"
   },
   {
    "fieldname": "description",
@@ -115,14 +117,16 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Project",
-   "options": "Project",
-   "in_standard_filter": 1
+   "options": "Project"
   },
   {
-   "fieldname": "tags",
-   "fieldtype": "Data",
-   "label": "Tags"
+   "fieldname": "tags_labels",
+   "fieldtype": "Table MultiSelect",
+   "in_standard_filter": 1,
+   "label": "Tags/Labels",
+   "options": "Label"
   },
   {
    "fieldname": "section_break_5",
@@ -134,8 +138,19 @@
    "fieldtype": "Table",
    "label": "Linked Items",
    "options": "Test Case Link"
+  },
+  {
+   "fieldname": "column_break_zykl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table MultiSelect",
+   "label": "Components",
+   "options": "Component"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -143,8 +158,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "grid_page_length": 50,
- "modified": "2025-10-21 12:17:21.249588",
+ "modified": "2025-10-21 17:25:17.953026",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
@@ -199,6 +213,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "track_changes": 1,
- "states": []
+ "states": [],
+ "track_changes": 1
 }
