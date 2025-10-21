@@ -26,7 +26,8 @@ def get_columns():
 
 def get_data(filters):
     if not filters or not filters.get("sprint"):
-        sprint = frappe.db.get_value("Agile Sprint", {"sprint_state": "Active"}, "name")
+        sprint_name = frappe.db.get_value("Agile Sprint", {"sprint_state": "Active"}, "name")
+        sprint = frappe.get_doc("Agile Sprint", sprint_name) if sprint_name else None
         if not sprint:
             frappe.throw("No active sprint found. Please select a sprint.")
     else:
