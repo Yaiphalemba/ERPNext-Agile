@@ -35,7 +35,6 @@
   {
    "fieldname": "sprint_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Sprint Name",
    "reqd": 1
   },
@@ -48,6 +47,7 @@
    "fieldname": "sprint_state",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Sprint State",
    "options": "Future\nActive\nCompleted",
    "reqd": 1
@@ -141,7 +141,7 @@
    "link_fieldname": "current_sprint"
   }
  ],
- "modified": "2025-10-16 10:41:35.445035",
+ "modified": "2025-10-21 10:13:44.228002",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Sprint",
