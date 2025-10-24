@@ -37,7 +37,7 @@ frappe.ui.form.on('Test Execution', {
             }).addClass('btn-warning');
 
             // Create bug button for failed tests
-            if (frm.doc.docstatus === 1 && frm.doc.status === 'Fail') {
+            if (frm.doc.docstatus === 0 && frm.doc.status === 'Fail') {
                 let has_bugs = frm.doc.defects && frm.doc.defects.length > 0;
                 if (!has_bugs) {
                     frm.add_custom_button(__('Create Bug'), () => {
@@ -48,7 +48,7 @@ frappe.ui.form.on('Test Execution', {
                                 if (r.message) {
                                     frappe.show_alert({
                                         message: __('Bug {0} created', [r.message]),
-                                        indicator: 'red'
+                                        indicator: 'Green'
                                     });
                                     frm.reload_doc();
                                 }
@@ -65,7 +65,7 @@ frappe.ui.form.on('Test Execution', {
                         method: 'load_test_steps',
                         doc: frm.doc,
                         callback: () => {
-                            frm.reload_doc();
+                            frm.refresh_field('test_results');
                         }
                     });
                 }).addClass('btn-danger');
@@ -140,6 +140,12 @@ frappe.ui.form.on('Test Execution', {
             });
         }
     },
+
+    status(frm) {
+        if (frm.doc.status) {
+            mark_all_steps(frm, frm.doc.status);
+        }
+    },
     
     before_save(frm) {
         // Auto-calculate overall status from step results
@@ -175,20 +181,6 @@ frappe.ui.form.on('Test Result', {
             } else if (row.step_status === 'Blocked') {
                 grid_row.wrapper.addClass('blocked-row');
             }
-        }
-    }
-});
-
-frappe.ui.form.on('Test Execution Defect', {
-    bug_task(frm, cdt, cdn) {
-        // Auto-fetch bug status
-        let row = locals[cdt][cdn];
-        if (row.bug_task) {
-            frappe.db.get_value('Task', row.bug_task, 'status', (r) => {
-                if (r && r.status) {
-                    frappe.model.set_value(cdt, cdn, 'bug_status', r.status);
-                }
-            });
         }
     }
 });

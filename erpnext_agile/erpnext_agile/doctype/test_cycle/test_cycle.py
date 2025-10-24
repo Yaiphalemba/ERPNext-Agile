@@ -50,6 +50,7 @@ class TestCycle(Document):
         """Calculate metrics on update"""
         self.calculate_metrics()
     
+    @frappe.whitelist()
     def calculate_metrics(self):
         """Calculate and update execution metrics"""
         executions = frappe.get_all(
@@ -74,6 +75,7 @@ class TestCycle(Document):
         self.db_set('not_run_tests', not_run, update_modified=False)
         self.db_set('pass_rate', pass_rate, update_modified=False)
     
+    @frappe.whitelist()
     def get_execution_summary(self):
         """Get detailed execution summary"""
         return {
@@ -85,6 +87,7 @@ class TestCycle(Document):
             "pass_rate": self.pass_rate or 0
         }
     
+    @frappe.whitelist()
     def start_cycle(self):
         """Start the test cycle"""
         if self.status != "Not Started":
@@ -95,6 +98,7 @@ class TestCycle(Document):
         self.save()
         frappe.msgprint(f"Test Cycle {self.name} started")
     
+    @frappe.whitelist()
     def complete_cycle(self):
         """Complete the test cycle"""
         if self.status != "In Progress":
@@ -110,6 +114,7 @@ class TestCycle(Document):
         self.save()
         frappe.msgprint(f"Test Cycle {self.name} completed with {self.pass_rate}% pass rate")
     
+    @frappe.whitelist()
     def add_test_cases_bulk(self, test_cases):
         """Bulk add test cases to cycle"""
         for tc in test_cases:

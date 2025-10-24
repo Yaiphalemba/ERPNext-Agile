@@ -48,8 +48,7 @@ class TestExecution(Document):
         # Load test steps into test results if not already loaded
         if not self.test_results:
             self.load_test_steps()
-    
-    def on_submit(self):
+            
         """Auto-create bug if test fails"""
         # Update test cycle item status
         self.update_cycle_item_status()
@@ -59,7 +58,15 @@ class TestExecution(Document):
         
         # Create bug if failed and no defects linked
         if self.status == "Fail" and not self.defects:
-            self.create_bug()
+        # Set flag to indicate we're in submit context
+            self._in_submit = True
+            try:
+                bug_name = self.create_bug()
+                frappe.msgprint(f"Bug {bug_name} created automatically", alert=True, indicator="green")
+            finally:
+                # Always clear the flag
+                self._in_submit = False
+            
     
     def on_cancel(self):
         """Reset cycle item status on cancel"""
@@ -70,6 +77,7 @@ class TestExecution(Document):
         if self.test_case:
             frappe.db.set_value('Test Case', self.test_case, 'last_executed', self.execution_date or frappe.utils.now())
     
+    @frappe.whitelist()
     def load_test_steps(self):
         """Load test steps from test case"""
         test_case = frappe.get_doc("Test Case", self.test_case)
@@ -99,69 +107,117 @@ class TestExecution(Document):
         cycle = frappe.get_doc("Test Cycle", self.test_cycle)
         cycle.calculate_metrics()
     
+    @frappe.whitelist()
     def create_bug(self):
-        """Create a bug task automatically"""
-        project = frappe.db.get_value("Test Cycle", self.test_cycle, "project")
-        
-        # Get failed steps for bug description
-        failed_steps = []
-        for result in self.test_results:
-            if result.step_status == "Fail":
-                failed_steps.append(f"Step {result.step_number}: {result.action}")
-        
-        failed_steps_text = "\n".join(failed_steps) if failed_steps else "See test execution for details"
-        
-        bug = frappe.get_doc({
-            "doctype": "Task",
-            "subject": f"Bug: {self.test_case} - Test Failed",
-            "type": "Bug",
-            "project": project,
-            "description": f"""
-                <h3>Test Execution Failed</h3>
-                <p><b>Test Case:</b> {self.test_case}</p>
-                <p><b>Test Execution:</b> {self.name}</p>
-                <p><b>Environment:</b> {self.environment}</p>
-                <p><b>Build Version:</b> {self.build_version or 'N/A'}</p>
-                <p><b>Executed By:</b> {self.executed_by}</p>
-                <p><b>Execution Date:</b> {self.execution_date}</p>
+        """Create a bug task automatically - handles both manual and auto-submit calls"""
+        try:
+            # Get fresh document to avoid stale data issues
+            if getattr(self, "_in_submit", False):
+                # If called from before_submit, use self but be careful with saves
+                doc = self
+            else:
+                # If called from button click, get fresh document
+                doc = frappe.get_doc("Test Execution", self.name)
+            
+            # Validate required fields
+            if not doc.test_cycle:
+                frappe.throw("Test Cycle is required to create a bug")
+            
+            if not doc.test_case:
+                frappe.throw("Test Case is required to create a bug")
+            
+            project = frappe.db.get_value("Test Cycle", doc.test_cycle, "project")
+            if not project:
+                frappe.throw("Project not found for the selected Test Cycle")
+            
+            # Check if there are any failed steps
+            failed_steps = []
+            for result in doc.test_results:
+                if result.step_status == "Fail":
+                    failed_steps.append(f"Step {result.step_number}: {result.action}")
+            
+            failed_steps_text = "\n".join(failed_steps) if failed_steps else "No specific failed steps recorded. Check test execution for details."
+            
+            # Prepare bug data
+            bug_data = {
+                "doctype": "Task",
+                "subject": f"Bug: {doc.test_case} - Test Failed",
+                "type": "Bug",
+                "project": project,
+                "description": f"""
+                    <h3>Test Execution Failed</h3>
+                    <p><strong>Test Case:</strong> {frappe.utils.strip_html(str(doc.test_case))}</p>
+                    <p><strong>Test Execution:</strong> {doc.name}</p>
+                    <p><strong>Environment:</strong> {doc.environment or 'N/A'}</p>
+                    <p><strong>Build Version:</strong> {doc.build_version or 'N/A'}</p>
+                    <p><strong>Executed By:</strong> {doc.executed_by or 'N/A'}</p>
+                    <p><strong>Execution Date:</strong> {doc.execution_date or frappe.utils.nowdate()}</p>
+                    
+                    <h4>Failed Steps:</h4>
+                    <pre>{failed_steps_text}</pre>
+                    
+                    <h4>Additional Comments:</h4>
+                    <p>{doc.comments or 'No additional comments'}</p>
+                    
+                    <hr>
+                    <p><em>Auto-generated from Test Execution: {doc.name}</em></p>
+                """,
+                "priority": doc.get_bug_priority() if hasattr(doc, 'get_bug_priority') else "High",
+                "is_agile": 1,
+                "status": "Open"
+            }
+            
+            # Create bug document
+            bug = frappe.get_doc(bug_data)
+            
+            # Set agile fields if project has agile enabled
+            if frappe.db.get_value("Project", project, "enable_agile"):
+                agile_status = frappe.db.get_value(
+                    "Agile Issue Status", 
+                    {"status_category": "To Do"}, 
+                    "name"
+                )
+                if agile_status:
+                    bug.issue_status = agile_status
                 
-                <h4>Failed Steps:</h4>
-                <pre>{failed_steps_text}</pre>
+                issue_type = frappe.db.get_value(
+                    "Agile Issue Type", 
+                    {"issue_type_name": "Bug"}, 
+                    "name"
+                )
+                bug.issue_type = issue_type or "Bug"
                 
-                <h4>Comments:</h4>
-                {self.comments or 'No comments'}
-            """,
-            "priority": self.get_bug_priority(),
-            "is_agile": 1,
-            "status": "Open"
-        })
-        
-        # Check if project has agile enabled
-        if frappe.db.get_value("Project", project, "enable_agile"):
-            # Set agile fields
-            bug.issue_status = frappe.db.get_value(
-                "Agile Issue Status", 
-                {"status_category": "To Do"}, 
-                "name"
+                if hasattr(doc, 'get_agile_priority'):
+                    bug.issue_priority = doc.get_agile_priority()
+            
+            # Insert the bug
+            bug.insert(ignore_permissions=True)
+            
+            # Link bug back to execution
+            doc.append("defects", {
+                "bug_task": bug.name,
+                "severity": doc.get_severity_from_priority() if hasattr(doc, 'get_severity_from_priority') else "Medium"
+            })
+            
+            # Handle save differently based on context
+            if getattr(doc, "_in_submit", False):
+                # If in submit process, don't save - the parent submit will handle it
+                # Just update the in-memory document
+                pass
+            else:
+                # If called from button, save immediately
+                doc.save(ignore_permissions=True)
+                frappe.db.commit()
+            
+            return bug.name
+            
+        except Exception as e:
+            frappe.db.rollback()
+            frappe.log_error(
+                title=f"Error creating bug for Test Execution {self.name}",
+                message=frappe.get_traceback()
             )
-            bug.issue_type = frappe.db.get_value(
-                "Agile Issue Type", 
-                {"issue_type_name": "Bug"}, 
-                "name"
-            ) or "Bug"
-            bug.issue_priority = self.get_agile_priority()
-        
-        bug.insert(ignore_permissions=True)
-        
-        # Link bug back to execution
-        self.append("defects", {
-            "bug_task": bug.name,
-            "severity": self.get_severity_from_priority()
-        })
-        self.save()
-        
-        frappe.msgprint(f"Bug {bug.name} created automatically", alert=True, indicator="red")
-        return bug.name
+            frappe.throw(f"Failed to create bug: {str(e)}")
     
     def get_bug_priority(self):
         """Map test priority to bug priority"""

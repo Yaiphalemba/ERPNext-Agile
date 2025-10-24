@@ -45,10 +45,12 @@ class TestCase(Document):
             if not frappe.db.exists(link.link_doctype, link.link_name):
                 frappe.throw(f"Invalid link: {link.link_doctype} - {link.link_name}")
     
+    @frappe.whitelist()
     def get_execution_count(self):
         """Get total number of executions for this test case"""
         return frappe.db.count("Test Execution", {"test_case": self.name})
     
+    @frappe.whitelist()
     def get_last_execution_status(self):
         """Get the status of the last execution"""
         last_execution = frappe.db.get_value(
@@ -59,6 +61,7 @@ class TestCase(Document):
         )
         return last_execution if last_execution else ("Not Run", None)
     
+    @frappe.whitelist()
     def get_pass_rate(self):
         """Calculate pass rate for this test case"""
         executions = frappe.get_all(
@@ -75,6 +78,7 @@ class TestCase(Document):
         
         return (passed / total * 100) if total > 0 else 0
     
+    @frappe.whitelist()
     def clone_test_case(self):
         """Create a copy of this test case"""
         new_case = frappe.copy_doc(self)
