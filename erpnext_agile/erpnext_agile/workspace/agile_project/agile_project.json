@@ -9,7 +9,7 @@
    "label": "Project Summary"
   }
  ],
- "content": "[{\"id\":\"ylXrELGA7W\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Rapifuzz Project</span>\",\"col\":12}},{\"id\":\"NVOJsFQFrg\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"qPou3RcvRj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Project Summary\",\"col\":12}},{\"id\":\"z7CMIkwo3e\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OA-RJ2LwF0\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Burndown Chart\",\"col\":12}},{\"id\":\"aH0EmEKS2R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"J8bM92uVRm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Shortcuts</b></span>\",\"col\":12}},{\"id\":\"K888fRPY-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":4}},{\"id\":\"O4sBZjMJMI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":4}},{\"id\":\"vVM36L9SDk\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint\",\"col\":4}},{\"id\":\"PeozJZNeOH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Type\",\"col\":4}},{\"id\":\"T-TrtOtLjt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Status\",\"col\":4}},{\"id\":\"fSlSPuyu8V\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Priority\",\"col\":4}},{\"id\":\"-GULSY4VwQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Issue Component\",\"col\":4}},{\"id\":\"CSFVXVtZad\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Issue Label\",\"col\":4}},{\"id\":\"C-gR0uUTt3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Workflow Scheme\",\"col\":4}},{\"id\":\"S7AYNLpiO-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Permission Scheme\",\"col\":4}},{\"id\":\"XXaToBE65U\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project Summary\",\"col\":4}},{\"id\":\"SjjlqgJnkl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint Burndown\",\"col\":4}}]",
+ "content": "[{\"id\":\"ylXrELGA7W\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Rapifuzz Project</span>\",\"col\":12}},{\"id\":\"NVOJsFQFrg\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"qPou3RcvRj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Project Summary\",\"col\":12}},{\"id\":\"z7CMIkwo3e\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OA-RJ2LwF0\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Burndown Chart\",\"col\":12}},{\"id\":\"aH0EmEKS2R\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"J8bM92uVRm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>PM Shortcuts</b></span>\",\"col\":12}},{\"id\":\"K888fRPY-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":4}},{\"id\":\"O4sBZjMJMI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":4}},{\"id\":\"vVM36L9SDk\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint\",\"col\":4}},{\"id\":\"PeozJZNeOH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Issue Type\",\"col\":4}},{\"id\":\"-GULSY4VwQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Issue Component\",\"col\":4}},{\"id\":\"CSFVXVtZad\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Issue Label\",\"col\":4}},{\"id\":\"m3jZKV2ftm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Release Version\",\"col\":4}},{\"id\":\"C-gR0uUTt3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Workflow Scheme\",\"col\":4}},{\"id\":\"S7AYNLpiO-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agile Permission Scheme\",\"col\":4}},{\"id\":\"tKDxbI92ig\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cFL7oS1NTf\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>QA/Test Shortcuts</b></span>\",\"col\":12}},{\"id\":\"61mKTVXx3X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Test Cycle\",\"col\":4}},{\"id\":\"oMg1IXiKhL\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Test Case\",\"col\":4}},{\"id\":\"DCpnmQkYwA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Test Execution\",\"col\":4}},{\"id\":\"FCMwyI_cG7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"j6-cO7JteM\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Analytics/Reports</b></span>\",\"col\":12}},{\"id\":\"tU7Q_BOxpx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project Summary\",\"col\":4}},{\"id\":\"YeXPWmro9K\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delayed Tasks Summary\",\"col\":4}},{\"id\":\"tkbT0-DqVB\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sprint Burndown\",\"col\":4}},{\"id\":\"bccQORjRxt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Test Execution Summary\",\"col\":4}},{\"id\":\"-_KsInsSth\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Test Coverage\",\"col\":4}},{\"id\":\"-tIvEef2Nt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Defect Trends\",\"col\":4}}]",
  "creation": "2025-09-22 12:03:39.871687",
  "custom_blocks": [],
  "docstatus": 0,
@@ -22,7 +22,7 @@
  "is_hidden": 0,
  "label": "Agile Project",
  "links": [],
- "modified": "2025-10-21 10:02:16.965673",
+ "modified": "2025-10-24 10:09:08.236888",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Project",
@@ -43,11 +43,19 @@
    "type": "DocType"
   },
   {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Agile Release Version",
+   "link_to": "Agile Release Version",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Sprint Burndown",
-   "link_to": "Sprint Burndown",
-   "report_ref_doctype": "Agile Sprint",
+   "label": "Delayed Tasks Summary",
+   "link_to": "Delayed Tasks Summary",
+   "report_ref_doctype": "Task",
    "type": "Report"
   },
   {
@@ -59,10 +67,42 @@
    "type": "DocType"
   },
   {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Test Coverage",
+   "link_to": "Test Coverage",
+   "report_ref_doctype": "Test Case",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Test Cycle",
+   "link_to": "Test Cycle",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
    "color": "Green",
    "doc_view": "List",
    "label": "Sprint",
    "link_to": "Agile Sprint",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Defect Trends",
+   "link_to": "Defect Trends",
+   "report_ref_doctype": "Test Execution",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Test Case",
+   "link_to": "Test Case",
    "stats_filter": "[]",
    "type": "DocType"
   },
@@ -77,18 +117,26 @@
   {
    "color": "Green",
    "doc_view": "List",
-   "label": "Issue Status",
-   "link_to": "Agile Issue Status",
+   "label": "Test Execution",
+   "link_to": "Test Execution",
    "stats_filter": "[]",
    "type": "DocType"
   },
   {
-   "color": "Green",
+   "color": "Grey",
    "doc_view": "List",
-   "label": "Issue Priority",
-   "link_to": "Agile Issue Priority",
-   "stats_filter": "[]",
-   "type": "DocType"
+   "label": "Project Summary",
+   "link_to": "Project Summary",
+   "report_ref_doctype": "Project",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sprint Burndown",
+   "link_to": "Sprint Burndown",
+   "report_ref_doctype": "Agile Sprint",
+   "type": "Report"
   },
   {
    "color": "Green",
@@ -97,6 +145,14 @@
    "link_to": "Agile Issue Component",
    "stats_filter": "[]",
    "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Test Execution Summary",
+   "link_to": "Test Execution Summary",
+   "report_ref_doctype": "Test Execution",
+   "type": "Report"
   },
   {
    "color": "Green",
@@ -121,14 +177,6 @@
    "link_to": "Agile Permission Scheme",
    "stats_filter": "[]",
    "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Project Summary",
-   "link_to": "Project Summary",
-   "report_ref_doctype": "Project",
-   "type": "Report"
   }
  ],
  "title": "Agile Project"

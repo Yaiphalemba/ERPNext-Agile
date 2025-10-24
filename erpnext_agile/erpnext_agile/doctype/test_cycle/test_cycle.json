@@ -1,0 +1,281 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TCYCLE-{#####}",
+ "creation": "2025-10-21 12:17:40.078404",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cycle_details",
+  "cycle_id",
+  "title",
+  "status",
+  "column_break_1",
+  "project",
+  "sprint",
+  "release_version",
+  "section_break_2",
+  "description",
+  "section_break_3",
+  "planned_start_date",
+  "planned_end_date",
+  "column_break_2",
+  "actual_start_date",
+  "actual_end_date",
+  "section_break_4",
+  "owner_user",
+  "column_break_rihi",
+  "project_manager",
+  "section_break_5",
+  "test_cases",
+  "metrics_section",
+  "total_tests",
+  "passed_tests",
+  "failed_tests",
+  "column_break_3",
+  "blocked_tests",
+  "not_run_tests",
+  "pass_rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "cycle_details",
+   "fieldtype": "Section Break",
+   "label": "Cycle Details"
+  },
+  {
+   "fieldname": "cycle_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Cycle ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "Not Started",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Not Started\nIn Progress\nCompleted\nOn Hold"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sprint",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Sprint",
+   "options": "Agile Sprint"
+  },
+  {
+   "fieldname": "release_version",
+   "fieldtype": "Link",
+   "label": "Release Version",
+   "options": "Agile Release Version"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Timeline"
+  },
+  {
+   "fieldname": "planned_start_date",
+   "fieldtype": "Date",
+   "label": "Planned Start Date"
+  },
+  {
+   "fieldname": "planned_end_date",
+   "fieldtype": "Date",
+   "label": "Planned End Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_start_date",
+   "fieldtype": "Date",
+   "label": "Actual Start Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_end_date",
+   "fieldtype": "Date",
+   "label": "Actual End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Ownership"
+  },
+  {
+   "default": "__user",
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "QA Lead",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Test Cases"
+  },
+  {
+   "fieldname": "test_cases",
+   "fieldtype": "Table",
+   "label": "Test Cases",
+   "options": "Test Cycle Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "metrics_section",
+   "fieldtype": "Section Break",
+   "label": "Execution Metrics"
+  },
+  {
+   "fieldname": "total_tests",
+   "fieldtype": "Int",
+   "label": "Total Tests",
+   "read_only": 1
+  },
+  {
+   "fieldname": "passed_tests",
+   "fieldtype": "Int",
+   "label": "Passed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "failed_tests",
+   "fieldtype": "Int",
+   "label": "Failed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "blocked_tests",
+   "fieldtype": "Int",
+   "label": "Blocked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "not_run_tests",
+   "fieldtype": "Int",
+   "label": "Not Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pass_rate",
+   "fieldtype": "Percent",
+   "label": "Pass Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rihi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "project.custom_project_manager",
+   "fieldname": "project_manager",
+   "fieldtype": "Link",
+   "label": "Project Manager",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Test Execution",
+   "link_fieldname": "test_cycle"
+  }
+ ],
+ "modified": "2025-10-23 16:30:15.644492",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Cycle",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Lead",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Tester",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Viewer"
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

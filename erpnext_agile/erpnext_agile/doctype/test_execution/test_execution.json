@@ -1,0 +1,223 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TEXEC-{#####}",
+ "creation": "2025-10-21 12:17:57.613411",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "execution_details",
+  "execution_id",
+  "test_cycle",
+  "test_case",
+  "column_break_1",
+  "executed_by",
+  "execution_date",
+  "status",
+  "section_break_2",
+  "environment",
+  "build_version",
+  "column_break_2",
+  "execution_time",
+  "section_break_3",
+  "test_results",
+  "section_break_4",
+  "comments",
+  "section_break_5",
+  "defects",
+  "section_break_6",
+  "attachments"
+ ],
+ "fields": [
+  {
+   "fieldname": "execution_details",
+   "fieldtype": "Section Break",
+   "label": "Execution Details"
+  },
+  {
+   "fieldname": "execution_id",
+   "fieldtype": "Data",
+   "label": "Execution ID",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "test_cycle",
+   "fieldtype": "Link",
+   "label": "Test Cycle",
+   "options": "Test Cycle",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "test_case",
+   "fieldtype": "Link",
+   "label": "Test Case",
+   "options": "Test Case",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "executed_by",
+   "fieldtype": "Link",
+   "label": "Executed By",
+   "options": "User",
+   "default": "__user",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "execution_date",
+   "fieldtype": "Datetime",
+   "label": "Execution Date",
+   "default": "now",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Run\nPass\nFail\nBlocked\nSkipped",
+   "default": "Not Run",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Environment"
+  },
+  {
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "label": "Environment",
+   "options": "Dev\nStaging\nProduction",
+   "default": "Dev"
+  },
+  {
+   "fieldname": "build_version",
+   "fieldtype": "Data",
+   "label": "Build Version"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "execution_time",
+   "fieldtype": "Duration",
+   "label": "Execution Time"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Test Results"
+  },
+  {
+   "fieldname": "test_results",
+   "fieldtype": "Table",
+   "label": "Step Results",
+   "options": "Test Result"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "comments",
+   "fieldtype": "Text Editor",
+   "label": "Comments"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Linked Defects"
+  },
+  {
+   "fieldname": "defects",
+   "fieldtype": "Table",
+   "label": "Defects",
+   "options": "Test Execution Defect"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Attachments"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-21 12:17:57.613411",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Execution",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Lead",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Tester",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Viewer"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "states": []
+}

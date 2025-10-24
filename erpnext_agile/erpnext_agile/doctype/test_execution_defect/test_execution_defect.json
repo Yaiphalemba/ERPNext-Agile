@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-21 12:19:09.311321",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bug_task",
+  "severity",
+  "bug_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "bug_task",
+   "fieldtype": "Link",
+   "label": "Bug Task",
+   "options": "Task",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Critical\nMajor\nMinor",
+   "default": "Minor",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "bug_status",
+   "fieldtype": "Data",
+   "label": "Bug Status",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-21 12:19:09.311321",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Execution Defect",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

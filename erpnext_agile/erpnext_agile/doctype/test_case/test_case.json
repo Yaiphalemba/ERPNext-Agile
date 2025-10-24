@@ -1,0 +1,231 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TC-{#####}",
+ "creation": "2025-10-21 12:17:21.249588",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "test_case_details",
+  "test_case_id",
+  "title",
+  "test_type",
+  "estimated_time",
+  "column_break_1",
+  "project",
+  "priority",
+  "status",
+  "last_executed",
+  "section_break_2",
+  "description",
+  "preconditions",
+  "section_break_3",
+  "test_steps",
+  "section_break_4",
+  "column_break_opup",
+  "tags_labels",
+  "column_break_zykl",
+  "components",
+  "section_break_5",
+  "linked_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_case_details",
+   "fieldtype": "Section Break",
+   "label": "Test Case Details"
+  },
+  {
+   "fieldname": "test_case_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Test Case ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "Manual",
+   "fieldname": "test_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Test Type",
+   "options": "Manual\nAutomated\nPerformance\nSecurity\nRegression\nSmoke"
+  },
+  {
+   "fieldname": "estimated_time",
+   "fieldtype": "Duration",
+   "label": "Estimated Time"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "options": "Critical\nHigh\nMedium\nLow"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nDeprecated"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "preconditions",
+   "fieldtype": "Text",
+   "label": "Preconditions"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Test Steps"
+  },
+  {
+   "fieldname": "test_steps",
+   "fieldtype": "Table",
+   "label": "Test Steps",
+   "options": "Test Step"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Tags & Components"
+  },
+  {
+   "fieldname": "tags_labels",
+   "fieldtype": "Table MultiSelect",
+   "in_standard_filter": 1,
+   "label": "Tags/Labels",
+   "options": "Label"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Traceability"
+  },
+  {
+   "fieldname": "linked_items",
+   "fieldtype": "Table",
+   "label": "Linked Items",
+   "options": "Test Case Link"
+  },
+  {
+   "fieldname": "column_break_zykl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table MultiSelect",
+   "label": "Components",
+   "options": "Component"
+  },
+  {
+   "fieldname": "last_executed",
+   "fieldtype": "Datetime",
+   "label": "Last Executed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_opup",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Test Execution",
+   "link_fieldname": "test_case"
+  }
+ ],
+ "modified": "2025-10-24 09:49:25.302187",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Test Case",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Lead",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Tester",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QA Viewer"
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
