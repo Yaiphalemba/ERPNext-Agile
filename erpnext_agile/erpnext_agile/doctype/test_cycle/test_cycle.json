@@ -25,6 +25,8 @@
   "actual_end_date",
   "section_break_4",
   "owner_user",
+  "column_break_rihi",
+  "project_manager",
   "section_break_5",
   "test_cases",
   "metrics_section",
@@ -45,25 +47,25 @@
   {
    "fieldname": "cycle_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Cycle ID",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "title",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Title",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
+   "default": "Not Started",
    "fieldname": "status",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "Not Started\nIn Progress\nCompleted\nOn Hold",
-   "default": "Not Started",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Not Started\nIn Progress\nCompleted\nOn Hold"
   },
   {
    "fieldname": "column_break_1",
@@ -72,22 +74,23 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Project",
    "options": "Project",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "sprint",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Sprint",
-   "options": "Agile Sprint",
-   "in_standard_filter": 1
+   "options": "Agile Sprint"
   },
   {
    "fieldname": "release_version",
-   "fieldtype": "Data",
-   "label": "Release Version"
+   "fieldtype": "Link",
+   "label": "Release Version",
+   "options": "Agile Release Version"
   },
   {
    "fieldname": "section_break_2",
@@ -136,11 +139,11 @@
    "label": "Ownership"
   },
   {
+   "default": "__user",
    "fieldname": "owner_user",
    "fieldtype": "Link",
    "label": "QA Lead",
-   "options": "User",
-   "default": "__user"
+   "options": "User"
   },
   {
    "fieldname": "section_break_5",
@@ -154,10 +157,10 @@
    "options": "Test Cycle Item"
   },
   {
+   "collapsible": 1,
    "fieldname": "metrics_section",
    "fieldtype": "Section Break",
-   "label": "Execution Metrics",
-   "collapsible": 1
+   "label": "Execution Metrics"
   },
   {
    "fieldname": "total_tests",
@@ -198,6 +201,18 @@
    "fieldtype": "Percent",
    "label": "Pass Rate",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rihi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "project.custom_project_manager",
+   "fieldname": "project_manager",
+   "fieldtype": "Link",
+   "label": "Project Manager",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -208,7 +223,7 @@
    "link_fieldname": "test_cycle"
   }
  ],
- "modified": "2025-10-21 12:17:40.078404",
+ "modified": "2025-10-23 16:30:15.644492",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Cycle",
@@ -261,6 +276,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "track_changes": 1,
- "states": []
+ "states": [],
+ "track_changes": 1
 }

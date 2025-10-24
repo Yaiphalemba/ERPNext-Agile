@@ -178,13 +178,18 @@ doc_events = {
         "validate": "erpnext_agile.agile_doctype_controllers.task_validate",
         "on_update": [
             "erpnext_agile.agile_doctype_controllers.task_on_update",
-            # "erpnext_agile.version_control.task_on_update_version_control"
+            "erpnext_agile.test_management.events.task_check_test_coverage"
         ],
-        "after_insert": [
-            "erpnext_agile.agile_doctype_controllers.task_after_insert",
-            # "erpnext_agile.version_control.task_after_insert_version_control"
-        ],
+        "after_insert": "erpnext_agile.agile_doctype_controllers.task_after_insert",
         "on_trash": "erpnext_agile.agile_doctype_controllers.task_on_trash"
+    },
+    "Test Execution": {
+        "on_submit": "erpnext_agile.test_management.events.test_execution_on_submit",
+        "on_cancel": "erpnext_agile.test_management.events.test_execution_on_cancel"
+    },
+    "Test Cycle": {
+        "on_update": "erpnext_agile.test_management.events.test_cycle_on_update",
+        "validate": "erpnext_agile.test_management.events.test_cycle_validate"
     }
 }
 
@@ -212,7 +217,9 @@ doc_events = {
 scheduler_events = {
     "hourly": [
         "erpnext_agile.scheduler_events.hourly.update_sprint_metrics",
-        "erpnext_agile.scheduler_events.hourly.create_burndown_entries"
+        "erpnext_agile.scheduler_events.hourly.create_burndown_entries",
+        "erpnext_agile.test_management.scheduler.update_cycle_metrics",
+        "erpnext_agile.test_management.scheduler.send_test_reminders"
     ],
     "daily": [
         "erpnext_agile.scheduler_events.daily.send_sprint_digest",

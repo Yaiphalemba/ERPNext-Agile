@@ -1,26 +1,151 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{project}-{version_name}",
  "creation": "2025-10-21 16:29:46.553056",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "version_name"
+  "version_name",
+  "project",
+  "status",
+  "repository",
+  "release_owner",
+  "environment",
+  "column_break_osoi",
+  "release_type",
+  "start_date",
+  "release_date",
+  "branch_name",
+  "commit_sha",
+  "build_url",
+  "release_notes_section",
+  "release_notes",
+  "linked_tasks_and_test_cases_section",
+  "linked_tasks",
+  "linked_test_cases"
  ],
  "fields": [
   {
    "fieldname": "version_name",
    "fieldtype": "Data",
-   "label": "Version Name"
+   "label": "Version Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "release_type",
+   "fieldtype": "Select",
+   "label": "Release Type",
+   "options": "\nMajor\nMinor\nPatch\nHotfix",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nPlanned\nUnreleased\nReleased\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "release_date",
+   "fieldtype": "Date",
+   "label": "Release Date"
+  },
+  {
+   "fetch_from": "project.repository",
+   "fieldname": "repository",
+   "fieldtype": "Link",
+   "label": "Repository",
+   "options": "Repository",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.repository",
+   "fieldname": "branch_name",
+   "fieldtype": "Link",
+   "label": "Branch Name",
+   "options": "Repository Branch"
+  },
+  {
+   "depends_on": "eval:doc.repository",
+   "fieldname": "commit_sha",
+   "fieldtype": "Data",
+   "label": "Commit SHA",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "project.custom_project_manager",
+   "fieldname": "release_owner",
+   "fieldtype": "Link",
+   "label": "Release Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "release_notes",
+   "fieldtype": "Text Editor",
+   "label": "Release Notes"
+  },
+  {
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "label": "Environment",
+   "options": "\nStaging\nDevelopment\nProduction"
+  },
+  {
+   "fieldname": "build_url",
+   "fieldtype": "Data",
+   "label": "Build URL"
+  },
+  {
+   "fieldname": "column_break_osoi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "release_notes_section",
+   "fieldtype": "Section Break",
+   "label": "Release Notes"
+  },
+  {
+   "depends_on": "eval:doc.project",
+   "fieldname": "linked_tasks_and_test_cases_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Tasks and Test Cases"
+  },
+  {
+   "fieldname": "linked_tasks",
+   "fieldtype": "Table",
+   "label": "Linked Tasks",
+   "options": "Release Linked Task"
+  },
+  {
+   "fieldname": "linked_test_cases",
+   "fieldtype": "Table",
+   "label": "Linked Test Cases",
+   "options": "Release Linked Test Case"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-21 16:54:51.138825",
+ "modified": "2025-10-23 16:22:58.526742",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Release Version",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -39,5 +164,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

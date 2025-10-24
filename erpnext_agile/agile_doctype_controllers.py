@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 
 def task_validate(doc, method):
     """Extend Task validation for agile features"""

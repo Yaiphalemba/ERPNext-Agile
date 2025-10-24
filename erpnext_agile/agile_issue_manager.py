@@ -89,6 +89,7 @@ class AgileIssueManager:
         """, (project_key, project_doc.name, f"{project_key}-%"), as_dict=True)
         
         next_num = (last_issue[0].get('last_num') or 0) + 1
+        frappe.msgprint(f"Generated issue key: {project_key}-{next_num}", alert=True, indicator="green")
         return f"{project_key}-{next_num}"
     
     def is_agile_project(self, project_name):
@@ -104,7 +105,7 @@ class AgileIssueManager:
                 'Agile Issue Status', 
                 {'status_category': 'To Do'}, 
                 'name',
-                order_by='sort_order'
+                order_by='sort_order asc'
             )
             return default_status
         return 'Open'  # Fallback to standard Task status

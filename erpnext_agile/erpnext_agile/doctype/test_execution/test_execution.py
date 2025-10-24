@@ -65,6 +65,10 @@ class TestExecution(Document):
         """Reset cycle item status on cancel"""
         self.update_cycle_item_status("Not Run")
         self.update_cycle_metrics()
+        
+    def before_save(self):
+        if self.test_case:
+            frappe.db.set_value('Test Case', self.test_case, 'last_executed', self.execution_date or frappe.utils.now())
     
     def load_test_steps(self):
         """Load test steps from test case"""
