@@ -27,12 +27,6 @@ frappe.ui.form.on('Test Case', {
             // Show metrics
             show_test_metrics(frm);
         }
-        
-        // Auto-add empty step if none exist
-        if (!frm.doc.test_steps || frm.doc.test_steps.length === 0) {
-            frm.add_child('test_steps', {});
-            frm.refresh_field('test_steps');
-        }
     },
     
     project(frm) {
@@ -43,7 +37,8 @@ frappe.ui.form.on('Test Case', {
                 if (row.link_doctype === 'Task') {
                     return {
                         filters: {
-                            'project': frm.doc.project
+                            'project': frm.doc.project,
+                            'is_group': 0
                         }
                     };
                 }
@@ -80,12 +75,22 @@ function create_test_execution(frm) {
                 fieldname: 'test_cycle',
                 options: 'Test Cycle',
                 reqd: 1,
-                get_query: () => {
-                    return {
-                        filters: {
-                            'status': ['in', ['Not Started', 'In Progress']]
-                        }
-                    };
+                get_query: () => ({
+                    filters: { 'status': ['in', ['Not Started', 'In Progress']] }
+                }),
+                onchange: function() {
+                    const test_cycle = d.get_value('test_cycle');
+                    if (test_cycle) {
+                        frappe.db.get_doc('Test Cycle', test_cycle)
+                            .then(doc => {
+                                if (doc.release_version) {
+                                    d.set_value('build_version', doc.release_version);
+                                }
+                            })
+                            .catch(() => {
+                                frappe.msgprint(__('Unable to fetch Test Cycle details'));
+                            });
+                    }
                 }
             },
             {
@@ -99,13 +104,14 @@ function create_test_execution(frm) {
                 fieldtype: 'Select',
                 label: __('Environment'),
                 fieldname: 'environment',
-                options: 'Dev\nStaging\nProduction',
-                default: 'Dev'
+                options: 'Development\nStaging\nProduction',
+                default: 'Development'
             },
             {
-                fieldtype: 'Data',
+                fieldtype: 'Link',
                 label: __('Build Version'),
-                fieldname: 'build_version'
+                fieldname: 'build_version',
+                options: 'Agile Release Version'
             }
         ],
         primary_action_label: __('Create'),
@@ -132,6 +138,7 @@ function create_test_execution(frm) {
             });
         }
     });
+
     d.show();
 }
 

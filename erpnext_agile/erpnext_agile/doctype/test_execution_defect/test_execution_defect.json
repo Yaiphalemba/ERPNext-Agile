@@ -12,37 +12,38 @@
  ],
  "fields": [
   {
+   "columns": 4,
    "fieldname": "bug_task",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Bug Task",
    "options": "Task",
-   "reqd": 1,
-   "in_list_view": 1,
-   "columns": 4
+   "reqd": 1
   },
   {
+   "columns": 2,
+   "default": "Minor",
    "fieldname": "severity",
    "fieldtype": "Select",
-   "label": "Severity",
-   "options": "Critical\nMajor\nMinor",
-   "default": "Minor",
    "in_list_view": 1,
-   "columns": 2
+   "label": "Severity",
+   "options": "Critical\nMajor\nMinor"
   },
   {
+   "columns": 2,
+   "fetch_from": "bug_task.issue_status",
    "fieldname": "bug_status",
    "fieldtype": "Data",
-   "label": "Bug Status",
-   "read_only": 1,
    "in_list_view": 1,
-   "columns": 2
+   "label": "Bug Status",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-21 12:19:09.311321",
+ "modified": "2025-10-24 15:11:39.603464",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Execution Defect",

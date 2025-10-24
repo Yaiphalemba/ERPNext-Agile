@@ -6,7 +6,7 @@ from frappe import _
 from frappe.utils import now_datetime
 
 @frappe.whitelist()
-def create_test_execution(test_case, test_cycle, assigned_to=None, environment="Dev", build_version=None):
+def create_test_execution(test_case, test_cycle, assigned_to=None, environment="Development", build_version=None):
     """Create a test execution from test case"""
     # Validate inputs
     if not frappe.db.exists("Test Case", test_case):
@@ -59,13 +59,15 @@ def bulk_create_executions(test_cycle):
                 "executed_by": item.assigned_to or frappe.session.user,
                 "execution_date": now_datetime(),
                 "status": "Not Run",
-                "environment": "Dev"
+                "environment": "Development"
             })
             
             execution.insert()
             created_count += 1
-    
-    return created_count
+    if created_count == 0:
+        return '0'
+    else:
+        return created_count
 
 @frappe.whitelist()
 def get_test_execution_summary(test_cycle):
