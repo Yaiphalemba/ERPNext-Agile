@@ -115,7 +115,7 @@ function show_workflow_tester(frm) {
 
 function test_workflow_transitions(frm, task, dialog) {
     frappe.call({
-        method: 'erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_available_transitions',
+        method: 'erpnext_agile.erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_available_transitions',
         args: {
             workflow_scheme: frm.doc.name,
             from_status: task.issue_status,
@@ -164,7 +164,7 @@ function test_workflow_transitions(frm, task, dialog) {
 
 function show_workflow_diagram(frm) {
     frappe.call({
-        method: 'erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_workflow_diagram',
+        method: 'erpnext_agile.erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_workflow_diagram',
         args: {
             workflow_scheme: frm.doc.name
         },

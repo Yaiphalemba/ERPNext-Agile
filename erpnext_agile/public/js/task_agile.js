@@ -1152,31 +1152,37 @@ function compare_version(task_name, version_number) {
 }
 
 function add_workflow_transition_buttons(frm) {
-    // Get allowed transitions
-    frappe.call({
-        method: 'erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_available_transitions',
-        args: {
-            workflow_scheme: get_workflow_scheme(frm),
-            from_status: frm.doc.issue_status,
-            task_name: frm.doc.name
-        },
-        callback: (r) => {
-            if (r.message && r.message.length > 0) {
-                // Add workflow menu
-                frm.page.add_inner_button(__('Workflow'), null, 'workflow-menu');
-                
-                r.message.forEach(transition => {
-                    frm.page.add_inner_button(
-                        transition.transition_name,
-                        () => {
-                            show_transition_dialog(frm, transition);
-                        },
-                        'workflow-menu'
-                    );
-                });
+    // First get the workflow scheme from project
+    frappe.db.get_value('Project', frm.doc.project, 'workflow_scheme')
+        .then(result => {
+            const workflow_scheme = result.message.workflow_scheme;
+            
+            if (!workflow_scheme) {
+                console.log('No workflow scheme found for project');
+                return;
             }
-        }
-    });
+            frappe.call({
+                method: 'erpnext_agile.erpnext_agile.doctype.agile_workflow_scheme.agile_workflow_scheme.get_available_transitions',
+                args: {
+                    workflow_scheme: workflow_scheme,
+                    from_status: frm.doc.issue_status,
+                    task_name: frm.doc.name
+                },
+                callback: (r) => {
+                    if (r.message && r.message.length > 0) {
+                        r.message.forEach(transition => {
+                            frm.page.add_inner_button(
+                                transition.transition_name,
+                                () => {
+                                    show_transition_dialog(frm, transition);
+                                },
+                                'Workflow'
+                            );
+                        });
+                    }
+                }
+            });
+        });
 }
 
 function show_transition_dialog(frm, transition) {
@@ -1203,7 +1209,7 @@ function show_transition_dialog(frm, transition) {
         primary_action_label: __('Transition'),
         primary_action(values) {
             frappe.call({
-                method: 'erpnext_agile.doctype.agile_workflow_scheme.task_workflow_integration.transition_task_status',
+                method: 'erpnext_agile.overrides.task.transition_task_status',
                 args: {
                     task_name: frm.doc.name,
                     to_status: transition.to_status,
@@ -1235,7 +1241,7 @@ function filter_status_dropdown(frm) {
         if (r && r.workflow_scheme) {
             // Get allowed statuses
             frappe.call({
-                method: 'erpnext_agile.doctype.agile_workflow_scheme.task_workflow_integration.get_task_allowed_statuses',
+                method: 'erpnext_agile..overrides.task.get_task_allowed_statuses',
                 args: {
                     task_name: frm.doc.name
                 },
@@ -1264,12 +1270,12 @@ function filter_status_dropdown(frm) {
     });
 }
 
-function get_workflow_scheme(frm) {
-    // This will be called synchronously, so we need to have it pre-fetched
-    // or make the API call handle missing workflow scheme
-    if (frm.doc.project) {
-        let project = frappe.get_doc('Project', frm.doc.project);
-        return project ? project.workflow_scheme : null;
-    }
-    return null;
-}
+// function get_workflow_scheme(frm) {
+//     // This will be called synchronously, so we need to have it pre-fetched
+//     // or make the API call handle missing workflow scheme
+//     if (frm.doc.project) {
+//         let project = frappe.get_doc('Project', frm.doc.project);
+//         return project ? project.workflow_scheme : null;
+//     }
+//     return null;
+// }
