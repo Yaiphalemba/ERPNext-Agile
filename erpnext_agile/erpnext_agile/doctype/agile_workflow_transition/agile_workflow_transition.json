@@ -11,7 +11,9 @@
   "to_status",
   "required_permission",
   "column_break_hxsn",
-  "condition"
+  "condition",
+  "section_break_yohb",
+  "condition_helper"
  ],
  "fields": [
   {
@@ -53,11 +55,22 @@
    "fieldtype": "Code",
    "label": "Condition",
    "options": "Python"
+  },
+  {
+   "fieldname": "section_break_yohb",
+   "fieldtype": "Section Break",
+   "label": "Condition Helper"
+  },
+  {
+   "fieldname": "condition_helper",
+   "fieldtype": "HTML",
+   "label": "Condition Helper",
+   "options": "<p><b>Available Variables:</b></p>\n                    <ul>\n                        <li><code>doc</code> - The task document</li>\n                        <li><code>doc.issue_type</code> - Issue type (e.g., \"Epic\", \"Story\")</li>\n                        <li><code>doc.issue_priority</code> - Priority</li>\n                        <li><code>doc.story_points</code> - Story points</li>\n                        <li><code>doc.assigned_to_users</code> - List of assignees</li>\n                        <li><code>doc.project</code> - Project name</li>\n                        <li><code>len()</code> - Get length of list</li>\n                        <li><code>today()</code> - Today's date</li>\n                    </ul>\n                    <p><b>Example Conditions:</b></p>\n                    <ul>\n                        <li><code>doc.issue_type == \"Epic\"</code></li>\n                        <li><code>doc.story_points and doc.story_points &gt;= 5</code></li>\n                        <li><code>len(doc.assigned_to_users) &gt; 0</code></li>\n                        <li><code>doc.issue_priority == \"Critical\"</code></li>\n                        <li><code>doc.project == \"My Project\"</code></li>\n                    </ul>"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-10-30 10:23:03.930184",
+ "modified": "2025-10-30 15:11:42.444082",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Workflow Transition",

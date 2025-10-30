@@ -18,39 +18,6 @@ frappe.ui.form.on('Agile Workflow Scheme', {
 });
 
 frappe.ui.form.on('Agile Workflow Transition', {
-    condition(frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
-        
-        // Show helper dialog for condition
-        if (row.condition) {
-            frappe.msgprint({
-                title: __('Condition Syntax'),
-                indicator: 'blue',
-                message: `
-                    <p><b>Available Variables:</b></p>
-                    <ul>
-                        <li><code>doc</code> - The task document</li>
-                        <li><code>doc.issue_type</code> - Issue type (e.g., "Epic", "Story")</li>
-                        <li><code>doc.issue_priority</code> - Priority</li>
-                        <li><code>doc.story_points</code> - Story points</li>
-                        <li><code>doc.assigned_to_users</code> - List of assignees</li>
-                        <li><code>doc.project</code> - Project name</li>
-                        <li><code>len()</code> - Get length of list</li>
-                        <li><code>today()</code> - Today's date</li>
-                    </ul>
-                    <p><b>Example Conditions:</b></p>
-                    <ul>
-                        <li><code>doc.issue_type == "Epic"</code></li>
-                        <li><code>doc.story_points and doc.story_points >= 5</code></li>
-                        <li><code>len(doc.assigned_to_users) > 0</code></li>
-                        <li><code>doc.issue_priority == "Critical"</code></li>
-                        <li><code>doc.project == "My Project"</code></li>
-                    </ul>
-                `
-            });
-        }
-    },
-    
     transitions_add(frm, cdt, cdn) {
         // Auto-fill transition name based on statuses
         let row = locals[cdt][cdn];

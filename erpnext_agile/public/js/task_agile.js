@@ -29,7 +29,7 @@ frappe.ui.form.on('Task', {
                 show_restore_dialog(frm);
             }, __('Version Control'));
             
-            if (frm.doc.issue_status && !frm.is_new()) {
+            if (frm.doc.issue_status) {
                 // Add workflow transition buttons
                 add_workflow_transition_buttons(frm);
             }
