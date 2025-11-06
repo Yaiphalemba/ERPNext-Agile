@@ -197,14 +197,6 @@ def create_agile_custom_fields():
                 'depends_on': 'eval:doc.is_agile==1'
             },
             {
-                'fieldname': 'github_repo',
-                'label': 'GitHub Repository',
-                'fieldtype': 'Link',
-                'options': 'Repository',
-                'insert_after': 'github_integration_section',
-                'depends_on': 'eval:doc.is_agile==1'
-            },
-            {
                 'fieldname': 'github_issue_number',
                 'label': 'GitHub Issue #',
                 'fieldtype': 'Int',
