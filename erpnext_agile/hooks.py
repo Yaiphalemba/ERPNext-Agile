@@ -61,7 +61,10 @@ app_include_js = "/assets/erpnext_agile/js/task_gantt_override.js"
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
     "Task": "public/js/task_agile.js",
-    "Project": "public/js/project_agile.js"
+    "Project": [
+            "public/js/project_agile.js",
+            "public/js/project_time_tracking.js"
+        ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -178,10 +181,15 @@ doc_events = {
         "validate": "erpnext_agile.agile_doctype_controllers.task_validate",
         "on_update": [
             "erpnext_agile.agile_doctype_controllers.task_on_update",
+            "erpnext_agile.project_time_tracking.update_project_user_time_on_task_update",
             "erpnext_agile.test_management.events.task_check_test_coverage"
         ],
         "after_insert": "erpnext_agile.agile_doctype_controllers.task_after_insert",
         "on_trash": "erpnext_agile.agile_doctype_controllers.task_on_trash"
+    },
+    "Agile Issue Work Log": {
+        "after_insert": "erpnext_agile.project_time_tracking.update_project_user_time_on_work_log",
+        "on_update": "erpnext_agile.project_time_tracking.update_project_user_time_on_work_log"
     },
     "Test Execution": {
         "on_submit": "erpnext_agile.test_management.events.test_execution_on_submit",
@@ -219,6 +227,7 @@ scheduler_events = {
         "erpnext_agile.scheduler_events.hourly.update_sprint_metrics",
         "erpnext_agile.scheduler_events.hourly.create_burndown_entries",
         "erpnext_agile.test_management.scheduler.update_cycle_metrics",
+        "erpnext_agile.project_time_tracking.recalculate_all_project_times_scheduled",
         "erpnext_agile.test_management.scheduler.send_test_reminders"
     ],
     "daily": [
