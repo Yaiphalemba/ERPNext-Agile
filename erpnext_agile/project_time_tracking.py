@@ -165,7 +165,7 @@ class ProjectTimeTracker:
         statuses = [t.status for t in user_tasks]
         
         # If any task is being worked on
-        if 'Working' in statuses:
+        if any(status in statuses for status in ['Working', 'Overdue', 'Pending Review']):
             return 'Working'
         
         # If all completed
