@@ -152,6 +152,16 @@ after_install = "erpnext_agile.after_install.setup_agile"
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
+permission_query_conditions = {
+    "Project": "erpnext_agile.overrides.project.get_project_permission_query_conditions",
+    "Task": "erpnext_agile.overrides.project.get_task_permission_query_conditions"
+}
+
+has_permission = {
+    "Project": "erpnext_agile.overrides.project.has_project_permission",
+    "Task": "erpnext_agile.overrides.project.has_task_permission"
+}
+
 # DocType Class
 # ---------------
 # Override standard doctype classes
