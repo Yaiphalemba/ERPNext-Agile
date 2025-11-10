@@ -423,3 +423,221 @@ def force_recalculate_project_times(project_name):
         }
     except Exception as e:
         frappe.throw(f"Error recalculating times: {str(e)}")
+        
+# erpnext_agile/project_time_tracking.py - ADD THIS SECTION
+
+def send_time_overallocation_alert(project_name, user, time_data):
+    """
+    Send email alert when user exceeds time allocation
+    Triggered when custom_time_utilized > custom_time_allocated
+    """
+    try:
+        total_time = time_data['total_time_spent']
+        total_allocated = time_data['total_estimated']
+        
+        # Only send if actually over allocated
+        if total_allocated <= 0 or total_time <= total_allocated:
+            return
+        
+        # Calculate overage
+        overage_seconds = total_time - total_allocated
+        overage_percentage = (overage_seconds / total_allocated) * 100
+        
+        # Format for display
+        total_time_display = format_seconds(total_time)
+        allocated_display = format_seconds(total_allocated)
+        overage_display = format_seconds(overage_seconds)
+        
+        project = frappe.get_doc('Project', project_name)
+        user_doc = frappe.get_doc('User', user)
+        
+        # Get project manager to cc
+        cc_list = [project.owner]
+        if project.custom_project_manager:
+            cc_list.append(project.custom_project_manager)
+        cc_list = list(set(cc_list))  # Remove duplicates
+        
+        # Build email content
+        subject = f"Time Allocation Alert - {project.project_name}"
+        
+        html = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0;">Time Allocation Alert</h2>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                        <p>Hi <strong>{user_doc.full_name}</strong>,</p>
+                        
+                        <p>You have exceeded your allocated time for project <strong>{project.project_name}</strong>.</p>
+                        
+                        <!-- Alert Box -->
+                        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #856404;">
+                                <strong>You are overallocated by:</strong>
+                            </p>
+                            <p style="margin: 10px 0 0 0; font-size: 18px; color: #d39e00;">
+                                <strong>{overage_display}</strong> ({overage_percentage:.1f}%)
+                            </p>
+                        </div>
+                        
+                        <!-- Time Breakdown -->
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                <td style="padding: 12px; font-weight: bold;">Allocated Time</td>
+                                <td style="padding: 12px; text-align: right; font-size: 16px; color: #007bff;">
+                                    <strong>{allocated_display}</strong>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                <td style="padding: 12px; font-weight: bold;">Time Logged</td>
+                                <td style="padding: 12px; text-align: right; font-size: 16px; color: #dc3545;">
+                                    <strong>{total_time_display}</strong>
+                                </td>
+                            </tr>
+                            <tr style="background: #fff3cd;">
+                                <td style="padding: 12px; font-weight: bold;">Overage</td>
+                                <td style="padding: 12px; text-align: right; font-size: 16px; color: #d39e00;">
+                                    <strong>{overage_display}</strong>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Action Items -->
+                        <div style="background: #e7f3ff; border-left: 4px solid #0066ff; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 0 0 10px 0;"><strong>Recommended Actions:</strong></p>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>Review your task estimates</li>
+                                <li>Check if there are low-priority tasks that can be deferred</li>
+                                <li>Communicate with your project manager about extended timeline</li>
+                                <li>Consider splitting tasks to future sprints</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Project Link -->
+                        <div style="margin: 20px 0;">
+                            <a href="{frappe.utils.get_url()}/app/project/{project.name}" 
+                               style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                                View Project Details
+                            </a>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 0.9em; margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 20px;">
+                            This is an automated alert from ERPNext Agile. 
+                            You can manage your project assignments and time allocation in the project dashboard.
+                        </p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        # Send email
+        frappe.sendmail(
+            recipients=[user],
+            cc=cc_list,
+            subject=subject,
+            message=html,
+            delayed=False
+        )
+        
+        frappe.logger().info(
+            f"Overallocation alert sent to {user} for project {project_name}. "
+            f"Overage: {overage_display} ({overage_percentage:.1f}%)"
+        )
+        
+    except Exception as e:
+        frappe.log_error(f"Error sending overallocation alert: {str(e)}")
+
+
+# ============================================
+# MODIFY update_project_user_metrics TO INCLUDE ALERTS
+# ============================================
+
+def update_project_user_metrics(project_name, user):
+    """
+    Utility function to update a specific user's metrics in Project
+    Uses database direct update for performance
+    Sends alerts if time allocation exceeded
+    """
+    try:
+        # Calculate metrics
+        tracker = ProjectTimeTracker(project_name)
+        user_tasks = tracker.get_user_tasks(user)
+        
+        if not user_tasks:
+            return
+        
+        time_data = tracker.calculate_user_time_metrics(user, user_tasks)
+        status = tracker.determine_user_status(user_tasks)
+        
+        # Calculate time_allocated from original estimates
+        time_allocated = time_data['total_estimated']
+        time_utilized = time_data['total_time_spent']
+        
+        # Get old values to detect state change
+        old_values = frappe.db.sql("""
+            SELECT custom_time_utilized, custom_time_allocated
+            FROM `tabProject User`
+            WHERE parent = %s AND user = %s
+        """, (project_name, user), as_dict=True)
+        
+        was_over = False
+        if old_values:
+            old_util = old_values[0].get('custom_time_utilized', 0) or 0
+            old_alloc = old_values[0].get('custom_time_allocated', 0) or 0
+            was_over = old_util > old_alloc
+        
+        is_now_over = time_utilized > time_allocated if time_allocated > 0 else False
+        
+        # Use direct database update
+        frappe.db.sql("""
+            UPDATE `tabProject User`
+            SET custom_time_utilized = %s,
+                custom_time_allocated = %s,
+                custom_designated_task_status = %s,
+                modified = NOW(),
+                modified_by = %s
+            WHERE parent = %s AND user = %s
+        """, (
+            time_utilized,
+            time_allocated,
+            status,
+            frappe.session.user,
+            project_name,
+            user
+        ))
+        
+        frappe.db.commit()
+        
+        # Send alert if state changed
+        if is_now_over and not was_over:
+            # User just exceeded allocation
+            send_time_overallocation_alert(project_name, user, time_data)
+        
+        # Clear the cache
+        frappe.clear_cache()
+            
+    except Exception as e:
+        frappe.log_error(f"Error updating project user metrics: {str(e)}")
+
+
+def format_seconds(seconds):
+    """Format seconds to human readable time"""
+    if not seconds:
+        return "0m"
+    
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    
+    if hours > 0 and minutes > 0:
+        return f"{hours}h {minutes}m"
+    elif hours > 0:
+        return f"{hours}h"
+    else:
+        return f"{minutes}m"
