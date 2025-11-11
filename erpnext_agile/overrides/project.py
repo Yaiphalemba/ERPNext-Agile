@@ -1,8 +1,7 @@
-# erpnext_agile/overrides/project.py
 import frappe
 from frappe import _
-import re
 from erpnext.projects.doctype.project.project import Project
+
 
 class AgileProject(Project):
     def validate(self):
@@ -24,24 +23,12 @@ class AgileProject(Project):
 
 @frappe.whitelist()
 def get_project_permission_query_conditions(user):
-    """
-    Permission query for Project doctype
-    
-    Rules:
-    - Administrators and Project Managers: See all projects
-    - Others: See only projects they are part of (via users child table)
-    """
-    
-    # Admins and System Managers see everything
+    """Permission query for Project doctype"""
     if "Administrator" in frappe.get_roles(user):
-        return ""  # Empty string means no restrictions
-    
-    # Project Managers see all projects
+        return ""
     if "Projects Manager" in frappe.get_roles(user):
         return ""
-    
-    # Everyone else sees only projects they're in (via users table)
-    # Use backticks to escape the email properly
+
     user_quoted = f"'{user}'"
     return f"""
         (`tabProject`.name IN (
@@ -52,46 +39,22 @@ def get_project_permission_query_conditions(user):
 
 
 def has_project_permission(doc, perm_type=None, user=None):
-    """
-    Permission validator for Project doctype
-    
-    Rules:
-    - Administrators: Full access
-    - Project Managers: Full access
-    - Project Owner: Full access
-    - Users in Project's users table: Read/Write access
-    - Others: No access
-    """
-    
-    if not user:
-        user = frappe.session.user
-    
-    # Admins have full access
+    """Permission validator for Project doctype"""
+    user = user or frappe.session.user
+
     if "Administrator" in frappe.get_roles(user):
         return True
-    
-    # Project Managers have full access
     if "Projects Manager" in frappe.get_roles(user):
         return True
-    
-    # Project owner has full access
     if doc.owner == user:
         return True
-    
-    # Check if user is in the project's users child table
+
     user_in_project = frappe.db.exists(
         'Project User',
-        {
-            'parent': doc.name,
-            'user': user
-        }
+        {'parent': doc.name, 'user': user}
     )
-    
-    if user_in_project:
-        return True
-    
-    # No access for others
-    return False
+
+    return bool(user_in_project)
 
 
 # ============================================
@@ -101,95 +64,58 @@ def has_project_permission(doc, perm_type=None, user=None):
 @frappe.whitelist()
 def get_task_permission_query_conditions(user):
     """
-    Permission query for Task doctype (Agile Issues)
-    
-    Rules:
-    - Administrators: See all tasks
-    - Project Managers: See all tasks
-    - Others: See only tasks they are assigned to (via assigned_to_users table)
-              OR tasks in projects they are part of
+    Only show tasks assigned to the logged-in user.
+    Admins and Project Managers can see everything.
     """
-    
-    # Admins see everything
     if "Administrator" in frappe.get_roles(user):
         return ""
-    
-    # Project Managers see everything
     if "Projects Manager" in frappe.get_roles(user):
         return ""
-    
-    # Everyone else sees:
-    # 1. Tasks they are assigned to
-    # 2. Tasks in projects they are part of
+
+    user_quoted = frappe.db.escape(user)
+    """Show only tasks assigned to the user"""
     return f"""
-        (
-            `tabTask`.name IN (
-                SELECT parent FROM `tabAssigned To Users`
-                WHERE user = {frappe.db.escape(user)}
-            )
-            OR
-            `tabTask`.project IN (
-                SELECT parent FROM `tabProject User`
-                WHERE user = {frappe.db.escape(user)}
+        (`tabTask`.name IN (
+            SELECT parent
+            FROM `tabAssigned To Users`
+            WHERE user = {user_quoted}
             )
         )
     """
+    
+    """Alternatively, to show tasks assigned to the user or tasks in projects where the user is a project user:"""
+    # return f"""
+    #     (`tabTask`.name IN (
+    #         SELECT parent
+    #         FROM `tabAssigned To Users`
+    #         WHERE user = {user_quoted}
+    #         )
+    #     OR
+    #     `tabTask`.project IN (
+    #         SELECT parent
+    #         FROM `tabProject User`
+    #         WHERE user = {user_quoted}
+    #         )
+    #     )
+    # """
 
 
 def has_task_permission(doc, perm_type=None, user=None):
     """
-    Permission validator for Task doctype (Agile Issues)
-    
-    Rules:
-    - Administrators: Full access
-    - Project Managers: Full access
-    - Task Creator/Owner: Full access
-    - Assigned Users: Read/Write access
-    - Users in Project.users table: Read access only
-    - Others: No access
+    Restrict access to only assigned users.
+    Admins and Project Managers have full access.
     """
-    
-    if not user:
-        user = frappe.session.user
-    
-    # Admins have full access
+    user = user or frappe.session.user
+
     if "Administrator" in frappe.get_roles(user):
         return True
-    
-    # Project Managers have full access
     if "Projects Manager" in frappe.get_roles(user):
         return True
-    
-    # Task owner/creator has full access
-    if doc.owner == user:
+
+    # Allow if user is assigned
+    if frappe.db.exists('Assigned To Users', {'parent': doc.name, 'user': user}):
         return True
-    
-    # Check if user is assigned to this task
-    user_assigned = frappe.db.exists(
-        'Assigned To Users',
-        {
-            'parent': doc.name,
-            'user': user
-        }
-    )
-    
-    if user_assigned:
-        return True
-    
-    # Check if user is in the project (secondary permission)
-    if doc.project:
-        user_in_project = frappe.db.exists(
-            'Project User',
-            {
-                'parent': doc.project,
-                'user': user
-            }
-        )
-        
-        if user_in_project:
-                return True
-    
-    # No access for others
+
     return False
 
 
@@ -199,20 +125,8 @@ def has_task_permission(doc, perm_type=None, user=None):
 
 def task_list_query_filter(filters, user):
     """
-    Optional: Additional filtering for Task list view
-    Ensures users only see tasks they should have access to
+    Optional: Additional filtering for Task list view.
+    - All users can see all tasks (handled by permission query above)
+    - Custom logic can be added here if you want to further narrow list results
     """
-    if "Administrator" in frappe.get_roles(user):
-        return filters
-    
-    if "Projects Manager" in frappe.get_roles(user):
-        return filters
-    
-    # For regular users, add filter to show only their tasks
-    if not filters:
-        filters = {}
-    
-    # This is handled by get_task_permission_query_conditions
-    # but can be overridden here for additional logic
-    
     return filters
