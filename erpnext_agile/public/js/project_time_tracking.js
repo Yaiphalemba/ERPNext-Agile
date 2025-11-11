@@ -194,7 +194,7 @@ function render_time_summary_table(container, summaries) {
             <table class="table table-bordered table-hover" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>
-                        <th style="min-width: 220px;">User</th>
+                        <th style="min-width: 200px;">User</th>
                         <th style="width: 100px;">Status</th>
                         <th style="width: 110px;">Time Logged</th>
                         <th style="width: 110px;">Estimated</th>
