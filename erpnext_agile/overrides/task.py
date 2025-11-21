@@ -2,6 +2,7 @@
 import frappe
 from frappe import _
 import re
+from frappe.desk.form.assign_to import add, clear
 from erpnext.projects.doctype.task.task import Task
 from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
     log_issue_activity,
@@ -233,6 +234,13 @@ class AgileTask(Task):
         
         if added:
             assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in added]
+            user_id = list(added)
+            add({
+                    "assign_to": user_id,
+                    "doctype": "Task",
+                    "name": self.name,
+                    "description": self.subject
+                })
             log_issue_activity(
                 self.name,
                 f"assigned to {', '.join(assignee_names)}",
@@ -241,6 +249,7 @@ class AgileTask(Task):
         
         if removed:
             assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in removed]
+            clear("Task", self.name)
             log_issue_activity(
                 self.name,
                 f"unassigned from {', '.join(assignee_names)}",
