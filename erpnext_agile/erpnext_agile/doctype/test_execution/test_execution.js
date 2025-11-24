@@ -132,7 +132,7 @@ frappe.ui.form.on('Test Execution', {
                         return {
                             filters: {
                                 'project': r.project,
-                                'status': 'Active'
+                                'status': 'Approved'
                             }
                         };
                     });

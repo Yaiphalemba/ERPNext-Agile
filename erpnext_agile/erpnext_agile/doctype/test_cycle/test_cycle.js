@@ -72,7 +72,7 @@ frappe.ui.form.on('Test Cycle', {
             return {
                 filters: {
                     'project': frm.doc.project,
-                    'status': 'Active'
+                    'status': 'Approved'
                 }
             };
         };
@@ -117,7 +117,7 @@ function show_test_case_selector(frm) {
                             doctype: 'Test Case',
                             filters: {
                                 'project': frm.doc.project,
-                                'status': 'Active'
+                                'status': 'Approved'
                             },
                             fields: ['name', 'title', 'priority'],
                             limit_page_length: 0

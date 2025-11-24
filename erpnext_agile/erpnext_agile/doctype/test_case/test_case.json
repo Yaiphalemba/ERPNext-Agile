@@ -38,11 +38,11 @@
   {
    "fieldname": "test_case_id",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Test Case ID",
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "title",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -87,12 +87,15 @@
    "options": "Critical\nHigh\nMedium\nLow"
   },
   {
+   "columns": 1,
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nActive\nDeprecated"
+   "options": "Draft\nApproved\nDeprecated"
   },
   {
    "fieldname": "section_break_2",
@@ -171,7 +174,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2025-10-24 09:49:25.302187",
+ "modified": "2025-11-24 17:31:38.234537",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",

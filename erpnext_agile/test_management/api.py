@@ -106,7 +106,7 @@ def get_test_coverage(project):
         INNER JOIN `tabTest Case` tc ON tcl.parent = tc.name
         WHERE tcl.link_doctype = 'Task'
         AND tc.project = %s
-        AND tc.status = 'Active'
+        AND tc.status = 'Approved'
     """, project)
     
     tasks_with_tests = len(linked_tasks)
