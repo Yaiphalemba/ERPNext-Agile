@@ -32,9 +32,16 @@
    "link_fieldname": "label",
    "parent_doctype": "Task",
    "table_fieldname": "custom_labels"
+  },
+  {
+   "is_child_table": 1,
+   "link_doctype": "Label",
+   "link_fieldname": "label",
+   "parent_doctype": "Test Case",
+   "table_fieldname": "tags_labels"
   }
  ],
- "modified": "2025-10-16 10:40:24.878121",
+ "modified": "2025-11-25 14:30:46.344330",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Issue Label",

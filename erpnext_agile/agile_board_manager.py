@@ -60,7 +60,8 @@ class AgileBoardManager:
                 issue['assignees'] = assignees
                 
                 board_columns[status]['issues'].append(issue)
-                board_columns[status]['total_points'] += issue.get('story_points', 0)
+                story_points = issue.get('story_points') or 0
+                board_columns[status]['total_points'] += int(float(story_points))
         
         active_sprint = frappe.get_all('Agile Sprint',
             filters={'project': project, 'sprint_state': 'Active'},

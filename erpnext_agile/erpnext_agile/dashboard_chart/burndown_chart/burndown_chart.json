@@ -6,7 +6,7 @@
  "custom_options": "{\"type\": \"line\", \"height\": 280, \"colors\": [\"#fc8d59\", \"#91bfdb\"], \"axisOptions\": {\"shortenYAxisNumbers\": 1}}",
  "docstatus": 0,
  "doctype": "Dashboard Chart",
- "filters_json": "{\"sprint\":\"Sprint 1: Authentication & Basic Sync\"}",
+ "filters_json": "{}",
  "group_by_type": "Count",
  "idx": 3,
  "is_public": 0,
