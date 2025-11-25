@@ -12,7 +12,18 @@ frappe.ui.form.on('Project', {
             let suggested_key = generate_project_key(frm.doc.project_name);
             frm.set_value('project_key', suggested_key);
         }
-    }
+    },
+
+    project_name: function (frm) {
+		if (frm.doc.__islocal) {
+			// add missing " " arg in split method
+			let parts = frm.doc.project_name.split(" ");
+			let abbr = $.map(parts, function (p) {
+				return p ? p.substr(0, 1) : null;
+			}).join("");
+			frm.set_value("project_key", abbr);
+		}
+	}
 });
 
 function add_agile_project_buttons(frm) {

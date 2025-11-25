@@ -1,0 +1,41 @@
+{
+ "chart_name": "Burndown Chart",
+ "chart_type": "Report",
+ "creation": "2025-10-09 17:46:38.642198",
+ "currency": "",
+ "custom_options": "{\"type\": \"line\", \"height\": 280, \"colors\": [\"#fc8d59\", \"#91bfdb\"], \"axisOptions\": {\"shortenYAxisNumbers\": 1}}",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "filters_json": "{\"sprint\":\"Sprint 1: Authentication & Basic Sync\"}",
+ "group_by_type": "Count",
+ "idx": 3,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2025-11-24 10:42:51.754779",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Burndown Chart",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "Sprint Burndown",
+ "roles": [
+  {
+   "role": "Project Manager"
+  },
+  {
+   "role": "Projects Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "Administrator"
+  }
+ ],
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Line",
+ "use_report_chart": 1,
+ "y_axis": []
+}
