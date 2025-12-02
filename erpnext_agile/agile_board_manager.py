@@ -18,7 +18,7 @@ class AgileBoardManager:
         workflow_statuses = self.get_workflow_statuses(project)
         
         # Build filters based on view type
-        filters = {
+        filters = {total_points = sum(issue.get
             'project': project,
             'is_agile': 1,
             'status': ['!=', 'Cancelled']
