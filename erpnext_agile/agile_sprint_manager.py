@@ -162,7 +162,7 @@ class AgileSprintManager:
             fields=['story_points', 'issue_status']
         )
         
-        total_points = sum(issue.get('story_points', 0) for issue in sprint_issues)
+        total_points = sum(int(issue.get('story_points', 0)) for issue in sprint_issues)
         
         done_statuses = self.get_done_statuses()
         completed_points = sum(
