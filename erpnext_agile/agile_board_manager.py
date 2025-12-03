@@ -18,7 +18,7 @@ class AgileBoardManager:
         workflow_statuses = self.get_workflow_statuses(project)
         
         # Build filters based on view type
-        filters = {total_points = sum(issue.get
+        filters = {
             'project': project,
             'is_agile': 1,
             'status': ['!=', 'Cancelled']
@@ -208,7 +208,7 @@ class AgileBoardManager:
                     }
                 
                 swimlanes[swimlane_key][status]['issues'].append(issue)
-                swimlanes[swimlane_key][status]['total_points'] += issue.get('story_points', 0)
+                swimlanes[swimlane_key][status]['total_points'] += float(issue.get('story_points', 0))
         
         return {
             'swimlanes': swimlanes,
@@ -241,18 +241,18 @@ class AgileBoardManager:
             
             for issue in column['issues']:
                 metrics['total_issues'] += 1
-                metrics['total_points'] += issue.get('story_points', 0)
+                metrics['total_points'] += float(issue.get('story_points', 0))
                 
                 # By status category
                 metrics['by_status_category'][status_category]['count'] += 1
-                metrics['by_status_category'][status_category]['points'] += issue.get('story_points', 0)
+                metrics['by_status_category'][status_category]['points'] += float(issue.get('story_points', 0))
                 
                 # By type
                 issue_type = issue.get('issue_type') or 'Untyped'
                 if issue_type not in metrics['by_type']:
                     metrics['by_type'][issue_type] = {'count': 0, 'points': 0}
                 metrics['by_type'][issue_type]['count'] += 1
-                metrics['by_type'][issue_type]['points'] += issue.get('story_points', 0)
+                metrics['by_type'][issue_type]['points'] += float(issue.get('story_points', 0))
                 
                 # By priority
                 priority = issue.get('issue_priority') or 'Unassigned'
@@ -337,7 +337,7 @@ class AgileBoardManager:
         )
         
         completed_count = len(completed)
-        completed_points = sum(issue.get('story_points', 0) for issue in completed)
+        completed_points = sum(float(issue.get('story_points', 0)) for issue in completed)
         
         return {
             'issues_per_day': round(completed_count / days_elapsed, 2),
