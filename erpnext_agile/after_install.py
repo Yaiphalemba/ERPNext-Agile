@@ -117,7 +117,8 @@ def create_agile_custom_fields():
             {
                 'fieldname': 'story_points',
                 'label': 'Story Points',
-                'fieldtype': 'Int',
+                'fieldtype': 'Select',
+                'options': '\n'.join([str(i) for i in range(1, 21)]),  # Options from 1 to 20
                 'insert_after': 'agile_planning_section',
                 'depends_on': 'eval:doc.is_agile==1'
             },
