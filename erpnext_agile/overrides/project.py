@@ -64,7 +64,10 @@ def has_project_permission(doc, perm_type=None, user=None):
 @frappe.whitelist()
 def get_task_permission_query_conditions(user):
     """
-    Only show tasks assigned to the logged-in user.
+    Show tasks that are either:
+    1. Assigned to the logged-in user
+    2. Created by the logged-in user (owner)
+    
     Admins and Project Managers can see everything.
     """
     if "Administrator" in frappe.get_roles(user):
@@ -73,13 +76,16 @@ def get_task_permission_query_conditions(user):
         return ""
 
     user_quoted = frappe.db.escape(user)
-    """Show only tasks assigned to the user"""
+    
+    # Show tasks assigned to user OR created by user
     return f"""
-        (`tabTask`.name IN (
-            SELECT parent
-            FROM `tabAssigned To Users`
-            WHERE user = {user_quoted}
+        (
+            `tabTask`.name IN (
+                SELECT parent
+                FROM `tabAssigned To Users`
+                WHERE user = {user_quoted}
             )
+            OR `tabTask`.owner = {user_quoted}
         )
     """
     
