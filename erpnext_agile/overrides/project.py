@@ -114,7 +114,16 @@ def has_task_permission(doc, perm_type=None, user=None):
     if "Projects User" in frappe.get_roles(user):
         return True
 
-    # Allow if user is assigned
+    # Allow creation if user is in the project
+    if perm_type == "create":
+        if doc.project:
+            return frappe.db.exists('Project User', {
+                'parent': doc.project, 
+                'user': user
+            })
+        return True  # Allow if no project specified
+
+    # For existing tasks, check assignment
     if frappe.db.exists('Assigned To Users', {'parent': doc.name, 'user': user}):
         return True
 
