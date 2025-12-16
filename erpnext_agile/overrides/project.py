@@ -67,6 +67,7 @@ def get_task_permission_query_conditions(user):
     Show tasks that are either:
     1. Assigned to the logged-in user
     2. Created by the logged-in user (owner)
+    3. Watched by the logged-in user (Agile Issue Watcher)
     
     Admins and Project Managers can see everything.
     """
@@ -86,6 +87,11 @@ def get_task_permission_query_conditions(user):
                 WHERE user = {user_quoted}
             )
             OR `tabTask`.owner = {user_quoted}
+            OR `tabTask`.name IN (
+                SELECT parent
+                FROM `tabAgile Issue Watcher`
+                WHERE user = {user_quoted}
+            )
         )
     """
     
