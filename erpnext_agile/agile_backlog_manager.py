@@ -230,8 +230,8 @@ class AgileBacklogManager:
         metrics = {
             'total_items': len(backlog_items),
             'total_points': sum(flt(item.get('story_points', 0)) for item in backlog_items),
-            'estimated_items': sum(1 for item in backlog_items if item.get('story_points', 0) > 0),
-            'unestimated_items': sum(1 for item in backlog_items if not item.get('story_points') or item.get('story_points') == 0),
+            'estimated_items': sum(1 for item in backlog_items if flt(item.get('story_points', 0)) > 0),
+            'unestimated_items': sum(1 for item in backlog_items if not flt(item.get('story_points', 0)) or flt(item.get('story_points', 0)) == 0),
             'by_priority': {},
             'by_type': {},
             'ready_for_sprint': 0
