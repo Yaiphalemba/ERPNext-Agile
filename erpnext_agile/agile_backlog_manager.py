@@ -248,7 +248,7 @@ class AgileBacklogManager:
             metrics['by_type'][issue_type] = metrics['by_type'].get(issue_type, 0) + 1
             
             # Ready for sprint (has story points and acceptance criteria)
-            if item.get('story_points', 0) > 0 and item.get('description'):
+            if flt(item.get('story_points', 0)) > 0 and item.get('description'):
                 metrics['ready_for_sprint'] += 1
         
         # Calculate estimation percentage
