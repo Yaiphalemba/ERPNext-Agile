@@ -323,7 +323,7 @@ def map_agile_status_to_task_status(agile_status):
     status_mapping = {
         "Open": "Open",
         "In Progress": "Working", 
-        "In Review": "Pending Review",
+        "QA Review": "Pending Review",
         "Testing": "Pending Review",
         "Resolved": "Pending Review",
         "Closed": "Completed",
