@@ -3,16 +3,16 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Features](#features)
-3. [Installation Guide](#installation-guide)
-4. [Quick Start](#quick-start)
-5. [User Guide](#user-guide)
-6. [API Reference](#api-reference)
-7. [Developer Guide](#developer-guide)
-8. [Configuration](#configuration)
-9. [Troubleshooting](#troubleshooting)
-10. [Contributing](#contributing)
-11. [Required File Structure](#required-file-structure)
+2. [Required File Structure](#required-file-structure)
+3. [Features](#features)
+4. [Installation Guide](#installation-guide)
+5. [Quick Start](#quick-start)
+6. [User Guide](#user-guide)
+7. [API Reference](#api-reference)
+8. [Developer Guide](#developer-guide)
+9. [Configuration](#configuration)
+10. [Troubleshooting](#troubleshooting)
+11. [Contributing](#contributing)
 
 ---
 
@@ -40,6 +40,80 @@ The system consists of:
 - **Frontend Enhancements**: JavaScript extensions for Task and Project forms
 - **Scheduled Tasks**: Automated metrics and reporting
 - **Version Control**: Complete change tracking system
+
+---
+
+## Required File Structure
+
+```
+erpnext_agile/
+├── erpnext_agile/
+│   ├── __init__.py
+│   ├── hooks.py
+│   ├── patches/
+│   │   └── after_install.py
+│   ├── erpnext_agile/
+│   │   └── doctype/
+│   │       ├── agile_sprint/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_sprint.json
+│   │       │   ├── agile_sprint.py
+│   │       │   └── test_agile_sprint.py
+│   │       ├── agile_issue_status/
+│   │       ├── agile_issue_priority/
+│   │       ├── agile_issue_type/
+│   │       ├── agile_issue_activity/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_issue_activity.json
+│   │       │   ├── agile_issue_activity.py
+│   │       │   └── test_agile_issue_activity.py
+│   │       ├── agile_work_timer/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_work_timer.json
+│   │       │   ├── agile_work_timer.py
+│   │       │   └── test_agile_work_timer.py
+│   │       ├── agile_sprint_burndown/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_sprint_burndown.json
+│   │       │   ├── agile_sprint_burndown.py
+│   │       │   └── test_agile_sprint_burndown.py
+│   │       ├── agile_issue_work_log/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_issue_work_log.json
+│   │       │   └── agile_issue_work_log.py
+│   │       ├── agile_issue_version/
+│   │       │   ├── __init__.py
+│   │       │   ├── agile_issue_version.json
+│   │       │   ├── agile_issue_version.py
+│   │       │   └── test_agile_issue_version.py
+│   │       ├── agile_workflow_scheme/
+│   │       ├── agile_permission_scheme/
+│   │       └── ...
+│   ├── agile_issue_manager.py
+│   ├── agile_sprint_manager.py
+│   ├── agile_backlog_manager.py
+│   ├── agile_board_manager.py
+│   ├── agile_time_tracking.py
+│   ├── agile_github_integration.py
+│   ├── agile_doctype_controllers.py
+│   ├── version_control.py
+│   ├── utils.py
+│   ├── api.py
+│   ├── tasks/
+│   │   ├── __init__.py
+│   │   ├── hourly.py
+│   │   └── daily.py
+│   └── public/
+│       ├── js/
+│       │   ├── task_agile.js
+│       │   ├── project_agile.js
+│       │   └── agile_utils.js
+│       └── css/
+│           └── erpnext_agile.css
+├── setup.py
+├── requirements.txt
+└── README.md
+```
 
 ---
 
@@ -1620,79 +1694,5 @@ For support and questions:
 
 ---
 
-*Last updated: January 2024*
+*Last updated: December 2025*
 *Version: 1.0.0*
-
-
-
-## Required File Structure
-
-```
-erpnext_agile/
-├── erpnext_agile/
-│   ├── __init__.py
-│   ├── hooks.py
-│   ├── patches/
-│   │   └── after_install.py
-│   ├── erpnext_agile/
-│   │   └── doctype/
-│   │       ├── agile_sprint/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_sprint.json
-│   │       │   ├── agile_sprint.py
-│   │       │   └── test_agile_sprint.py
-│   │       ├── agile_issue_status/
-│   │       ├── agile_issue_priority/
-│   │       ├── agile_issue_type/
-│   │       ├── agile_issue_activity/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_issue_activity.json
-│   │       │   ├── agile_issue_activity.py
-│   │       │   └── test_agile_issue_activity.py
-│   │       ├── agile_work_timer/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_work_timer.json
-│   │       │   ├── agile_work_timer.py
-│   │       │   └── test_agile_work_timer.py
-│   │       ├── agile_sprint_burndown/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_sprint_burndown.json
-│   │       │   ├── agile_sprint_burndown.py
-│   │       │   └── test_agile_sprint_burndown.py
-│   │       ├── agile_issue_work_log/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_issue_work_log.json
-│   │       │   └── agile_issue_work_log.py
-│   │       ├── agile_issue_version/
-│   │       │   ├── __init__.py
-│   │       │   ├── agile_issue_version.json
-│   │       │   ├── agile_issue_version.py
-│   │       │   └── test_agile_issue_version.py
-│   │       ├── agile_workflow_scheme/
-│   │       ├── agile_permission_scheme/
-│   │       └── ...
-│   ├── agile_issue_manager.py
-│   ├── agile_sprint_manager.py
-│   ├── agile_backlog_manager.py
-│   ├── agile_board_manager.py
-│   ├── agile_time_tracking.py
-│   ├── agile_github_integration.py
-│   ├── agile_doctype_controllers.py
-│   ├── version_control.py
-│   ├── utils.py
-│   ├── api.py
-│   ├── tasks/
-│   │   ├── __init__.py
-│   │   ├── hourly.py
-│   │   └── daily.py
-│   └── public/
-│       ├── js/
-│       │   ├── task_agile.js
-│       │   ├── project_agile.js
-│       │   └── agile_utils.js
-│       └── css/
-│           └── erpnext_agile.css
-├── setup.py
-├── requirements.txt
-└── README.md
-```
