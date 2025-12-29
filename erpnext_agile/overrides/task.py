@@ -365,7 +365,7 @@ def get_allowed_status_changes(doc):
                 pluck="name",
                 order_by="sort_order"
             )
-        
+         
         # Get allowed transitions from workflow scheme
         scheme = frappe.get_doc("Agile Workflow Scheme", project.workflow_scheme)
         transitions = scheme.get_transitions(doc.issue_status, doc)
