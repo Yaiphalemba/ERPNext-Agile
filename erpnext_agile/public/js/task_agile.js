@@ -1186,49 +1186,77 @@ function add_workflow_transition_buttons(frm) {
 }
 
 function show_transition_dialog(frm, transition) {
-    let d = new frappe.ui.Dialog({
-        title: __(transition.transition_name),
-        fields: [
-            {
-                fieldtype: 'HTML',
-                fieldname: 'transition_info',
-                options: `
-                    <p>
-                        <b>Transition:</b> ${frm.doc.issue_status} → ${transition.to_status}<br>
-                        ${transition.required_permission ? 
-                            `<b>Required Permission:</b> ${transition.required_permission}<br>` : ''}
-                    </p>
-                `
-            },
-            {
-                fieldtype: 'Small Text',
-                label: __('Comment (Optional)'),
-                fieldname: 'comment'
-            }
-        ],
-        primary_action_label: __('Transition'),
-        primary_action(values) {
-            frappe.call({
-                method: 'erpnext_agile.overrides.task.transition_task_status',
-                args: {
-                    task_name: frm.doc.name,
-                    to_status: transition.to_status,
-                    comment: values.comment
-                },
-                callback: (r) => {
-                    if (r.message && r.message.success) {
-                        frappe.show_alert({
-                            message: r.message.message,
-                            indicator: 'green'
-                        });
-                        d.hide();
-                        frm.reload_doc();
+    let additional_field_flag = false;
+    frappe.call({
+        method:"erpnext_agile.overrides.task.map_agile_status_to_task_status",
+        args:{
+            agile_status:transition.to_status,
+        },
+        callback(r){
+            const additional_field_flag = (r.message === "Completed");
+
+            let d = new frappe.ui.Dialog({
+                title: __(transition.transition_name),
+                fields: [
+                    {
+                        fieldtype: 'HTML',
+                        fieldname: 'transition_info',
+                        options: `
+                            <p>
+                                <b>Transition:</b> ${frm.doc.issue_status} → ${transition.to_status}<br>
+                                ${transition.required_permission ?
+                                    `<b>Required Permission:</b> ${transition.required_permission}<br>` : ''}
+                            </p>
+                        `
+                    },
+                    {
+                        fieldtype: 'Small Text',
+                        label: __('Comment (Optional)'),
+                        fieldname: 'comment'
+                    },
+                    {
+                        fieldtype: 'Link',
+                        label: __('Completed by'),
+                        fieldname: 'completed_by',
+                        options: 'User',
+                        depends_on: () => additional_field_flag
+                    },
+                    {
+                        fieldtype: 'Date',
+                        label: __('Completed On'),
+                        fieldname: 'completed_on',
+                        reqd:1,
+                        depends_on: () => additional_field_flag
                     }
+                ],
+                primary_action_label: __('Transition'),
+                primary_action(values) {
+                    frappe.call({
+                        method: 'erpnext_agile.overrides.task.transition_task_status',
+                        args: {
+                            task_name: frm.doc.name,
+                            to_status: transition.to_status,
+                            comment: values.comment,
+                            completed_by: values.completed_by,
+                            completed_on: values.completed_on
+                        },
+                        callback: (r) => {
+                            if (r.message && r.message.success) {
+                                frappe.show_alert({
+                                    message: r.message.message,
+                                    indicator: 'green'
+                                });
+                                d.hide();
+                                frm.reload_doc();
+                            }
+                        }
+                    });
                 }
             });
+
+            d.show();
         }
     });
-    d.show();
 }
 
 function filter_status_dropdown(frm) {
