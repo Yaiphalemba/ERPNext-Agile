@@ -87,6 +87,8 @@ def get_task_permission_query_conditions(user):
                 WHERE user = {user_quoted}
             )
             OR `tabTask`.owner = {user_quoted}
+            OR `tabTask`.reporter = {user_quoted}
+            OR `tabTask`.custom_original_owner = {user_quoted}
             OR `tabTask`.name IN (
                 SELECT parent
                 FROM `tabAgile Issue Watcher`
