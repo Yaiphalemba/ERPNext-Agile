@@ -334,7 +334,12 @@ def map_agile_status_to_task_status(agile_status):
         "To Do": "Open",
         "Done": "Completed",
     }
-    return status_mapping.get(agile_status, "Working")
+    if status_mapping.get(agile_status):
+        return status_mapping.get(agile_status, "Open")
+    else:
+        status_category = frappe.db.get_value("Agile Issue Status", agile_status, "status_category")
+        if status_category:
+            return status_mapping.get(status_category, "Open")
 
 
 def map_agile_priority_to_task_priority(agile_priority: str) -> str:
@@ -441,9 +446,7 @@ def transition_task_status(task_name, to_status, comment=None, completed_by=None
     
     # Update status
     old_status = doc.issue_status
-    doc.issue_status = to_status
-    frappe.msgprint(doc.status)
-    
+    doc.issue_status = to_status    
 
     if completed_by:
         doc.completed_by = completed_by
