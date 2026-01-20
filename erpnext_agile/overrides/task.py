@@ -7,6 +7,7 @@ from erpnext.projects.doctype.task.task import Task
 from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
     log_issue_activity,
 )
+from frappe.utils import getdate
 
 class AgileTask(Task):
     def after_insert(self):
@@ -317,12 +318,13 @@ def format_seconds(seconds):
         return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
     return f"{minutes}m"
 
-
+@frappe.whitelist()
 def map_agile_status_to_task_status(agile_status):
     """Map agile status to ERPNext task status"""
     status_mapping = {
         "Open": "Open",
-        "In Progress": "Working", 
+        "In Progress": "Working",
+        "In Review": "Pending Review",
         "QA Review": "Pending Review",
         "Testing": "Pending Review",
         "Resolved": "Pending Review",
@@ -330,9 +332,14 @@ def map_agile_status_to_task_status(agile_status):
         "Reopened": "Open",
         "Blocked": "Open",
         "To Do": "Open",
-        "Done": "Completed"
+        "Done": "Completed",
     }
-    return status_mapping.get(agile_status, "Open")
+    if status_mapping.get(agile_status):
+        return status_mapping.get(agile_status, "Open")
+    else:
+        status_category = frappe.db.get_value("Agile Issue Status", agile_status, "status_category")
+        if status_category:
+            return status_mapping.get(status_category, "Open")
 
 
 def map_agile_priority_to_task_priority(agile_priority: str) -> str:
@@ -408,7 +415,7 @@ def get_task_allowed_statuses(task_name):
 
 
 @frappe.whitelist()
-def transition_task_status(task_name, to_status, comment=None):
+def transition_task_status(task_name, to_status, comment=None, completed_by=None, completed_on=None):
     """
     Transition task to new status with workflow validation
     
@@ -439,7 +446,12 @@ def transition_task_status(task_name, to_status, comment=None):
     
     # Update status
     old_status = doc.issue_status
-    doc.issue_status = to_status
+    doc.issue_status = to_status    
+
+    if completed_by:
+        doc.completed_by = completed_by
+    if completed_on:
+        doc.completed_on = getdate(completed_on)
     doc.save()
     
     # Add comment if provided

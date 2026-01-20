@@ -332,27 +332,31 @@ def create_default_issue_priorities():
     
     print("Default issue priorities created")
 
-def create_default_issue_types():
-    """Create default issue types"""
-    
-    types = [
-        {'issue_type_name': 'Story', 'icon': '📖', 'color': '#4CAF50', 'description': 'User story'},
-        {'issue_type_name': 'Task', 'icon': '✓', 'color': '#2196F3', 'description': 'General task'},
-        {'issue_type_name': 'Bug', 'icon': '🐛', 'color': '#F44336', 'description': 'Bug or defect'},
-        {'issue_type_name': 'Epic', 'icon': '🎯', 'color': '#9C27B0', 'description': 'Large feature or initiative'},
-        {'issue_type_name': 'Spike', 'icon': '🔬', 'color': '#FF9800', 'description': 'Research or investigation'},
-        {'issue_type_name': 'Sub-task', 'icon': '📝', 'color': '#607D8B', 'description': 'Sub-task of another issue'}
+def create_default_issue_statuses():
+    """Create default issue statuses"""
+   
+    statuses = [
+        {'status_name': 'To Do', 'status_category': 'To Do', 'color': '#808080', 'sort_order': 1},
+        {'status_name': 'In Progress', 'status_category': 'In Progress', 'color': '#0066ff', 'sort_order': 2},
+        {'status_name': 'QA Review', 'status_category': 'In Progress', 'color': '#9966ff', 'sort_order': 3},
+        {'status_name': 'Done', 'status_category': 'Done', 'color': '#00aa00', 'sort_order': 4},
+        {'status_name': 'Blocked', 'status_category': 'To Do', 'color': '#ff0000', 'sort_order': 5},
+        {'status_name': 'Open', 'status_category': 'To Do', 'color': '#ff9900', 'sort_order': 6},
+        {'status_name': 'Testing', 'status_category': 'In Progress', 'color': '#ff66cc', 'sort_order': 7},
+        {'status_name': 'Resolved', 'status_category': 'In Progress', 'color': '#ffcc00', 'sort_order': 8},
+        {'status_name': 'Closed', 'status_category': 'Done', 'color': '#009900', 'sort_order': 9},
+        {'status_name': 'Reopened', 'status_category': 'To Do', 'color': '#ff6600', 'sort_order': 10}
     ]
-    
-    for issue_type in types:
-        if not frappe.db.exists('Agile Issue Type', {'issue_type_name': issue_type['issue_type_name']}):
+   
+    for status in statuses:
+        if not frappe.db.exists('Agile Issue Status', {'status_name': status['status_name']}):
             doc = frappe.get_doc({
-                'doctype': 'Agile Issue Type',
-                **issue_type
+                'doctype': 'Agile Issue Status',
+                **status
             })
             doc.insert(ignore_permissions=True)
-    
-    print("Default issue types created")
+   
+    print("Default issue statuses created")
 
 def create_agile_roles():
     """Create agile-specific roles"""
