@@ -1225,7 +1225,7 @@ function show_transition_dialog(frm, transition) {
                         fieldtype: 'Date',
                         label: __('Completed On'),
                         fieldname: 'completed_on',
-                        reqd:1,
+                        mandatory_depends_on: ()=> additional_field_flag,
                         depends_on: () => additional_field_flag
                     }
                 ],
