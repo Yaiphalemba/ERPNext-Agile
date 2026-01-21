@@ -16,6 +16,7 @@ frappe.ui.form.on('Task', {
 
     refresh: function(frm) {
         if (frm.doc.is_agile) {
+            parent_issue_query(frm)
             // Add Version Control buttons
             frm.add_custom_button(__('Version History'), function() {
                 show_version_history(frm);
@@ -76,9 +77,31 @@ frappe.ui.form.on('Task', {
             // Load project-specific agile configuration
             load_project_agile_config(frm);
             filter_status_dropdown(frm);
+            parent_issue_query(frm)
         }
     }
 });
+function parent_issue_query(frm){
+    console.log("Invoked");
+    
+    frm.set_query("parent_issue", function(){
+            if(frm.doc.project){
+                return{
+                    filters:{
+                        project: frm.doc.project,
+                        is_group: 1
+                    }
+                }
+            }
+            else {
+                return{
+                    filters:{
+                        is_group:1
+                    }
+                }
+            }
+        })
+}
 
 // Helper to color-code agile statuses
 function get_agile_status_color(status) {
@@ -1269,7 +1292,7 @@ function filter_status_dropdown(frm) {
         if (r && r.workflow_scheme) {
             // Get allowed statuses
             frappe.call({
-                method: 'erpnext_agile..overrides.task.get_task_allowed_statuses',
+                method: 'erpnext_agile.overrides.task.get_task_allowed_statuses',
                 args: {
                     task_name: frm.doc.name
                 },
