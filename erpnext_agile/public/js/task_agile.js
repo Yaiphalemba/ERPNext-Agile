@@ -82,8 +82,6 @@ frappe.ui.form.on('Task', {
     }
 });
 function parent_issue_query(frm){
-    console.log("Invoked");
-    
     frm.set_query("parent_issue", function(){
             if(frm.doc.project){
                 return{
