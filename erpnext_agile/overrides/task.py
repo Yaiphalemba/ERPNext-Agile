@@ -402,6 +402,19 @@ def get_allowed_status_changes(doc):
 
 # Whitelisted method for client-side use
 @frappe.whitelist()
+def get_project_users(project):
+    """Get users from Project → project_users child table"""
+    if not project:
+        return []
+    
+    users = frappe.get_all("Project User", 
+        filters={"parent": project},
+        fields=["user"],
+        pluck="user"
+    )
+    return users
+
+@frappe.whitelist()
 def get_task_allowed_statuses(task_name):
     """
     Get allowed status transitions for a task
