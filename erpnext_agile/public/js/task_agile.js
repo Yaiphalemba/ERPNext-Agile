@@ -16,6 +16,8 @@ frappe.ui.form.on('Task', {
 
     refresh: function(frm) {
         if (frm.doc.is_agile) {
+            parent_issue_query(frm)
+            assignee_users_query(frm)
             // Add Version Control buttons
             frm.add_custom_button(__('Version History'), function() {
                 show_version_history(frm);
@@ -76,9 +78,57 @@ frappe.ui.form.on('Task', {
             // Load project-specific agile configuration
             load_project_agile_config(frm);
             filter_status_dropdown(frm);
+            parent_issue_query(frm);
+            assignee_users_query(frm);
         }
+    },
+    
+    assigned_to_users(frm){
+        assignee_users_query(frm);
     }
 });
+function assignee_users_query(frm){
+    if(!frm.doc.project) 
+        return
+    frappe.call({
+        method:"erpnext_agile.overrides.task.get_project_users",
+        args:{
+            project: frm.doc.project,
+        },
+        callback(r) {
+            if(r.message && r.message.length > 0){
+                
+                frm.set_query("user", "assigned_to_users", function(){
+                    return{
+                        filters:{
+                            name:["in", r.message || []],
+                        }
+                    }
+                })
+                frm.refresh_field("assigned_to_users");
+            }
+        }
+    })
+}
+function parent_issue_query(frm){
+    frm.set_query("parent_issue", function(){
+        if(frm.doc.project){
+            return{
+                filters:{
+                    project: frm.doc.project,
+                    is_group: 1
+                }
+            }
+        }
+        else {
+            return{
+                filters:{
+                    is_group:1
+                }
+            }
+        }
+    })
+}
 
 // Helper to color-code agile statuses
 function get_agile_status_color(status) {
@@ -1186,49 +1236,77 @@ function add_workflow_transition_buttons(frm) {
 }
 
 function show_transition_dialog(frm, transition) {
-    let d = new frappe.ui.Dialog({
-        title: __(transition.transition_name),
-        fields: [
-            {
-                fieldtype: 'HTML',
-                fieldname: 'transition_info',
-                options: `
-                    <p>
-                        <b>Transition:</b> ${frm.doc.issue_status} → ${transition.to_status}<br>
-                        ${transition.required_permission ? 
-                            `<b>Required Permission:</b> ${transition.required_permission}<br>` : ''}
-                    </p>
-                `
-            },
-            {
-                fieldtype: 'Small Text',
-                label: __('Comment (Optional)'),
-                fieldname: 'comment'
-            }
-        ],
-        primary_action_label: __('Transition'),
-        primary_action(values) {
-            frappe.call({
-                method: 'erpnext_agile.overrides.task.transition_task_status',
-                args: {
-                    task_name: frm.doc.name,
-                    to_status: transition.to_status,
-                    comment: values.comment
-                },
-                callback: (r) => {
-                    if (r.message && r.message.success) {
-                        frappe.show_alert({
-                            message: r.message.message,
-                            indicator: 'green'
-                        });
-                        d.hide();
-                        frm.reload_doc();
+    let additional_field_flag = false;
+    frappe.call({
+        method:"erpnext_agile.overrides.task.map_agile_status_to_task_status",
+        args:{
+            agile_status:transition.to_status,
+        },
+        callback(r){
+            const additional_field_flag = (r.message === "Completed");
+
+            let d = new frappe.ui.Dialog({
+                title: __(transition.transition_name),
+                fields: [
+                    {
+                        fieldtype: 'HTML',
+                        fieldname: 'transition_info',
+                        options: `
+                            <p>
+                                <b>Transition:</b> ${frm.doc.issue_status} → ${transition.to_status}<br>
+                                ${transition.required_permission ?
+                                    `<b>Required Permission:</b> ${transition.required_permission}<br>` : ''}
+                            </p>
+                        `
+                    },
+                    {
+                        fieldtype: 'Small Text',
+                        label: __('Comment (Optional)'),
+                        fieldname: 'comment'
+                    },
+                    {
+                        fieldtype: 'Link',
+                        label: __('Completed by'),
+                        fieldname: 'completed_by',
+                        options: 'User',
+                        depends_on: () => additional_field_flag
+                    },
+                    {
+                        fieldtype: 'Date',
+                        label: __('Completed On'),
+                        fieldname: 'completed_on',
+                        mandatory_depends_on: ()=> additional_field_flag,
+                        depends_on: () => additional_field_flag
                     }
+                ],
+                primary_action_label: __('Transition'),
+                primary_action(values) {
+                    frappe.call({
+                        method: 'erpnext_agile.overrides.task.transition_task_status',
+                        args: {
+                            task_name: frm.doc.name,
+                            to_status: transition.to_status,
+                            comment: values.comment,
+                            completed_by: values.completed_by,
+                            completed_on: values.completed_on
+                        },
+                        callback: (r) => {
+                            if (r.message && r.message.success) {
+                                frappe.show_alert({
+                                    message: r.message.message,
+                                    indicator: 'green'
+                                });
+                                d.hide();
+                                frm.reload_doc();
+                            }
+                        }
+                    });
                 }
             });
+
+            d.show();
         }
     });
-    d.show();
 }
 
 function filter_status_dropdown(frm) {
@@ -1241,7 +1319,7 @@ function filter_status_dropdown(frm) {
         if (r && r.workflow_scheme) {
             // Get allowed statuses
             frappe.call({
-                method: 'erpnext_agile..overrides.task.get_task_allowed_statuses',
+                method: 'erpnext_agile.overrides.task.get_task_allowed_statuses',
                 args: {
                     task_name: frm.doc.name
                 },
