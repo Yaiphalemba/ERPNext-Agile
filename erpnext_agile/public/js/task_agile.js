@@ -1260,9 +1260,11 @@ function show_transition_dialog(frm, transition) {
                         `
                     },
                     {
-                        fieldtype: 'Small Text',
-                        label: __('Comment (Optional)'),
-                        fieldname: 'comment'
+                        fieldtype: 'Date',
+                        label: __('Completed On'),
+                        fieldname: 'completed_on',
+                        mandatory_depends_on: ()=> additional_field_flag,
+                        depends_on: () => additional_field_flag
                     },
                     {
                         fieldtype: 'Link',
@@ -1272,11 +1274,9 @@ function show_transition_dialog(frm, transition) {
                         depends_on: () => additional_field_flag
                     },
                     {
-                        fieldtype: 'Date',
-                        label: __('Completed On'),
-                        fieldname: 'completed_on',
-                        mandatory_depends_on: ()=> additional_field_flag,
-                        depends_on: () => additional_field_flag
+                        fieldtype: 'Small Text',
+                        label: __('Comment (Optional)'),
+                        fieldname: 'comment'
                     }
                 ],
                 primary_action_label: __('Transition'),

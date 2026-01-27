@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#ED6396",
+ "color": "#EC864B",
  "creation": "2026-01-20 11:57:27.813397",
  "currency": "",
  "docstatus": 0,
@@ -14,7 +14,7 @@
  "is_standard": 1,
  "label": "Total Tasks",
  "method": "erpnext_agile.number_card_api.get_total_task_count",
- "modified": "2026-01-20 11:57:31.770865",
+ "modified": "2026-01-27 09:26:54.592051",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Total Tasks",
