@@ -71,6 +71,9 @@ def get_task_permission_query_conditions(user):
     
     Admins and Project Managers can see everything.
     """
+    
+    user_quoted = frappe.db.escape(user)
+    
     if "Administrator" in frappe.get_roles(user):
         return ""
     if "Projects Manager" in frappe.get_roles(user):
@@ -88,8 +91,6 @@ def get_task_permission_query_conditions(user):
             )
         )
     """
-
-    user_quoted = frappe.db.escape(user)
     
     # Show tasks assigned to user OR created by user
     return f"""
