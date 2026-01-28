@@ -92,7 +92,7 @@ def get_total_ongoing_task_count():
     user = frappe.session.user
 
     if is_admin_or_system_manager(user):
-        count = frappe.db.count("Task", filters=["status", "in", ["Working","Pending Review","Overdue"]])
+        count = frappe.db.count("Task", filters=[["status", "in", ["Working", "Pending Review", "Overdue"]]])
     else:
         count = frappe.db.sql("""
         SELECT COUNT(DISTINCT t.name)

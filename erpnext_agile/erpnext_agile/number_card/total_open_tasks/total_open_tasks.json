@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#ED6396",
+ "color": "#29CD42",
  "creation": "2026-01-20 12:13:32.922190",
  "currency": "",
  "docstatus": 0,
@@ -14,7 +14,7 @@
  "is_standard": 1,
  "label": "Total Open Tasks",
  "method": "erpnext_agile.number_card_api.get_total_open_task_count",
- "modified": "2026-01-20 12:31:58.752012",
+ "modified": "2026-01-27 09:22:58.383529",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Total Open Tasks",

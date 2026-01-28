@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#ED6396",
+ "color": "#CB2929",
  "creation": "2026-01-20 12:45:41.445452",
  "currency": "",
  "docstatus": 0,
@@ -14,7 +14,7 @@
  "is_standard": 1,
  "label": "Total Overdue Tasks",
  "method": "erpnext_agile.number_card_api.get_total_overdue_task_count",
- "modified": "2026-01-20 12:45:41.445452",
+ "modified": "2026-01-27 09:27:23.817558",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Total Overdue Tasks",

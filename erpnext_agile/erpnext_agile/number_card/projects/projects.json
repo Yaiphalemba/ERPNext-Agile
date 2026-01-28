@@ -1,5 +1,6 @@
 {
  "aggregate_function_based_on": "",
+ "color": "#ED6396",
  "creation": "2026-01-20 10:06:39.653135",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +14,7 @@
  "is_standard": 1,
  "label": "Projects",
  "method": "erpnext_agile.number_card_api.get_user_projects_count",
- "modified": "2026-01-20 11:16:55.898596",
+ "modified": "2026-01-27 09:09:41.270782",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Projects",
