@@ -26,8 +26,8 @@ def get_project_permission_query_conditions(user):
     """Permission query for Project doctype"""
     if "Administrator" in frappe.get_roles(user):
         return ""
-    if "Projects Manager" in frappe.get_roles(user):
-        return ""
+    # if "Projects Manager" in frappe.get_roles(user):
+    #     return ""
 
     user_quoted = f"'{user}'"
     return f"""
@@ -74,7 +74,20 @@ def get_task_permission_query_conditions(user):
     if "Administrator" in frappe.get_roles(user):
         return ""
     if "Projects Manager" in frappe.get_roles(user):
-        return ""
+        return f"""
+        (`tabTask`.name IN (
+            SELECT parent
+            FROM `tabAssigned To Users`
+            WHERE user = {user_quoted}
+            )
+        OR
+        `tabTask`.project IN (
+            SELECT parent
+            FROM `tabProject User`
+            WHERE user = {user_quoted}
+            )
+        )
+    """
 
     user_quoted = frappe.db.escape(user)
     
