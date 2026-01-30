@@ -100,51 +100,82 @@ class AgileWorkflowScheme(Document):
         return True, None
     
     def evaluate_condition(self, condition, doc):
-        """
-        Evaluate Python condition against document
-        
-        Args:
-            condition: Python expression string
-            doc: Document object
-        
-        Returns:
-            Boolean result of condition evaluation
-        """
+        """Evaluate Python condition against document"""
         if not condition or not condition.strip():
             return True
         
+        def get_float(value):
+            try:
+                return float(value) if value else 0
+            except (ValueError, TypeError):
+                return 0
+        
+        def get_int(value):
+            try:
+                return int(float(value)) if value else 0
+            except (ValueError, TypeError):
+                return 0
+        
+        # Smart wrapper for doc that auto-casts numeric fields
+        class SmartDoc:
+            def __init__(self, original_doc):
+                self._doc = original_doc
+                self.numeric_fields = {
+                    'story_points', 'priority_value', 'estimated_hours',
+                    'actual_hours', 'progress', 'expected_time'
+                }
+            
+            def __getattr__(self, name):
+                value = getattr(self._doc, name, None)
+                if name in self.numeric_fields:
+                    return get_float(value)
+                return value
+            
+            def get(self, key, default=None):
+                value = self._doc.get(key, default)
+                if key in self.numeric_fields:
+                    return get_float(value)
+                return value
+            
+            # Forward other methods to original doc
+            def __getitem__(self, key):
+                return self._doc[key]
+            
+            @property
+            def name(self):
+                return self._doc.name
+        
         try:
-            # Create safe evaluation context
+            smart_doc = SmartDoc(doc)
+            
             eval_context = {
-                'doc': doc,
+                'doc': smart_doc,  # Use smart doc here
                 'frappe': frappe,
                 '_': _,
-                # Add commonly used functions
                 'len': len,
                 'str': str,
-                'int': int,
-                'float': float,
+                'int': get_int,
+                'float': get_float,
+                'flt': get_float,
+                'cint': get_int,
                 'bool': bool,
-                'list': list,
-                'dict': dict,
                 'today': frappe.utils.today,
                 'now': frappe.utils.now,
+                'getdate': frappe.utils.getdate,
                 'get_value': frappe.db.get_value,
                 'exists': frappe.db.exists,
             }
             
-            # Evaluate condition
             result = eval(condition, {"__builtins__": {}}, eval_context)
             return bool(result)
             
         except Exception as e:
             frappe.log_error(
-                f"Error evaluating workflow condition: {condition}\nError: {str(e)}",
+                f"Workflow condition failed\nCondition: {condition}\nError: {str(e)}",
                 "Workflow Condition Error"
             )
-            # If condition evaluation fails, deny transition for safety
             frappe.throw(
-                _("Failed to evaluate transition condition: {0}").format(str(e))
+                _("Workflow condition error: {0}\n\nCondition: {1}").format(str(e), condition)
             )
             return False
     
