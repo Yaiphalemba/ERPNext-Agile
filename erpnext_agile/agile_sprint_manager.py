@@ -303,22 +303,22 @@ class AgileSprintManager:
             ideal_remaining = 0 if is_final else metrics['total_points']
 
         # Check if today's burndown entry already exists
-        existing_entry = frappe.db.exists(
+        existing_entry = frappe.db.get_value(
             'Agile Sprint Burndown',
             {
                 'sprint': sprint_doc.name,
                 'date': today()
-            }
+            },
+            'name'  # Get the actual document name
         )
 
         if existing_entry:
             # Update existing entry
-            frappe.db.set_value('Agile Sprint Burndown', existing_entry, {
-                'remaining_points': remaining_points,
-                'ideal_remaining': max(0, ideal_remaining),
-                'completed_points': metrics['completed_points']
-            })
-            frappe.db.commit()
+            burndown_doc = frappe.get_doc('Agile Sprint Burndown', existing_entry)
+            burndown_doc.remaining_points = remaining_points
+            burndown_doc.ideal_remaining = max(0, ideal_remaining)
+            burndown_doc.completed_points = metrics['completed_points']
+            burndown_doc.save()
             frappe.logger().info(f"Updated burndown entry for sprint {sprint_doc.name} on {today()}")
         else:
             # Create a new one if missing (safety fallback)
