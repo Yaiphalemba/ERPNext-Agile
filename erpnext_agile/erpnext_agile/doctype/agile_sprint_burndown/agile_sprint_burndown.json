@@ -24,7 +24,7 @@
    "label": "Sprint",
    "options": "Agile Sprint",
    "reqd": 1,
-   "unique": 1
+   "unique": 0
   },
   {
    "fieldname": "date",
