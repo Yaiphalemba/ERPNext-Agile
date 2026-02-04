@@ -5,6 +5,7 @@ frappe.ui.form.on('Test Case', {
     refresh(frm) {
         // Set test_case_id as title field
         frm.set_df_property('test_case_id', 'bold', 1);
+        assignee_users_query(frm)
         
         if (!frm.is_new()) {
             // Add custom buttons
@@ -43,7 +44,12 @@ frappe.ui.form.on('Test Case', {
                     };
                 }
             };
+            assignee_users_query(frm);
         }
+    },
+
+    assigned_to_users(frm){
+        assignee_users_query(frm);
     }
 });
 
@@ -164,4 +170,28 @@ function show_test_metrics(frm) {
             }
         }
     });
+}
+
+function assignee_users_query(frm){
+    if(!frm.doc.project) 
+        return
+    frappe.call({
+        method:"erpnext_agile.overrides.task.get_project_users",
+        args:{
+            project: frm.doc.project,
+        },
+        callback(r) {
+            if(r.message && r.message.length > 0){
+                
+                frm.set_query("user", "assigned_to_users", function(){
+                    return{
+                        filters:{
+                            name:["in", r.message || []],
+                        }
+                    }
+                })
+                frm.refresh_field("assigned_to_users");
+            }
+        }
+    })
 }

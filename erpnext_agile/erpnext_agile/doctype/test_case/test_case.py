@@ -30,21 +30,23 @@ class TestCase(Document):
     
     def validate(self):
         """Validate test case"""
-        # Ensure at least one test step
-        frappe.msgprint("validate called")
-        if not self.test_steps:
-            frappe.throw("At least one test step is required")
+        # # Ensure at least one test step
+        # if not self.test_steps:
+        #     frappe.throw("At least one test step is required")
         
-        # Auto-number test steps
-        for idx, step in enumerate(self.test_steps, 1):
-            step.step_number = idx
+        # # Auto-number test steps
+        # for idx, step in enumerate(self.test_steps, 1):
+        #     step.step_number = idx
+        
+        if self.test_steps:
+            for idx, step in enumerate(self.test_steps, 1):
+                step.step_number = idx
         
         # Validate linked items
         self.validate_linked_items()
         
     def on_update(self):
         # Track assignee changes
-        frappe.msgprint("on_update called")
         if self.has_value_changed("assigned_to_users"):
             self.track_assignee_changes()
     

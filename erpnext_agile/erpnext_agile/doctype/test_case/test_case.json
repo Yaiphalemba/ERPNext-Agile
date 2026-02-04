@@ -180,6 +180,7 @@
    "options": "User"
   },
   {
+   "depends_on": "eval:doc.__islocal!=true",
    "fieldname": "assigned_to_users",
    "fieldtype": "Table",
    "label": "Assignees",
@@ -194,7 +195,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-04 11:48:43.510559",
+ "modified": "2026-02-04 12:25:46.094930",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",

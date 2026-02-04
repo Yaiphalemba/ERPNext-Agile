@@ -87,6 +87,7 @@ frappe.ui.form.on('Task', {
         assignee_users_query(frm);
     }
 });
+
 function assignee_users_query(frm){
     if(!frm.doc.project) 
         return
@@ -110,6 +111,7 @@ function assignee_users_query(frm){
         }
     })
 }
+
 function parent_issue_query(frm){
     frm.set_query("parent_issue", function(){
         if(frm.doc.project){
