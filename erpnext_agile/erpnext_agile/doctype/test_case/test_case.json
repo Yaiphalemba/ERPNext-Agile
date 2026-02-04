@@ -9,14 +9,16 @@
   "test_case_details",
   "test_case_id",
   "title",
+  "original_owner",
   "test_type",
   "estimated_time",
-  "automated",
+  "last_executed",
   "column_break_1",
   "project",
   "priority",
   "status",
-  "last_executed",
+  "automated",
+  "assigned_to_users",
   "section_break_2",
   "description",
   "preconditions",
@@ -39,8 +41,7 @@
   {
    "fieldname": "test_case_id",
    "fieldtype": "Data",
-   "label": "Test Case ID",
-   "read_only": 1
+   "label": "Test Case ID"
   },
   {
    "columns": 2,
@@ -170,6 +171,19 @@
    "fieldname": "automated",
    "fieldtype": "Check",
    "label": "Automated"
+  },
+  {
+   "default": "__user",
+   "fieldname": "original_owner",
+   "fieldtype": "Link",
+   "label": "Original Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_to_users",
+   "fieldtype": "Table",
+   "label": "Assignees",
+   "options": "Assigned To Users"
   }
  ],
  "grid_page_length": 50,
@@ -180,7 +194,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-03 11:41:48.887960",
+ "modified": "2026-02-04 11:48:43.510559",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
