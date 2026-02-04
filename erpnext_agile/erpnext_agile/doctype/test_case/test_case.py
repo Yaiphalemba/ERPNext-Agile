@@ -2,7 +2,9 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe.desk.form.assign_to import add, clear
 
 class TestCase(Document):
     def autoname(self):
@@ -28,16 +30,25 @@ class TestCase(Document):
     
     def validate(self):
         """Validate test case"""
-        # Ensure at least one test step
-        if not self.test_steps:
-            frappe.throw("At least one test step is required")
+        # # Ensure at least one test step
+        # if not self.test_steps:
+        #     frappe.throw("At least one test step is required")
         
-        # Auto-number test steps
-        for idx, step in enumerate(self.test_steps, 1):
-            step.step_number = idx
+        # # Auto-number test steps
+        # for idx, step in enumerate(self.test_steps, 1):
+        #     step.step_number = idx
+        
+        if self.test_steps:
+            for idx, step in enumerate(self.test_steps, 1):
+                step.step_number = idx
         
         # Validate linked items
         self.validate_linked_items()
+        
+    def on_update(self):
+        # Track assignee changes
+        if self.has_value_changed("assigned_to_users"):
+            self.track_assignee_changes()
     
     def validate_linked_items(self):
         """Validate linked tasks/projects"""
@@ -86,3 +97,27 @@ class TestCase(Document):
         new_case.status = "Draft"
         new_case.insert()
         return new_case.name
+    
+    def track_assignee_changes(self):
+        """Track changes to assignees"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_assignees = set([d.user for d in old_doc.get("assigned_to_users", [])])
+        new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
+        
+        added = new_assignees - old_assignees
+        removed = old_assignees - new_assignees
+        
+        if added:
+            user_id = list(added)
+            add({
+                    "assign_to": user_id,
+                    "doctype": "Test Case",
+                    "name": self.name,
+                    "description": self.title
+                })
+        
+        if removed:
+            clear("Test Case", self.name)
