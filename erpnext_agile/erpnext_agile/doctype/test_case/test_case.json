@@ -57,7 +57,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Test Type",
-   "options": "\nFunctionality\nUser Interface(UI)\nPerformance\nSecurity\nIntegration\nData Validation Test\nError Handling\nPerformance\nSecurity\nRegression\nSmoke"
+   "options": "\nFunctionality\nUser Interface (UI)\nPerformance\nSecurity\nIntegration\nData Validation Test\nError Handling\nPerformance\nSecurity\nRegression\nSmoke"
   },
   {
    "fieldname": "estimated_time",
