@@ -2,6 +2,26 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Test Case', {
+    validate(frm) {
+        if (frm.doc.components && frm.doc.components.length) {
+            const components = frm.doc.components
+                .map(row => row.component)
+                .join(", ");
+            frm.set_value("component_filter", components);
+        } else {
+            frm.set_value("component_filter", "");
+        }
+        
+        if (frm.doc.tags_labels && frm.doc.tags_labels.length) {
+            const tags = frm.doc.tags_labels
+                .map(row => row.label)
+                .join(", ");
+            frm.set_value("label_filter", tags);
+        } else {
+            frm.set_value("label_filter", "");
+        }
+    },
+
     refresh(frm) {
         // Set test_case_id as title field
         frm.set_df_property('test_case_id', 'bold', 1);

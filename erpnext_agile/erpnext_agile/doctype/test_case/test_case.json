@@ -27,8 +27,10 @@
   "section_break_4",
   "column_break_opup",
   "tags_labels",
+  "label_filter",
   "column_break_zykl",
   "components",
+  "component_filter",
   "section_break_5",
   "linked_items"
  ],
@@ -46,7 +48,7 @@
   {
    "columns": 2,
    "fieldname": "title",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Title",
@@ -83,7 +85,6 @@
    "fieldname": "priority",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Priority",
    "options": "Critical\nHigh\nMedium\nLow"
   },
@@ -153,6 +154,8 @@
   {
    "fieldname": "components",
    "fieldtype": "Table MultiSelect",
+   "in_filter": 1,
+   "in_standard_filter": 1,
    "label": "Components",
    "options": "Component"
   },
@@ -176,6 +179,8 @@
    "default": "__user",
    "fieldname": "original_owner",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_standard_filter": 1,
    "label": "Original Owner",
    "options": "User"
   },
@@ -185,6 +190,26 @@
    "fieldtype": "Table",
    "label": "Assignees",
    "options": "Assigned To Users"
+  },
+  {
+   "fieldname": "label_filter",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Label Filter",
+   "read_only": 1
+  },
+  {
+   "fieldname": "component_filter",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Component Filter",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -195,7 +220,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-04 12:25:46.094930",
+ "modified": "2026-02-05 14:22:11.039521",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
@@ -246,7 +271,6 @@
    "role": "QA Viewer"
   }
  ],
- "quick_entry": 1,
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
