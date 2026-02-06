@@ -61,7 +61,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Test Type",
-   "options": "\nFunctionality\nUser Interface (UI)\nPerformance\nSecurity\nIntegration\nData Validation Test\nError Handling\nPerformance\nSecurity\nRegression\nSmoke"
+   "options": "\nFunctionality\nUser Interface (UI)\nPerformance\nSecurity\nIntegration\nData Validation Test\nError Handling\nRegression\nSmoke"
   },
   {
    "fieldname": "estimated_time",
@@ -227,7 +227,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-06 10:36:16.169026",
+ "modified": "2026-02-06 11:09:35.453057",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
