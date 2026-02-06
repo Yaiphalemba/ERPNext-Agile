@@ -12,16 +12,17 @@
   "original_owner",
   "test_type",
   "estimated_time",
-  "last_executed",
+  "automated",
   "column_break_1",
   "project",
   "priority",
   "status",
-  "automated",
   "assigned_to_users",
+  "last_executed",
   "section_break_2",
   "description",
   "preconditions",
+  "testcase_document_url",
   "section_break_3",
   "test_steps",
   "section_break_4",
@@ -210,6 +211,12 @@
    "in_standard_filter": 1,
    "label": "Component Filter",
    "read_only": 1
+  },
+  {
+   "fieldname": "testcase_document_url",
+   "fieldtype": "Small Text",
+   "label": "Testcase Document URL",
+   "options": "URL"
   }
  ],
  "grid_page_length": 50,
@@ -220,7 +227,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-05 14:22:11.039521",
+ "modified": "2026-02-06 10:36:16.169026",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
