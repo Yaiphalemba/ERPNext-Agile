@@ -154,12 +154,20 @@ after_install = "erpnext_agile.after_install.setup_agile"
 
 permission_query_conditions = {
     "Project": "erpnext_agile.overrides.project.get_project_permission_query_conditions",
-    "Task": "erpnext_agile.overrides.project.get_task_permission_query_conditions"
+    "Task": "erpnext_agile.overrides.project.get_task_permission_query_conditions",
+    "Agile Sprint": "erpnext_agile.overrides.project.get_agile_sprint_permission_query_conditions",
+    "Test Cycle": "erpnext_agile.overrides.project.get_test_cycle_permission_query_conditions",
+    "Test Case":  "erpnext_agile.overrides.project.get_test_case_permission_query_conditions",
+    "Test Execution":  "erpnext_agile.overrides.project.get_test_execution_permission_query_conditions"
 }
 
 has_permission = {
     "Project": "erpnext_agile.overrides.project.has_project_permission",
-    "Task": "erpnext_agile.overrides.project.has_task_permission"
+    "Task": "erpnext_agile.overrides.project.has_task_permission",
+    "Agile Sprint": "erpnext_agile.overrides.project.has_agile_sprint_permission",
+    "Test Cycle": "erpnext_agile.overrides.project.has_test_cycle_permission",
+    "Test Case": "erpnext_agile.overrides.project.has_test_case_permission",
+    "Test Execution": "erpnext_agile.overrides.project.has_test_execution_permission"
 }
 
 # DocType Class
