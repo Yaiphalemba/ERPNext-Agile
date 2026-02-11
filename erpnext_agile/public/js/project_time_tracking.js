@@ -76,7 +76,7 @@ function hide_time_tracking_section(frm) {
 
 function load_and_display_time_summary(frm) {
     // Load summary and update the child table display
-    if (!frm.doc.name) return;
+    if (!frm.doc.name || frm.doc.is_new()) return;
 
     frappe.call({
         method: 'erpnext_agile.project_time_tracking.get_project_user_time_summary',
