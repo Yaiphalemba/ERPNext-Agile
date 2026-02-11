@@ -179,8 +179,8 @@ def get_agile_sprint_permission_query_conditions(user):
     """Permission query for Agile Sprint doctype"""
     if "Administrator" in frappe.get_roles(user):
         return ""
-    if "Projects Manager" in frappe.get_roles(user):
-        return ""
+    # if "Projects Manager" in frappe.get_roles(user):
+    #     return ""
 
     user_quoted = f"'{user}'"
     return f"""
@@ -218,8 +218,8 @@ def get_test_cycle_permission_query_conditions(user):
     """Permission query for Test Cycle doctype"""
     if "Administrator" in frappe.get_roles(user):
         return ""
-    if "Projects Manager" in frappe.get_roles(user):
-        return ""
+    # if "Projects Manager" in frappe.get_roles(user):
+    #     return ""
 
     user_quoted = f"'{user}'"
     return f"""
@@ -262,8 +262,8 @@ def get_test_case_permission_query_conditions(user):
     """Permission query for Test Case doctype"""
     if "Administrator" in frappe.get_roles(user):
         return ""
-    if "Projects Manager" in frappe.get_roles(user):
-        return ""
+    # if "Projects Manager" in frappe.get_roles(user):
+    #     return ""
 
     user_quoted = f"'{user}'"
     return f"""
@@ -305,8 +305,8 @@ def get_test_execution_permission_query_conditions(user):
     """Permission query for Test Execution doctype"""
     if "Administrator" in frappe.get_roles(user):
         return ""
-    if "Projects Manager" in frappe.get_roles(user):
-        return ""
+    # if "Projects Manager" in frappe.get_roles(user):
+    #     return ""
 
     user_quoted = f"'{user}'"
     return f"""
