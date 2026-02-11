@@ -14,6 +14,7 @@ class AgileTask(Task):
         """Log creation activity"""
         if self.is_agile:
             log_issue_activity(self.name, "created this issue")
+            self.handle_assignment_for_new_tasks()
     
     def validate(self):
         super().validate()
@@ -278,6 +279,24 @@ class AgileTask(Task):
             for user in removed:
                 user_name = frappe.get_cached_value("User", user, "full_name")
                 log_issue_activity(self.name, f"removed watcher {user_name}", data={"watcher": user})
+
+    def handle_assignment_for_new_tasks(self):
+        # For new documents, assign to users in assigned_to_users field
+        new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
+        if new_assignees:
+            assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in new_assignees]
+            user_id = list(new_assignees)
+            add({
+                    "assign_to": user_id,
+                    "doctype": "Task",
+                    "name": self.name,
+                    "description": self.subject
+                })
+            log_issue_activity(
+                self.name,
+                f"assigned to {', '.join(assignee_names)}",
+                data={"assignees": user_id}
+            )
 
     def sync_parent_task(self):
         """Keep parent_task and parent_issue in sync"""
