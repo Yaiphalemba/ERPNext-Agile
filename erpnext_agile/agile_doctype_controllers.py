@@ -12,10 +12,11 @@ def task_validate(doc, method):
         if not project_doc.enable_agile:
             frappe.throw(f"Project {doc.project} is not agile-enabled")
         
+        from erpnext_agile.agile_issue_manager import AgileIssueManager
+        manager = AgileIssueManager()
+            
         # Auto-generate issue key if not set
         if not doc.issue_key:
-            from erpnext_agile.agile_issue_manager import AgileIssueManager
-            manager = AgileIssueManager()
             doc.issue_key = manager.generate_issue_key(project_doc)
         
         # Set default status if not set
