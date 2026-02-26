@@ -484,6 +484,9 @@ def transition_task_status(task_name, to_status, comment=None, completed_by=None
         doc.completed_by = completed_by
     if completed_on:
         doc.completed_on = getdate(completed_on)
+        doc.progress = 100  # Mark as complete if completed_on is set
+    if to_status in ["Blocked", "On Hold"]:
+        doc.exp_end_date = None  # Clear end date if blocked
     doc.save()
     
     # Add comment if provided
