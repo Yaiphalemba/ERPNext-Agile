@@ -66,7 +66,7 @@ doctype_js = {
             "public/js/project_time_tracking.js"
         ]
 }
-doctype_list_js = {"Task" : "public/js/task_list.js"}
+
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
