@@ -2,7 +2,7 @@
 import frappe
 from frappe import _
 import re
-from frappe.desk.form.assign_to import add, clear
+from frappe.desk.form.assign_to import add, clear, remove
 from erpnext.projects.doctype.task.task import Task
 from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
     log_issue_activity,
@@ -222,27 +222,32 @@ class AgileTask(Task):
         if self.has_value_changed("watchers"):
             self.track_watcher_changes()
     
+    # Make sure you import 'remove' at the top of your file if you haven't already:
+    # from frappe.desk.form.assign_to import add, remove, clear 
+
     def track_assignee_changes(self):
         """Track changes to assignees"""
         old_doc = self.get_doc_before_save()
         if not old_doc:
             return
         
-        old_assignees = set([d.user for d in old_doc.get("assigned_to_users", [])])
-        new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
+        # Let's use set comprehensions here. Cleaner and slightly faster.
+        old_assignees = {d.user for d in old_doc.get("assigned_to_users", [])}
+        new_assignees = {d.user for d in self.get("assigned_to_users", [])}
         
         added = new_assignees - old_assignees
         removed = old_assignees - new_assignees
         
         if added:
             assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in added]
-            user_id = list(added)
+            
             add({
-                    "assign_to": user_id,
-                    "doctype": "Task",
-                    "name": self.name,
-                    "description": self.subject
-                })
+                "assign_to": list(added),
+                "doctype": "Task",
+                "name": self.name,
+                "description": self.subject
+            })
+            
             log_issue_activity(
                 self.name,
                 f"assigned to {', '.join(assignee_names)}",
@@ -251,7 +256,11 @@ class AgileTask(Task):
         
         if removed:
             assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in removed]
-            clear("Task", self.name)
+            
+            # THE FIX: Loop through the exact users removed and unassign them individually
+            for user in removed:
+                remove("Task", self.name, user)
+                
             log_issue_activity(
                 self.name,
                 f"unassigned from {', '.join(assignee_names)}",
