@@ -493,12 +493,12 @@ def _build_summary(data):
             "value":     round(total_wp, 1),
             "label":     _("Total Weighted Points"),
             "datatype":  "Float",
-            "indicator": "purple",
+            "indicator": "red",
         },
         {
             "value":     top.get("full_name") or top.get("user", ""),
             "label":     _("Top Performer"),
             "datatype":  "Data",
-            "indicator": "orange",
+            "indicator": "yellow",
         },
     ]
