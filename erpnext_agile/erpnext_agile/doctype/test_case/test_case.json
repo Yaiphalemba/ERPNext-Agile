@@ -88,7 +88,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Priority",
-   "options": "Critical\nHigh\nMedium\nLow"
+   "options": "Critical\nHigh\nMedium\nLow\nLowest"
   },
   {
    "columns": 1,
@@ -227,7 +227,7 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-02-11 16:30:25.919422",
+ "modified": "2026-03-18 09:47:59.670288",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Case",
