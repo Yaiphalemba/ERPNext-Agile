@@ -51,19 +51,18 @@ def _validate_filters(filters):
 def get_columns(filters):
     return [
         {"label": _("Rank"),                 "fieldname": "rank",                 "fieldtype": "Data",    "width": 70},
-        {"label": _("Employee"),             "fieldname": "user",                 "fieldtype": "Link",    "options": "User", "width": 220},
-        {"label": _("Full Name"),            "fieldname": "full_name",            "fieldtype": "Data",    "width": 160},
-        {"label": _("Project(s)"),           "fieldname": "project_display",      "fieldtype": "Data",    "width": 210},
+        {"label": _("Employee"),             "fieldname": "user",                 "fieldtype": "Link",    "options": "User", "width": 300},
+        {"label": _("Project(s)"),           "fieldname": "project_display",      "fieldtype": "Data",    "width": 400,      "align": "left"},
         {"label": _("Total Tasks"),          "fieldname": "project_total_tasks",  "fieldtype": "Int",     "width": 110},
         {"label": _("Total Assigned Tasks"), "fieldname": "total_assigned_tasks", "fieldtype": "Int",     "width": 140},
         {"label": _("Completed"),            "fieldname": "tasks_completed",      "fieldtype": "Int",     "width": 110},
         {"label": _("In Progress"),          "fieldname": "tasks_in_progress",    "fieldtype": "Int",     "width": 110},
-        {"label": _("Raw Story Pts"),        "fieldname": "raw_story_points",     "fieldtype": "Float",   "precision": 1, "width": 130},
-        {"label": _("Weighted Pts"),         "fieldname": "weighted_points",      "fieldtype": "Float",   "precision": 2, "width": 130},
+        {"label": _("Raw Story Pts"),        "fieldname": "raw_story_points",     "fieldtype": "Float",   "precision": 1,    "width": 130},
+        {"label": _("Weighted Pts"),         "fieldname": "weighted_points",      "fieldtype": "Float",   "precision": 2,    "width": 130},
         {"label": _("Avg Contribution %"),   "fieldname": "avg_contribution_pct", "fieldtype": "Percent", "width": 140},
-        {"label": _("Avg Pts / Task"),       "fieldname": "avg_points_per_task",  "fieldtype": "Float",   "precision": 2, "width": 120},
+        {"label": _("Avg Pts / Task"),       "fieldname": "avg_points_per_task",  "fieldtype": "Float",   "precision": 2,    "width": 120},
         {"label": _("Completion Rate"),      "fieldname": "completion_rate",      "fieldtype": "Percent", "width": 130},
-        {"label": _("Performance Score"),    "fieldname": "performance_score",    "fieldtype": "Float",   "precision": 2, "width": 150},
+        {"label": _("Performance Score"),    "fieldname": "performance_score",    "fieldtype": "Float",   "precision": 2,    "width": 150},
     ]
 
 
@@ -203,6 +202,26 @@ def _fetch_assignees(task_names, employee_filter=None):
 
 
 # ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
+
+def _fetch_project_name_map(project_ids):
+    """
+    Bulk fetch project_name for a collection of project IDs.
+    Returns: {project_id: "PROJECT-001: My Project Name"}
+    """
+    if not project_ids:
+        return {}
+
+    rows = frappe.get_all(
+        "Project",
+        filters=[["name", "in", list(project_ids)]],
+        fields=["name", "project_name"],
+    )
+    return {r.name: f"{r.name}: {r.project_name}" for r in rows}
+
+
+# ─────────────────────────────────────────────
 # AGGREGATION
 # ─────────────────────────────────────────────
 
@@ -308,13 +327,13 @@ def _make_row(rank, user, project_display, s, project_total_tasks=0, indent=0):
     }
 
 
-def _section_header(label, project_display=""):
+def _section_header(label, stats, project_display=""):
     """Bold section separator row (no data cells)."""
     return {
-        "rank":                 "",
+        "rank":                 None,
         "user":                 label,
-        "full_name":            "",
-        "project_display":      project_display,
+        "full_name":            None,
+        "project_display":      stats,
         "project_total_tasks":  None,
         "total_assigned_tasks": None,
         "tasks_completed":      None,
@@ -368,11 +387,23 @@ def _build_overall(assignees, task_map, project_totals, filters):
         reverse=True,
     )
 
+    all_project_ids = {p for _, agg in sorted_users for p in agg["projects"]}
+    project_name_map = _fetch_project_name_map(all_project_ids)
+
+    project_filter    = filters.get("project")
+    filter_display    = project_name_map.get(project_filter) if project_filter else None
+
     data, labels, values = [], [], []
 
     for rank, (user, agg) in enumerate(sorted_users, 1):
-        projects        = agg["projects"]
-        project_display = filters.get("project") or ", ".join(sorted(projects))
+        projects = agg["projects"]
+
+        if filter_display:
+            project_display = filter_display
+        else:
+            project_display = ", ".join(
+                sorted(project_name_map.get(p, p) for p in projects)
+            )
 
         # Sum total tasks across all projects this user belongs to
         proj_total = sum(project_totals.get(p, 0) for p in projects)
@@ -404,11 +435,14 @@ def _build_per_project(assignees, task_map, project_totals, filters):
         for project, s in proj_map.items():
             proj_users[project][user] = s
 
+    project_name_map = _fetch_project_name_map(proj_users.keys())
+
     data, labels, values = [], [], []
 
     for project in sorted(proj_users.keys()):
-        users       = proj_users[project]
-        proj_total  = project_totals.get(project, 0)
+        users            = proj_users[project]
+        proj_total       = project_totals.get(project, 0)
+        project_display  = project_name_map.get(project, project)
 
         ranked = sorted(
             users.items(),
@@ -419,20 +453,20 @@ def _build_per_project(assignees, task_map, project_totals, filters):
         total_assigned  = sum(s["total_assigned_tasks"] for _, s in ranked)
         total_completed = sum(s["tasks_completed"] for _, s in ranked)
         total_wp        = sum(flt(s["weighted_points"]) for _, s in ranked)
+        stats = f"<b>{proj_total} total tasks · {total_assigned} assigned · "f"{total_completed} completed · {round(total_wp, 1)} pts</b>"
 
         data.append(_section_header(
-            f"📁  {project}  "
-            f"({proj_total} total tasks · {total_assigned} assigned · "
-            f"{total_completed} completed · {round(total_wp, 1)} pts)",
-            project,
+            f"📁  {project_display}  ",
+            stats,
+            project_display,
         ))
 
         for rank, (user, s) in enumerate(ranked, 1):
-            row = _make_row(rank, user, project, s, project_total_tasks=proj_total, indent=1)
+            row = _make_row(rank, user, project_display, s, project_total_tasks=proj_total, indent=1)
             data.append(row)
 
             if rank == 1:
-                labels.append(f"{s['full_name'] or user}\n({project})")
+                labels.append(f"{s['full_name'] or user}\n({project_display})")
                 values.append(row["performance_score"])
 
     chart_data = {
