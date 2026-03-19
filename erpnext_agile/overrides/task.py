@@ -150,6 +150,8 @@ class AgileTask(Task):
                     self.project
                 )
             )
+        elif self.is_group:
+            self.story_points = 0
     
     def handle_issue_activity_update(self):
         """Handle activity tracking for field changes"""
