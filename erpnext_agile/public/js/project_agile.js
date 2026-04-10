@@ -52,12 +52,19 @@ function add_agile_project_buttons(frm) {
         show_agile_reports_menu(frm);
     }, __('Agile'));
     
+    
     // Bulk Sync GitHub
-    if (frm.doc.repository) {
-        frm.add_custom_button(__('Bulk Sync GitHub'), function() {
-            bulk_sync_github(frm);
-        }, __('GitHub'));
-    }
+    let github_enabled = 0;
+    frappe.db.get_value('GitHub Settings', 'GitHub Settings', 'enabled', (r)=>{
+        if(r && r.enabled == 1){
+            github_enabled = 1;
+        }
+        if (github_enabled === 1 && frm.doc.repository) {
+            frm.add_custom_button(__('Bulk Sync GitHub'), function() {
+                bulk_sync_github(frm);
+            }, __('GitHub'));
+        }
+    });
 }
 
 function show_agile_board(frm) {
