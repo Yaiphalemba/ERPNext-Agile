@@ -166,19 +166,28 @@ function add_agile_buttons(frm) {
             remove_from_sprint(frm);
         }, __('Agile'));
     }
-    
+
     // GitHub Integration
-    if (frm.doc.github_repo) {
-        if (frm.doc.github_issue_number) {
-            frm.add_custom_button(__('View on GitHub'), function() {
-                window.open(get_github_issue_url(frm), '_blank');
-            }, __('GitHub'));
-        } else {
-            frm.add_custom_button(__('Sync to GitHub'), function() {
-                sync_to_github(frm);
-            }, __('GitHub'));
+    let github_enabled = 0;
+    frappe.db.get_value('GitHub Settings', 'GitHub Settings', 'enabled', (r)=>{
+        if(r && r.enabled == 1){
+            github_enabled = 1;
         }
-    }
+    
+        if (github_enabled === 1 && frm.doc.github_repo) {
+            if (frm.doc.github_repo) {
+                if (frm.doc.github_issue_number) {
+                    frm.add_custom_button(__('View on GitHub'), function() {
+                        window.open(get_github_issue_url(frm), '_blank');
+                    }, __('GitHub'));
+                } else {
+                    frm.add_custom_button(__('Sync to GitHub'), function() {
+                        sync_to_github(frm);
+                    }, __('GitHub'));
+                }
+            }
+        }
+    });
     
     // Time Tracking
     frm.add_custom_button(__('Start Timer'), function() {
