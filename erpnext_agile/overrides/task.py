@@ -42,7 +42,7 @@ class AgileTask(Task):
         if self.original_estimate:
             self.custom_original_estimated_time = format_seconds(self.original_estimate)
         if self.time_spent:
-            self.custom_time_spent = format_seconds(self.time_spent)
+            self.custom_total_time_spent = format_seconds(self.time_spent)
         if self.remaining_estimate:
             self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
     
@@ -334,7 +334,7 @@ class AgileTask(Task):
             self.original_estimate = self.expected_time*3600  # convert hours to seconds
             self.custom_original_estimated_time = format_seconds(self.original_estimate)
             if self.time_spent:
-                self.custom_time_spent = format_seconds(self.time_spent)
+                self.custom_total_time_spent = format_seconds(self.time_spent)
                 self.remaining_estimate = max(0, self.original_estimate - self.time_spent)
                 self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
             else:
