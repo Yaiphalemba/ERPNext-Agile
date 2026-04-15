@@ -692,6 +692,12 @@ function remove_from_sprint(frm) {
 }
 
 function start_work_timer(frm) {
+    if (["open", "completed"].includes(frm.doc.status.toLowerCase())) {
+        frappe.throw(
+            __('Cannot start timer when issue is in "{0}" status.', [frm.doc.status])
+        );
+    }
+
     // First check if timer is already running
     frappe.call({
         method: 'erpnext_agile.api.get_active_timer',
