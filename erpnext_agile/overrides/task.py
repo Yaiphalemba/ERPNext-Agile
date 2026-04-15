@@ -30,7 +30,8 @@ class AgileTask(Task):
         # sync agile status → task status
         if self.issue_status:
             self.status = map_agile_status_to_task_status(self.issue_status)
-        
+        if self.issue_type in ["Story", "Epic"]:
+            self.is_group = 1
         # sync agile priority → task priority
         if self.issue_priority:
             self.priority = map_agile_priority_to_task_priority(self.issue_priority)
@@ -38,6 +39,12 @@ class AgileTask(Task):
         # setting date for review date to skip scheduled overdue marking
         if self.status == "Pending Review" and not self.review_date:
             self.review_date = getdate()  # Set to current date to avoid overdue status
+        if self.original_estimate:
+            self.custom_original_estimated_time = format_seconds(self.original_estimate)
+        if self.time_spent:
+            self.custom_time_spent = format_seconds(self.time_spent)
+        if self.remaining_estimate:
+            self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
     
     def on_update(self):
         """Track field changes after update"""
@@ -325,6 +332,14 @@ class AgileTask(Task):
             
         if self.expected_time:
             self.original_estimate = self.expected_time*3600  # convert hours to seconds
+            self.custom_original_estimated_time = format_seconds(self.original_estimate)
+            if self.time_spent:
+                self.custom_time_spent = format_seconds(self.time_spent)
+                self.remaining_estimate = max(0, self.original_estimate - self.time_spent)
+                self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
+            else:
+                self.remaining_estimate = self.original_estimate
+                self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
     
     def validate_agile_fields(self):
         """Validate agile-specific fields"""

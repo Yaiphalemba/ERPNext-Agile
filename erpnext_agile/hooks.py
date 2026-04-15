@@ -253,7 +253,7 @@ scheduler_events = {
         "erpnext_agile.scheduler_events.daily.cleanup_old_timers"
     ],
     "weekly": [
-        "erpnext_agile.version_control.cleanup_all_old_versions",
+        # "erpnext_agile.version_control.cleanup_all_old_versions",
         "erpnext_agile.scheduler_events.weekly.generate_team_velocity_report"
     ]
 }
