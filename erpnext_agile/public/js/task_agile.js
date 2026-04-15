@@ -6,17 +6,17 @@ frappe.ui.form.on('Task', {
             assignee_users_query(frm);
             
             // Add Version Control buttons
-            frm.add_custom_button(__('Version History'), function() {
-                show_version_history(frm);
-            }, __('Version Control'));
+            // frm.add_custom_button(__('Version History'), function() {
+            //     show_version_history(frm);
+            // }, __('Version Control'));
             
-            frm.add_custom_button(__('Create Version'), function() {
-                create_version_snapshot(frm);
-            }, __('Version Control'));
+            // frm.add_custom_button(__('Create Version'), function() {
+            //     create_version_snapshot(frm);
+            // }, __('Version Control'));
             
-            frm.add_custom_button(__('Restore Version'), function() {
-                show_restore_dialog(frm);
-            }, __('Version Control'));
+            // frm.add_custom_button(__('Restore Version'), function() {
+            //     show_restore_dialog(frm);
+            // }, __('Version Control'));
             
             if (frm.doc.issue_status) {
                 // Add workflow transition buttons
@@ -692,6 +692,12 @@ function remove_from_sprint(frm) {
 }
 
 function start_work_timer(frm) {
+    if (["open", "completed"].includes(frm.doc.status.toLowerCase())) {
+        frappe.throw(
+            __('Cannot start timer when issue is in "{0}" status.', [frm.doc.status])
+        );
+    }
+
     // First check if timer is already running
     frappe.call({
         method: 'erpnext_agile.api.get_active_timer',
@@ -958,246 +964,246 @@ function load_project_agile_config(frm) {
 // VERSION CONTROL FUNCTIONS
 // ============================================
 
-function show_version_history(frm) {
-    frappe.call({
-        method: 'erpnext_agile.version_control.get_version_history',
-        args: { task_name: frm.doc.name },
-        callback: function(r) {
-            if (!r.message || r.message.length === 0) {
-                frappe.msgprint(__('No version history available'));
-                return;
-            }
+// function show_version_history(frm) {
+//     frappe.call({
+//         method: 'erpnext_agile.version_control.get_version_history',
+//         args: { task_name: frm.doc.name },
+//         callback: function(r) {
+//             if (!r.message || r.message.length === 0) {
+//                 frappe.msgprint(__('No version history available'));
+//                 return;
+//             }
             
-            let history = r.message;
+//             let history = r.message;
             
-            let d = new frappe.ui.Dialog({
-                title: __('Version History'),
-                size: 'large',
-                fields: [
-                    {
-                        fieldtype: 'HTML',
-                        fieldname: 'version_list'
-                    }
-                ]
-            });
+//             let d = new frappe.ui.Dialog({
+//                 title: __('Version History'),
+//                 size: 'large',
+//                 fields: [
+//                     {
+//                         fieldtype: 'HTML',
+//                         fieldname: 'version_list'
+//                     }
+//                 ]
+//             });
             
-            let html = '<table class="table table-bordered table-hover">';
-            html += '<thead><tr><th>Version</th><th>Created By</th><th>Date</th><th>Description</th><th>Actions</th></tr></thead>';
-            html += '<tbody>';
+//             let html = '<table class="table table-bordered table-hover">';
+//             html += '<thead><tr><th>Version</th><th>Created By</th><th>Date</th><th>Description</th><th>Actions</th></tr></thead>';
+//             html += '<tbody>';
             
-            history.forEach(function(v) {
-                html += `<tr>
-                    <td><strong>v${v.version_number}</strong></td>
-                    <td>${frappe.user_info(v.created_by).fullname}</td>
-                    <td>${frappe.datetime.str_to_user(v.created_at)}</td>
-                    <td>${v.change_description || 'No description'}</td>
-                    <td>
-                        <button class="btn btn-xs btn-primary restore-version-btn" data-version="${v.version_number}">
-                            <i class="fa fa-undo"></i> Restore
-                        </button>
-                        <button class="btn btn-xs btn-default compare-version-btn" data-version="${v.version_number}">
-                            <i class="fa fa-exchange"></i> Compare
-                        </button>
-                    </td>
-                </tr>`;
-            });
+//             history.forEach(function(v) {
+//                 html += `<tr>
+//                     <td><strong>v${v.version_number}</strong></td>
+//                     <td>${frappe.user_info(v.created_by).fullname}</td>
+//                     <td>${frappe.datetime.str_to_user(v.created_at)}</td>
+//                     <td>${v.change_description || 'No description'}</td>
+//                     <td>
+//                         <button class="btn btn-xs btn-primary restore-version-btn" data-version="${v.version_number}">
+//                             <i class="fa fa-undo"></i> Restore
+//                         </button>
+//                         <button class="btn btn-xs btn-default compare-version-btn" data-version="${v.version_number}">
+//                             <i class="fa fa-exchange"></i> Compare
+//                         </button>
+//                     </td>
+//                 </tr>`;
+//             });
             
-            html += '</tbody></table>';
-            d.fields_dict.version_list.$wrapper.html(html);
+//             html += '</tbody></table>';
+//             d.fields_dict.version_list.$wrapper.html(html);
             
-            // Add click handlers
-            d.$wrapper.find('.restore-version-btn').on('click', function() {
-                let version_num = $(this).data('version');
-                restore_version_from_dialog(frm, version_num, d);
-            });
+//             // Add click handlers
+//             d.$wrapper.find('.restore-version-btn').on('click', function() {
+//                 let version_num = $(this).data('version');
+//                 restore_version_from_dialog(frm, version_num, d);
+//             });
             
-            d.$wrapper.find('.compare-version-btn').on('click', function() {
-                let version_num = $(this).data('version');
-                compare_version(frm.doc.name, version_num);
-            });
+//             d.$wrapper.find('.compare-version-btn').on('click', function() {
+//                 let version_num = $(this).data('version');
+//                 compare_version(frm.doc.name, version_num);
+//             });
             
-            d.show();
-        }
-    });
-}
+//             d.show();
+//         }
+//     });
+// }
 
-function create_version_snapshot(frm) {
-    let d = new frappe.ui.Dialog({
-        title: __('Create Version Snapshot'),
-        fields: [
-            {
-                label: __('Description'),
-                fieldname: 'description',
-                fieldtype: 'Text',
-                reqd: 1,
-                description: 'Describe what this version represents'
-            }
-        ],
-        primary_action_label: __('Create'),
-        primary_action: function(values) {
-            frappe.call({
-                method: 'erpnext_agile.version_control.create_issue_version',
-                args: {
-                    task_name: frm.doc.name,
-                    change_description: values.description
-                },
-                callback: function(r) {
-                    if (r.message) {
-                        frappe.show_alert({
-                            message: __('Version snapshot created'),
-                            indicator: 'green'
-                        });
-                        d.hide();
-                    }
-                }
-            });
-        }
-    });
-    d.show();
-}
+// function create_version_snapshot(frm) {
+//     let d = new frappe.ui.Dialog({
+//         title: __('Create Version Snapshot'),
+//         fields: [
+//             {
+//                 label: __('Description'),
+//                 fieldname: 'description',
+//                 fieldtype: 'Text',
+//                 reqd: 1,
+//                 description: 'Describe what this version represents'
+//             }
+//         ],
+//         primary_action_label: __('Create'),
+//         primary_action: function(values) {
+//             frappe.call({
+//                 method: 'erpnext_agile.version_control.create_issue_version',
+//                 args: {
+//                     task_name: frm.doc.name,
+//                     change_description: values.description
+//                 },
+//                 callback: function(r) {
+//                     if (r.message) {
+//                         frappe.show_alert({
+//                             message: __('Version snapshot created'),
+//                             indicator: 'green'
+//                         });
+//                         d.hide();
+//                     }
+//                 }
+//             });
+//         }
+//     });
+//     d.show();
+// }
 
-function show_restore_dialog(frm) {
-    frappe.call({
-        method: 'erpnext_agile.version_control.get_version_history',
-        args: { task_name: frm.doc.name },
-        callback: function(r) {
-            if (!r.message || r.message.length === 0) {
-                frappe.msgprint(__('No versions available to restore'));
-                return;
-            }
+// function show_restore_dialog(frm) {
+//     frappe.call({
+//         method: 'erpnext_agile.version_control.get_version_history',
+//         args: { task_name: frm.doc.name },
+//         callback: function(r) {
+//             if (!r.message || r.message.length === 0) {
+//                 frappe.msgprint(__('No versions available to restore'));
+//                 return;
+//             }
             
-            let versions = r.message;
+//             let versions = r.message;
             
-            let d = new frappe.ui.Dialog({
-                title: __('Restore Version'),
-                fields: [
-                    {
-                        label: __('Select Version'),
-                        fieldname: 'version_number',
-                        fieldtype: 'Select',
-                        options: versions.map(v => `${v.version_number} - ${v.change_description || 'No description'}`).join('\n'),
-                        reqd: 1
-                    },
-                    {
-                        fieldtype: 'HTML',
-                        fieldname: 'warning',
-                        options: '<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> <strong>Warning:</strong> Current state will be backed up before restore.</div>'
-                    }
-                ],
-                primary_action_label: __('Restore'),
-                primary_action: function(values) {
-                    let version_num = parseInt(values.version_number.split(' - ')[0]);
+//             let d = new frappe.ui.Dialog({
+//                 title: __('Restore Version'),
+//                 fields: [
+//                     {
+//                         label: __('Select Version'),
+//                         fieldname: 'version_number',
+//                         fieldtype: 'Select',
+//                         options: versions.map(v => `${v.version_number} - ${v.change_description || 'No description'}`).join('\n'),
+//                         reqd: 1
+//                     },
+//                     {
+//                         fieldtype: 'HTML',
+//                         fieldname: 'warning',
+//                         options: '<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> <strong>Warning:</strong> Current state will be backed up before restore.</div>'
+//                     }
+//                 ],
+//                 primary_action_label: __('Restore'),
+//                 primary_action: function(values) {
+//                     let version_num = parseInt(values.version_number.split(' - ')[0]);
                     
-                    frappe.confirm(
-                        __('Are you sure you want to restore to version {0}? This will create a backup of the current state.', [version_num]),
-                        function() {
-                            frappe.call({
-                                method: 'erpnext_agile.version_control.restore_issue_version',
-                                args: {
-                                    task_name: frm.doc.name,
-                                    version_number: version_num
-                                },
-                                callback: function(r) {
-                                    if (r.message) {
-                                        frappe.show_alert({
-                                            message: __('Issue restored to version {0}', [version_num]),
-                                            indicator: 'green'
-                                        });
-                                        frm.reload_doc();
-                                        d.hide();
-                                    }
-                                }
-                            });
-                        }
-                    );
-                }
-            });
-            d.show();
-        }
-    });
-}
+//                     frappe.confirm(
+//                         __('Are you sure you want to restore to version {0}? This will create a backup of the current state.', [version_num]),
+//                         function() {
+//                             frappe.call({
+//                                 method: 'erpnext_agile.version_control.restore_issue_version',
+//                                 args: {
+//                                     task_name: frm.doc.name,
+//                                     version_number: version_num
+//                                 },
+//                                 callback: function(r) {
+//                                     if (r.message) {
+//                                         frappe.show_alert({
+//                                             message: __('Issue restored to version {0}', [version_num]),
+//                                             indicator: 'green'
+//                                         });
+//                                         frm.reload_doc();
+//                                         d.hide();
+//                                     }
+//                                 }
+//                             });
+//                         }
+//                     );
+//                 }
+//             });
+//             d.show();
+//         }
+//     });
+// }
 
-function restore_version_from_dialog(frm, version_number, parent_dialog) {
-    frappe.confirm(
-        __('Are you sure you want to restore to version {0}? This will create a backup of the current state.', [version_number]),
-        function() {
-            frappe.call({
-                method: 'erpnext_agile.version_control.restore_issue_version',
-                args: {
-                    task_name: frm.doc.name,
-                    version_number: version_number
-                },
-                callback: function(r) {
-                    if (r.message) {
-                        frappe.show_alert({
-                            message: __('Issue restored to version {0}', [version_number]),
-                            indicator: 'green'
-                        });
-                        frm.reload_doc();
-                        if (parent_dialog) parent_dialog.hide();
-                    }
-                }
-            });
-        }
-    );
-}
+// function restore_version_from_dialog(frm, version_number, parent_dialog) {
+//     frappe.confirm(
+//         __('Are you sure you want to restore to version {0}? This will create a backup of the current state.', [version_number]),
+//         function() {
+//             frappe.call({
+//                 method: 'erpnext_agile.version_control.restore_issue_version',
+//                 args: {
+//                     task_name: frm.doc.name,
+//                     version_number: version_number
+//                 },
+//                 callback: function(r) {
+//                     if (r.message) {
+//                         frappe.show_alert({
+//                             message: __('Issue restored to version {0}', [version_number]),
+//                             indicator: 'green'
+//                         });
+//                         frm.reload_doc();
+//                         if (parent_dialog) parent_dialog.hide();
+//                     }
+//                 }
+//             });
+//         }
+//     );
+// }
 
-function compare_version(task_name, version_number) {
-    frappe.call({
-        method: 'erpnext_agile.version_control.compare_with_current',
-        args: {
-            task_name: task_name,
-            version_number: version_number
-        },
-        callback: function(r) {
-            if (!r.message) {
-                frappe.msgprint(__('No differences found'));
-                return;
-            }
+// function compare_version(task_name, version_number) {
+//     frappe.call({
+//         method: 'erpnext_agile.version_control.compare_with_current',
+//         args: {
+//             task_name: task_name,
+//             version_number: version_number
+//         },
+//         callback: function(r) {
+//             if (!r.message) {
+//                 frappe.msgprint(__('No differences found'));
+//                 return;
+//             }
             
-            let diff = r.message;
+//             let diff = r.message;
             
-            let d = new frappe.ui.Dialog({
-                title: __('Version Comparison (v{0} vs Current)', [version_number]),
-                size: 'large',
-                fields: [
-                    {
-                        fieldtype: 'HTML',
-                        fieldname: 'diff_view'
-                    }
-                ]
-            });
+//             let d = new frappe.ui.Dialog({
+//                 title: __('Version Comparison (v{0} vs Current)', [version_number]),
+//                 size: 'large',
+//                 fields: [
+//                     {
+//                         fieldtype: 'HTML',
+//                         fieldname: 'diff_view'
+//                     }
+//                 ]
+//             });
             
-            let html = '<table class="table table-bordered">';
-            html += '<thead><tr><th>Field</th><th>Change Type</th><th>Old Value</th><th>New Value</th></tr></thead>';
-            html += '<tbody>';
+//             let html = '<table class="table table-bordered">';
+//             html += '<thead><tr><th>Field</th><th>Change Type</th><th>Old Value</th><th>New Value</th></tr></thead>';
+//             html += '<tbody>';
             
-            if (diff.length === 0) {
-                html += '<tr><td colspan="4" class="text-center text-muted">No changes detected between this version and current state.</td></tr>';
-            } else {
-                diff.forEach(function(change) {
-                    let badge_class = change.change_type === 'added' ? 'success' : 
-                                     change.change_type === 'removed' ? 'danger' : 'warning';
+//             if (diff.length === 0) {
+//                 html += '<tr><td colspan="4" class="text-center text-muted">No changes detected between this version and current state.</td></tr>';
+//             } else {
+//                 diff.forEach(function(change) {
+//                     let badge_class = change.change_type === 'added' ? 'success' : 
+//                                      change.change_type === 'removed' ? 'danger' : 'warning';
                     
-                    let row_class = change.change_type === 'added' ? 'table-success' : 
-                                   change.change_type === 'removed' ? 'table-danger' : 'table-warning';
+//                     let row_class = change.change_type === 'added' ? 'table-success' : 
+//                                    change.change_type === 'removed' ? 'table-danger' : 'table-warning';
                     
-                    html += `<tr class="${row_class}">
-                        <td><strong>${change.field}</strong></td>
-                        <td><span class="badge badge-${badge_class}">${change.change_type}</span></td>
-                        <td><code>${change.old_value}</code></td>
-                        <td><code>${change.new_value}</code></td>
-                    </tr>`;
-                });
-            }
+//                     html += `<tr class="${row_class}">
+//                         <td><strong>${change.field}</strong></td>
+//                         <td><span class="badge badge-${badge_class}">${change.change_type}</span></td>
+//                         <td><code>${change.old_value}</code></td>
+//                         <td><code>${change.new_value}</code></td>
+//                     </tr>`;
+//                 });
+//             }
             
-            html += '</tbody></table>';
+//             html += '</tbody></table>';
             
-            d.fields_dict.diff_view.$wrapper.html(html);
-            d.show();
-        }
-    });
-}
+//             d.fields_dict.diff_view.$wrapper.html(html);
+//             d.show();
+//         }
+//     });
+// }
 
 function add_workflow_transition_buttons(frm) {
     // First get the workflow scheme from project

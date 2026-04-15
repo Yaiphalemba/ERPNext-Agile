@@ -54,11 +54,6 @@ class AgileIssueManager:
             for component in issue_data.get('components', []):
                 task_doc.append('components', {'component': component})
         
-        # Add fix versions
-        if issue_data.get('fix_versions'):
-            for version in issue_data.get('fix_versions', []):
-                task_doc.append('fix_versions', {'version': version})
-        
         # Add watchers
         if issue_data.get('watchers'):
             for watcher in issue_data.get('watchers', []):
