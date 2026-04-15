@@ -325,21 +325,21 @@ class AgileTimeTracking:
     def start_timer(self, task_name):
         """Start work timer for an issue"""
         
-        # Check if user already has an active timer
-        active_timer = frappe.db.get_value('Agile Work Timer',
-            {'user': frappe.session.user, 'status': 'Running'},
-            ['name', 'task', 'start_time'],
-            as_dict=True
-        )
+        # # Check if user already has an active timer
+        # active_timer = frappe.db.get_value('Agile Work Timer',
+        #     {'user': frappe.session.user, 'status': 'Running'},
+        #     ['name', 'task', 'start_time'],
+        #     as_dict=True
+        # )
         
-        if active_timer:
-            # Return info about existing timer instead of throwing error
-            return {
-                'success': False,
-                'error': 'timer_already_running',
-                'message': f"You already have an active timer running for {active_timer.task}",
-                'existing_timer': active_timer
-            }
+        # if active_timer:
+        #     # Return info about existing timer instead of throwing error
+        #     return {
+        #         'success': False,
+        #         'error': 'timer_already_running',
+        #         'message': f"You already have an active timer running for {active_timer.task}",
+        #         'existing_timer': active_timer
+        #     }
         
         # Create timer
         timer_doc = frappe.get_doc({

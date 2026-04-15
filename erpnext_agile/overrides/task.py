@@ -34,6 +34,10 @@ class AgileTask(Task):
         # sync agile priority → task priority
         if self.issue_priority:
             self.priority = map_agile_priority_to_task_priority(self.issue_priority)
+
+        # setting date for review date to skip scheduled overdue marking
+        if self.status == "Pending Review" and not self.review_date:
+            self.review_date = getdate()  # Set to current date to avoid overdue status
     
     def on_update(self):
         """Track field changes after update"""
@@ -334,6 +338,13 @@ class AgileTask(Task):
         if self.issue_priority and not frappe.db.exists("Agile Issue Priority", self.issue_priority):
             frappe.throw(f"Invalid Priority: {self.issue_priority}")
 
+    def update_status(self):
+        if self.status not in ("Cancelled", "Completed", "Pending Review") and self.exp_end_date:
+            from datetime import datetime
+
+            if self.exp_end_date < datetime.now().date():
+                self.db_set("status", "Overdue", update_modified=False)
+                self.update_project()
 
 def format_seconds(seconds):
     """Format seconds to human readable time"""
