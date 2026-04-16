@@ -34,7 +34,9 @@ app_license = "mit"
 # app_include_css = "/assets/erpnext_agile/css/erpnext_agile.css"
 app_include_css = "/assets/erpnext_agile/css/task_gantt_override.css"
 # app_include_js = "/assets/erpnext_agile/js/erpnext_agile.js"
-app_include_js = "/assets/erpnext_agile/js/task_gantt_override.js"
+app_include_js = [
+            "/assets/erpnext_agile/js/task_gantt_override.js",
+        ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/erpnext_agile/css/erpnext_agile.css"
@@ -67,6 +69,9 @@ doctype_js = {
         ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Task": "public/js/task_list.js"
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
