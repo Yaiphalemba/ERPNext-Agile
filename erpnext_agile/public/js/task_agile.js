@@ -754,7 +754,7 @@ function remove_from_sprint(frm) {
 }
 
 function start_work_timer(frm) {
-    if (["open", "completed"].includes(frm.doc.status.toLowerCase())) {
+    if (["open", "completed", "cancelled", "template"].includes(frm.doc.status.toLowerCase())) {
         frappe.throw(
             __('Cannot start timer when issue is in "{0}" status.', [frm.doc.status])
         );
