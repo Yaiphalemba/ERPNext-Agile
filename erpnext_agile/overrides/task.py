@@ -59,6 +59,18 @@ class AgileTask(Task):
             # Update sprint metrics if task is in a sprint
             if self.current_sprint and self.has_value_changed("issue_status"):
                 self.update_sprint_metrics()
+            if self.current_sprint and self.has_value_changed("current_sprint"):
+                self.update_sprint_metrics()
+            elif self.story_points and self.has_value_changed("story_points"):
+                self.update_sprint_metrics()
+                
+    def on_trash(self):
+        """Handle cleanup on deletion"""
+        if self.is_agile:
+            # Update sprint metrics if task is in a sprint
+            if self.current_sprint:
+                self.db_set("story_points", 0)  # Set story points to 0 before deletion to adjust sprint metrics
+                self.update_sprint_metrics()
                 
     def update_parent_progress(self):
         """Update parent task's completion percentage"""

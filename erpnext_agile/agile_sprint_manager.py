@@ -290,17 +290,19 @@ class AgileSprintManager:
 
         # Recalculate metrics
         metrics = self.calculate_sprint_metrics(sprint_doc)
+        current_total_points = metrics['total_points']
 
-        # Compute remaining and ideal work
-        remaining_points = metrics['total_points'] - metrics['completed_points']
+        # Compute remaining, ideal, AND scope changes
+        remaining_points = current_total_points - metrics['completed_points']
+        added_points, removed_points = self.get_scope_changes(sprint_doc.name, current_total_points)
 
         if sprint_doc.sprint_state == 'Active':
             total_days = date_diff(sprint_doc.end_date, sprint_doc.start_date) or 1
             days_passed = date_diff(today(), sprint_doc.actual_start_date or sprint_doc.start_date)
             days_remaining = total_days - days_passed
-            ideal_remaining = (days_remaining / total_days) * metrics['total_points'] if total_days > 0 else 0
+            ideal_remaining = (days_remaining / total_days) * current_total_points if total_days > 0 else 0
         else:
-            ideal_remaining = 0 if is_final else metrics['total_points']
+            ideal_remaining = 0 if is_final else current_total_points
 
         # Check if today's burndown entry already exists
         existing_entry = frappe.db.get_value(
@@ -309,7 +311,7 @@ class AgileSprintManager:
                 'sprint': sprint_doc.name,
                 'date': today()
             },
-            'name'  # Get the actual document name
+            'name' 
         )
 
         if existing_entry:
@@ -318,10 +320,12 @@ class AgileSprintManager:
             burndown_doc.remaining_points = remaining_points
             burndown_doc.ideal_remaining = max(0, ideal_remaining)
             burndown_doc.completed_points = metrics['completed_points']
-            burndown_doc.save()
+            burndown_doc.added_points = added_points
+            burndown_doc.removed_points = removed_points # Make sure this field exists in your DocType!
+            burndown_doc.save(ignore_permissions=True) # Good practice for background metric updates
             frappe.logger().info(f"Updated burndown entry for sprint {sprint_doc.name} on {today()}")
         else:
-            # Create a new one if missing (safety fallback)
+            # Create a new one if missing
             burndown_doc = frappe.get_doc({
                 'doctype': 'Agile Sprint Burndown',
                 'sprint': sprint_doc.name,
@@ -329,9 +333,10 @@ class AgileSprintManager:
                 'remaining_points': remaining_points,
                 'ideal_remaining': max(0, ideal_remaining),
                 'completed_points': metrics['completed_points'],
-                'added_points': 0
+                'added_points': added_points,
+                'removed_points': removed_points
             })
-            burndown_doc.insert()
+            burndown_doc.insert(ignore_permissions=True)
             frappe.logger().info(f"Created new burndown entry for sprint {sprint_doc.name} on {today()}")
         
     @frappe.whitelist()
@@ -488,3 +493,33 @@ class AgileSprintManager:
     def is_agile_project(self, project_name):
         """Check if project is agile-enabled"""
         return frappe.db.get_value('Project', project_name, 'enable_agile') == 1
+    
+    def get_scope_changes(self, sprint_name, current_total_points):
+        """
+        Compare current total points with the last recorded burndown entry (before today)
+        to calculate added and removed points.
+        """
+        # Fetch the most recent burndown entry strictly BEFORE today
+        last_entry = frappe.db.get_all(
+            'Agile Sprint Burndown',
+            filters={
+                'sprint': sprint_name,
+                'date': ['<', today()]
+            },
+            fields=['remaining_points', 'completed_points'],
+            order_by='date desc',
+            limit=1
+        )
+
+        if not last_entry:
+            # First day of the sprint. The baseline is set, so technically 0 "added" scope creep.
+            return 0, 0
+
+        # Total points yesterday = remaining + completed
+        previous_total_points = last_entry[0].remaining_points + last_entry[0].completed_points
+        scope_diff = current_total_points - previous_total_points
+
+        added_points = scope_diff if scope_diff > 0 else 0
+        removed_points = abs(scope_diff) if scope_diff < 0 else 0
+
+        return added_points, removed_points
