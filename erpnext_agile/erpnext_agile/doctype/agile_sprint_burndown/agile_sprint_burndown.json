@@ -21,10 +21,10 @@
    "fieldname": "sprint",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Sprint",
    "options": "Agile Sprint",
-   "reqd": 1,
-   "unique": 0
+   "reqd": 1
   },
   {
    "fieldname": "date",
@@ -74,7 +74,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-09 14:32:35.427618",
+ "modified": "2026-04-17 14:48:58.741096",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Sprint Burndown",
