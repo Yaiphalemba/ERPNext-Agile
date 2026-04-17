@@ -329,6 +329,12 @@ class AgileTimeTracking:
     @frappe.whitelist()
     def start_timer(self, task_name):
         """Start work timer for an issue"""
+        task_status = frappe.db.get_value('Task', task_name, 'status')
+
+        if task_status == 'Overdue':
+            workflow_state = frappe.db.get_value('Task', task_name, 'issue_status')
+            if workflow_state in ['Open', 'To Do', 'Reopened', 'Blocked']:
+                frappe.throw(_("Task needs to be in progress before starting timer"))
         
         # # Check if user already has an active timer
         # active_timer = frappe.db.get_value('Agile Work Timer',

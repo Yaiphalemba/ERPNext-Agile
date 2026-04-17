@@ -5,15 +5,6 @@ from frappe.utils import now_datetime, time_diff_in_seconds, get_datetime
 class AgileWorkTimer(Document):
     def validate(self):
         """Validate timer"""
-        # Check for existing running timer for same user
-        if self.status == 'Running' and not self.name:
-            existing = frappe.db.exists('Agile Work Timer', {
-                'user': self.user,
-                'status': 'Running'
-            })
-            if existing:
-                frappe.throw(f"You already have a running timer for task {frappe.db.get_value('Agile Work Timer', existing, 'task')}")
-        
         # Calculate time spent if timer is stopped
         if self.status == 'Stopped' and self.start_time and self.end_time:
             self.time_spent_seconds = time_diff_in_seconds(
