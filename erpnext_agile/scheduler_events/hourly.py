@@ -1,6 +1,7 @@
 # erpnext_agile/tasks/hourly.py
 import frappe
 from frappe.utils import today, now_datetime
+from erpnext_agile.agile_sprint_manager import AgileSprintManager
 
 def update_sprint_metrics():
     """Update metrics for all active sprints"""
@@ -9,7 +10,6 @@ def update_sprint_metrics():
         fields=['name', 'project']
     )
     
-    from erpnext_agile.agile_sprint_manager import AgileSprintManager
     manager = AgileSprintManager()
     
     for sprint in active_sprints:
@@ -34,7 +34,6 @@ def create_burndown_entries():
         fields=['name', 'project']
     )
     
-    from erpnext_agile.agile_sprint_manager import AgileSprintManager
     manager = AgileSprintManager()
     
     for sprint in active_sprints:
@@ -51,6 +50,9 @@ def create_burndown_entries():
                 
                 if not existing:
                     manager.create_burndown_entry(sprint_doc)
+                    frappe.db.commit()
+                else:
+                    manager.update_burndown_entry(sprint_doc)
                     frappe.db.commit()
         except Exception as e:
             frappe.log_error(f"Error creating burndown entry for {sprint.name}: {str(e)}")
