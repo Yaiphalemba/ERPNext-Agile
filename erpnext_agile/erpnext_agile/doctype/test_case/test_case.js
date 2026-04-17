@@ -26,7 +26,7 @@ frappe.ui.form.on('Test Case', {
         // Set test_case_id as title field
         frm.set_df_property('test_case_id', 'bold', 1);
         assignee_users_query(frm)
-        
+        set_custom_components_and_labels_query(frm);
         if (!frm.is_new()) {
             // Add custom buttons
             frm.add_custom_button(__('Execute Test'), () => {
@@ -65,6 +65,7 @@ frappe.ui.form.on('Test Case', {
                 }
             };
             assignee_users_query(frm);
+            set_custom_components_and_labels_query(frm);
         }
     },
 
@@ -214,4 +215,41 @@ function assignee_users_query(frm){
             }
         }
     })
+}
+
+function set_custom_components_and_labels_query(frm) {
+    frm.set_query('components', function() {
+        
+        if (frm.doc.project) {
+            return {
+                filters: {
+                    project: frm.doc.project
+                }
+            };
+        } else {
+            frappe.msgprint('Please select a Project first!');
+            return {
+                filters: {
+                    name: ['=', '']
+                }
+            };
+        }
+    });
+    frm.set_query('tags_labels', function() {
+        
+        if (frm.doc.project) {
+            return {
+                filters: {
+                    project: frm.doc.project
+                }
+            };
+        } else {
+            frappe.msgprint('Please select a Project first!');
+            return {
+                filters: {
+                    name: ['=', '']
+                }
+            };
+        }
+    });
 }
