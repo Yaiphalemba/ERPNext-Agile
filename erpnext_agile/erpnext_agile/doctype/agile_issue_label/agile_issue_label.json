@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "label_name",
+  "project",
   "description"
  ],
  "fields": [
@@ -23,6 +24,15 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1
   }
  ],
  "links": [
@@ -41,7 +51,7 @@
    "table_fieldname": "tags_labels"
   }
  ],
- "modified": "2025-11-25 14:30:46.344330",
+ "modified": "2026-04-17 14:50:46.655663",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Issue Label",
@@ -62,6 +72,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

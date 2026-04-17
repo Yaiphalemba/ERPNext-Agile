@@ -5,7 +5,7 @@ frappe.ui.form.on('Task', {
             parent_issue_query(frm);
             sprint_query(frm);
             assignee_users_query(frm);
-            
+            set_custom_components_and_labels_query(frm);
             // Add Version Control buttons
             // frm.add_custom_button(__('Version History'), function() {
             //     show_version_history(frm);
@@ -78,6 +78,7 @@ frappe.ui.form.on('Task', {
             parent_issue_query(frm);
             sprint_query(frm);
             assignee_users_query(frm);
+            set_custom_components_and_labels_query(frm);
         }
     },
     
@@ -148,6 +149,44 @@ function sprint_query(frm){
             }
         }
     })
+}
+
+
+function set_custom_components_and_labels_query(frm) {
+    frm.set_query('custom_components', function() {
+        
+        if (frm.doc.project) {
+            return {
+                filters: {
+                    project: frm.doc.project
+                }
+            };
+        } else {
+            frappe.msgprint('Please select a Project first!');
+            return {
+                filters: {
+                    name: ['=', '']
+                }
+            };
+        }
+    });
+    frm.set_query('custom_labels', function() {
+        
+        if (frm.doc.project) {
+            return {
+                filters: {
+                    project: frm.doc.project
+                }
+            };
+        } else {
+            frappe.msgprint('Please select a Project first!');
+            return {
+                filters: {
+                    name: ['=', '']
+                }
+            };
+        }
+    });
 }
 
 // Helper to color-code agile statuses
