@@ -3,6 +3,7 @@ frappe.ui.form.on('Task', {
     refresh: function(frm) {
         if (frm.doc.is_agile) {
             parent_issue_query(frm);
+            sprint_query(frm);
             assignee_users_query(frm);
             
             // Add Version Control buttons
@@ -75,6 +76,7 @@ frappe.ui.form.on('Task', {
             load_project_agile_config(frm);
             filter_status_dropdown(frm);
             parent_issue_query(frm);
+            sprint_query(frm);
             assignee_users_query(frm);
         }
     },
@@ -128,12 +130,33 @@ function parent_issue_query(frm){
     })
 }
 
+function sprint_query(frm){
+    frm.set_query("current_sprint", function(){
+        if(frm.doc.project){
+            return{
+                filters:{
+                    project: frm.doc.project,
+                    sprint_state: ['in', ['Future', 'Active']]
+                }
+            }
+        }
+        else {
+            return{
+                filters:{
+                    sprint_state: ['in', ['Future', 'Active']]
+                }
+            }
+        }
+    })
+}
+
 // Helper to color-code agile statuses
 function get_agile_status_color(status) {
     let colors = {
-        "Open": "red",
+        "Open": "blue",
         "In Progress": "orange",
-        "In Review": "blue",
+        "In Review": "orange",
+        "QA Review": "orange",
         "Testing": "blue",
         "Resolved": "green",
         "Closed": "green",

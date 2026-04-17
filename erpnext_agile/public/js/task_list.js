@@ -22,21 +22,24 @@ frappe.listview_settings["Task"] = {
 		});
 
         if (listview.page.fields_dict['current_sprint']) {
-            
-            listview.page.fields_dict['current_sprint'].get_query = function() {
-                let selected_project = listview.page.fields_dict['project'] ? listview.page.fields_dict['project'].get_value() : null;
+			listview.page.fields_dict['current_sprint'].get_query = function() {
+				let selected_project = listview.page.fields_dict['project'] ? listview.page.fields_dict['project'].get_value() : null;
 
-                if (selected_project) {
-                    return {
-                        filters: {
-                            'project': selected_project
-                        }
-                    };
-                }
-                
-                return {};
-            };
-        }
+				// Base filters that ALWAYS apply
+				let query_filters = {
+					'sprint_state': ['in', ['Active', 'Future']]
+				};
+
+				// Dynamically append the project filter if one is selected
+				if (selected_project) {
+					query_filters['project'] = selected_project;
+				}
+
+				return {
+					filters: query_filters
+				};
+			};
+		}
 	},
 	get_indicator: function (doc) {
 		var colors = {
