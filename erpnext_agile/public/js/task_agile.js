@@ -2,6 +2,7 @@
 frappe.ui.form.on('Task', {
     refresh: function(frm) {
         if (frm.doc.is_agile) {
+            hide_sidebar_assignment(frm);
             parent_issue_query(frm);
             sprint_query(frm);
             assignee_users_query(frm);
@@ -86,6 +87,15 @@ frappe.ui.form.on('Task', {
         assignee_users_query(frm);
     }
 });
+
+function hide_sidebar_assignment(frm) {
+    // Implementation for hiding sidebar assignment
+    if (frappe.session.user != "Administrator") {
+        if (frappe.user.has_role('Sales User') == 1) {
+            $(".form-assignments").hide();
+        }
+    }
+}
 
 function assignee_users_query(frm){
     if(!frm.doc.project) 
