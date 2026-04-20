@@ -91,7 +91,7 @@ frappe.ui.form.on('Task', {
 function hide_sidebar_assignment(frm) {
     // Implementation for hiding sidebar assignment
     if (frappe.session.user != "Administrator") {
-        if (frappe.user.has_role('Sales User') == 1) {
+        if (frappe.user.has_role('System Manager') != 1) {
             $(".form-assignments").hide();
         }
     }
