@@ -1,5 +1,13 @@
 // erpnext_agile/public/js/task_agile.js
 frappe.ui.form.on('Task', {
+    before_save: function(frm) {
+        if (frm.doc.is_agile) {
+            if (['Completed', 'Cancelled'].includes(frm.doc.status)) {
+                // Perform any necessary actions for completed or cancelled tasks
+                frappe.throw(__('Cannot save task in "{0}" status.', [frm.doc.status]));
+            }
+        }
+    },
     refresh: function(frm) {
         if (frm.doc.is_agile) {
             hide_sidebar_assignment(frm);
