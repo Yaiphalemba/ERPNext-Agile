@@ -14,7 +14,6 @@
   "environment",
   "column_break_osoi",
   "release_type",
-  "start_date",
   "release_date",
   "branch_name",
   "commit_sha",
@@ -54,11 +53,6 @@
    "label": "Status",
    "options": "\nPlanned\nUnreleased\nReleased\nArchived",
    "reqd": 1
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "label": "Start Date"
   },
   {
    "fieldname": "release_date",
@@ -141,7 +135,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-27 14:02:04.980854",
+ "modified": "2026-04-20 10:59:16.415270",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Release Version",
@@ -162,6 +156,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
