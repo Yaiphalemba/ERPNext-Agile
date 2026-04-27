@@ -540,6 +540,9 @@ def transition_task_status(task_name, to_status, comment=None, completed_by=None
         doc.progress = 100  # Mark as complete if completed_on is set
     if to_status in ["Blocked", "On Hold"]:
         doc.exp_end_date = None  # Clear end date if blocked
+    if to_status in ["In Progress", "Working"] and not doc.custom_actual_start_date:
+        doc.custom_actual_start_date = frappe.utils.nowdate()  # Set start date if moving to In Progress and no start date
+        
     doc.save()
     
     # Add comment if provided
