@@ -172,7 +172,7 @@ has_permission = {
     "Agile Sprint": "erpnext_agile.overrides.project.has_agile_sprint_permission",
     "Test Cycle": "erpnext_agile.overrides.project.has_test_cycle_permission",
     "Test Case": "erpnext_agile.overrides.project.has_test_case_permission",
-    "Test Execution": "erpnext_agile.overrides.project.has_test_execution_permission"
+    "Test Execution": "erpnext_agile.overrides.project.has_test_exec_permission"
 }
 
 # DocType Class
