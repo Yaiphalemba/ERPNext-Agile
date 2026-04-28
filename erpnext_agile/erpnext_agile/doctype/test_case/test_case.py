@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.desk.form.assign_to import add, clear
+from frappe.desk.form.assign_to import add, clear, remove
 
 class TestCase(Document):
     def after_insert(self):
@@ -100,23 +100,26 @@ class TestCase(Document):
         if not old_doc:
             return
         
-        old_assignees = set([d.user for d in old_doc.get("assigned_to_users", [])])
-        new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
+        # Look at these beauties. No unnecessary lists in memory!
+        old_assignees = {d.user for d in old_doc.get("assigned_to_users", [])}
+        new_assignees = {d.user for d in self.get("assigned_to_users", [])}
         
         added = new_assignees - old_assignees
         removed = old_assignees - new_assignees
         
         if added:
-            user_id = list(added)
             add({
-                    "assign_to": user_id,
-                    "doctype": "Test Case",
-                    "name": self.name,
-                    "description": self.title
-                })
-        
+                "assign_to": list(added),
+                "doctype": "Test Case",
+                "name": self.name,
+                "description": self.title
+            })
+            
         if removed:
-            clear("Test Case", self.name)
+            # THE FIX: Loop through the exact users removed and unassign them individually
+            # No more carpet-bombing the entire assignee list.
+            for user in removed:
+                remove("Test Case", self.name, user)
             
     def handle_assignment_for_new_test_cases(self):
         """Assign new test cases to users in assigned_to_users field"""
