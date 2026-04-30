@@ -221,6 +221,9 @@ doc_events = {
     "Test Cycle": {
         "on_update": "erpnext_agile.test_management.events.test_cycle_on_update",
         "validate": "erpnext_agile.test_management.events.test_cycle_validate"
+    },
+    "Comment": {
+        "after_insert": "erpnext_agile.utils.task_watcher_sync_on_mention"
     }
 }
 

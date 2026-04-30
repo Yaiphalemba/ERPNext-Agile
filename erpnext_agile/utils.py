@@ -6,6 +6,7 @@ Utility functions for ERPNext Agile
 import frappe
 from frappe import _
 from frappe.utils import flt, cint, today, add_days, date_diff
+from frappe.desk.notifications import extract_mentions
 import json
 
 def get_project_metrics(project):
@@ -311,3 +312,30 @@ def get_sprint_health(sprint_name):
 def get_available_transitions_api(task_name, from_status):
     """API method to get available transitions"""
     return get_available_transitions(task_name, from_status)
+
+def task_watcher_sync_on_mention(doc, method=None):
+    """
+    Sync task watchers when a user is mentioned in a comment on a Task.
+    Ensures mentioned users are added as watchers to the Task.
+    """
+    if doc.reference_doctype == "Task":
+        try:
+            task = frappe.get_doc("Task", doc.reference_name)
+        except frappe.DoesNotExistError:
+            frappe.log(f"Task {doc.reference_name} not found for watcher sync")
+            return
+        
+        # Extract mentioned users from the comment content
+        mentioned_users = extract_mentions(doc.content)
+        existing_watchers = {watcher.user for watcher in task.watchers}
+        
+        # Add mentioned users as watchers to the task
+        for user in mentioned_users:
+            if user not in task.get("watchers", []):
+                try:
+                    if user not in existing_watchers:
+                        task.append("watchers", {"user": user})
+                    task.save(ignore_permissions=True)
+                    task.reload()  # Refresh to get updated watchers list
+                except Exception as e:
+                    frappe.log(f"Failed to add watcher {user} to task {task.name}: {str(e)}")
