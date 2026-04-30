@@ -5,7 +5,7 @@ frappe.ui.form.on('Test Cycle', {
     refresh(frm) {
         // Set cycle_id as title
         frm.set_df_property('cycle_id', 'bold', 1);
-        
+        set_version_query(frm);
         if (!frm.is_new()) {
             // Status-based actions
             if (frm.doc.status === "Not Started") {
@@ -66,7 +66,7 @@ frappe.ui.form.on('Test Cycle', {
         if (frm.doc.sprint) {
             frm.set_value('sprint', '');
         }
-        
+        set_version_query(frm);
         // Filter test cases by project
         frm.fields_dict['test_cases'].grid.get_field('test_case').get_query = function() {
             return {
@@ -201,4 +201,25 @@ function show_execution_dashboard(frm) {
             frm.dashboard.add_indicator(__('Not Run: {0}', [frm.doc.not_run_tests]), 'grey');
         }
     }
+}
+
+function set_version_query(frm) {
+    frm.set_query('release_version', function() {
+        
+        if (frm.doc.project) {
+            return {
+                filters: {
+                    project: frm.doc.project,
+                    status: ['!=', 'Archived']
+                }
+            };
+        } else {
+            frappe.msgprint('Please select a Project first!');
+            return {
+                filters: {
+                    status: ['!=', 'Archived']
+                }
+            };
+        }
+    });
 }
