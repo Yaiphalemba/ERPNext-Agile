@@ -52,6 +52,7 @@ class TestExecution(Document):
         """Auto-create bug if test fails"""
         # Update test cycle item status
         self.update_cycle_item_status()
+        self.update_task_item_status()
         
         # Update test cycle metrics
         self.update_cycle_metrics()
@@ -92,15 +93,73 @@ class TestExecution(Document):
             })
     
     def update_cycle_item_status(self, status=None):
-        """Update test cycle item execution status"""
+        """Update test cycle item execution status. Create link if missing."""
+        if not self.test_cycle:
+            return
+            
         cycle = frappe.get_doc("Test Cycle", self.test_cycle)
+        new_status = status or self.status
         
+        item_found = False
+        
+        # 1. Search for the existing test case
         for item in cycle.test_cases:
             if item.test_case == self.test_case:
-                item.execution_status = status or self.status
+                item.execution_status = new_status
+                item_found = True
                 break
+                
+        # 2. If it wasn't found in the loop, create the missing linkage
+        if not item_found:
+            cycle.append("test_cases", {
+                "test_case": self.test_case,
+                "execution_status": new_status
+            })
+            
+        # 3. Save the document
+        # Using the anti-loop flag we established earlier just to be safe
+        cycle.flags.sync_in_progress = True
+        cycle.save(ignore_permissions=True)
+    
+    def update_task_item_status(self, status=None):
+        """Update test case execution status in the child tables of linked Tasks"""
+        new_status = status or self.status
         
-        cycle.save()
+        # 1. Find all Tasks that have this Test Case in their child table
+        # Using frappe.db.get_all on the child table is much faster than loading the Test Case
+        linked_tasks = frappe.get_all(
+            "Test Cycle Item",
+            filters={
+                "parenttype": "Task",
+                "parentfield": "custom_test_cases",
+                "test_case": self.test_case
+            },
+            fields=["parent"],
+            distinct=True
+        )
+        
+        # Extract unique Task names
+        task_names = {row.parent for row in linked_tasks}
+        
+        # 2. Iterate through each Task, update the row, and save
+        for task_name in task_names:
+            task_doc = frappe.get_doc("Task", task_name)
+            is_modified = False
+            
+            for item in task_doc.custom_test_cases:
+                if item.test_case == self.test_case:
+                    # Update the status. 
+                    # (Change 'execution_status' if your field is named differently in the Task child table)
+                    if item.get("execution_status") != new_status:
+                        item.execution_status = new_status
+                        is_modified = True
+            
+            # 3. Save the Task only if a change was actually made
+            if is_modified:
+                # Reusing the anti-loop flag from our previous unlinking logic 
+                # just in case you ever add logic that syncs statuses back from Task -> Test Case
+                task_doc.flags.sync_in_progress = True
+                task_doc.save(ignore_permissions=True)
     
     def update_cycle_metrics(self):
         """Trigger cycle metrics recalculation"""
