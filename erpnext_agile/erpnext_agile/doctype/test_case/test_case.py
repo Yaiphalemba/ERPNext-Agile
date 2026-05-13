@@ -45,6 +45,8 @@ class TestCase(Document):
         # Track assignee changes
         if self.has_value_changed("assigned_to_users"):
             self.track_assignee_changes()
+        self.create_linking_in_tasks()
+        self.remove_unlinked_tasks()
     
     def validate_linked_items(self):
         """Validate linked tasks/projects"""
@@ -132,3 +134,61 @@ class TestCase(Document):
                     "name": self.name,
                     "description": self.title
                 })
+    
+    def create_linking_in_tasks(self):
+        """Create links in Task's 'Test Cycle Item' child table for linked tasks"""
+        for link in self.linked_items:
+            if link.link_doctype == "Task":
+                # Load the parent Task document
+                task_doc = frappe.get_doc("Task", link.link_name)
+                
+                # Check if the Test Case is already linked using a list comprehension
+                existing = [item for item in task_doc.get("custom_test_cases") 
+                            if item.test_case == self.name]
+                
+                if existing:
+                    # Optionally use frappe.msgprint if you don't want to halt the whole process
+                    continue
+                
+                # Append to the child table through the parent object
+                task_doc.append("custom_test_cases", {
+                    "test_case": self.name
+                })
+                
+                # Save the parent; this handles the child table insertion, 
+                # triggers parent hooks, and updates the timestamp correctly.
+                task_doc.flags.sync_in_progress = True
+                task_doc.save(ignore_permissions=True)
+    
+    def remove_unlinked_tasks(self):
+        """Remove this Test Case from Tasks that were unlinked during this save."""
+        # Prevent infinite recursion loop between documents
+        if self.is_new() or self.flags.sync_in_progress:
+            return
+
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+
+        # Find which tasks were present before the save, but are missing now
+        old_tasks = {link.link_name for link in old_doc.linked_items if link.link_doctype == "Task"}
+        current_tasks = {link.link_name for link in self.linked_items if link.link_doctype == "Task"}
+        
+        removed_tasks = old_tasks - current_tasks
+
+        for task_name in removed_tasks:
+            task_doc = frappe.get_doc("Task", task_name)
+            
+            initial_count = len(task_doc.custom_test_cases)
+            
+            # Filter out this test case from the Task's child table
+            task_doc.custom_test_cases = [
+                row for row in task_doc.custom_test_cases 
+                if row.test_case != self.name
+            ]
+            
+            # Save only if something was actually removed
+            if len(task_doc.custom_test_cases) < initial_count:
+                # Set the flag to prevent the Task from triggering another sync back
+                task_doc.flags.sync_in_progress = True
+                task_doc.save(ignore_permissions=True)
