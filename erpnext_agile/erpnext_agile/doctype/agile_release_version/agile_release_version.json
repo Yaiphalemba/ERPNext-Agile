@@ -97,7 +97,7 @@
    "fieldname": "environment",
    "fieldtype": "Select",
    "label": "Environment",
-   "options": "\nStaging\nDevelopment\nProduction"
+   "options": "\nUAT\nReplica\nProduction"
   },
   {
    "fieldname": "build_url",
@@ -135,7 +135,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-20 10:59:16.415270",
+ "modified": "2026-05-15 10:41:45.698423",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Release Version",
