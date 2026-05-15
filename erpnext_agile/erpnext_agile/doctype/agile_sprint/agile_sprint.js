@@ -1,4 +1,27 @@
 frappe.ui.form.on('Agile Sprint', {
+    validate: function(frm) {
+        return new Promise((resolve, reject) => {
+            frappe.call({
+                method: 'erpnext_agile.erpnext_agile.doctype.agile_sprint.agile_sprint.check_active_sprint',
+                args: {
+                    project: frm.doc.project,
+                    name: frm.doc.name
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frappe.confirm(
+                            `Another sprint '${r.message}' is already active. Continue anyway?`,
+                            () => resolve(),   // user clicked YES
+                            () => reject()     // user clicked NO → stops save
+                        );
+                    } else {
+                        resolve();
+                    }
+                }
+            });
+        });
+    },
+
     refresh(frm) {
         if (frm.doc.sprint_state === "Future") {
             frm.add_custom_button(__('Start Sprint'), () => {
@@ -15,36 +38,6 @@ frappe.ui.form.on('Agile Sprint', {
                 });
             }).addClass('btn-primary');
         }
-        // if (frm.doc.sprint_state === "Active") {
-        //     frm.add_custom_button(__('Complete Sprint'), () => {
-        //         frappe.confirm(
-        //             __('Are you sure you want to complete this sprint?'),
-        //             () => {
-        //                 frappe.call({
-        //                     method: "erpnext_agile.api.complete_sprint",
-        //                     args: {
-        //                         sprint_name: frm.doc.name
-        //                     },
-        //                     callback: function(r) {
-        //                         if (!r.exc) {
-        //                             frappe.show_alert({
-        //                                 message: __('Sprint completed successfully!'),
-        //                                 indicator: 'green'
-        //                             });
-        //                             frm.reload_doc();
-        //                         }
-        //                     }
-        //                 });
-        //             },
-        //             () => {
-        //                 frappe.show_alert({
-        //                     message: __('Sprint completion cancelled'),
-        //                     indicator: 'orange'
-        //                 });
-        //             }
-        //         );
-        //     }).addClass('btn-danger');
-        // }
         if (frm.doc.sprint_state === "Active") {
             frm.add_custom_button(__('Complete Sprint'), () => {
                 show_complete_sprint_dialog(frm);
