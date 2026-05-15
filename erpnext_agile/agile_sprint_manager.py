@@ -65,7 +65,7 @@ class AgileSprintManager:
             frappe.throw(_("Only future sprints can be started"))
         
         # Close any other active sprints in this project
-        self.complete_active_sprints(sprint_doc.project)
+        # self.complete_active_sprints(sprint_doc.project)
         
         # Start the sprint
         sprint_doc.sprint_state = 'Active'

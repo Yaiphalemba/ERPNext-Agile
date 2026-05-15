@@ -10,22 +10,6 @@ class AgileSprint(Document):
         if self.start_date and self.end_date:
             if self.end_date < self.start_date:
                 frappe.throw("End date cannot be before start date")
-        
-        # Validate no overlapping active sprints
-        if self.sprint_state == 'Active':
-            self.validate_no_overlap()
-    
-    def validate_no_overlap(self):
-        """Ensure no other active sprint exists"""
-        existing = frappe.db.sql("""
-            SELECT name FROM `tabAgile Sprint`
-            WHERE project = %s 
-            AND sprint_state = 'Active'
-            AND name != %s
-        """, (self.project, self.name or ''))
-        
-        if existing:
-            frappe.throw(f"Another sprint '{existing[0][0]}' is already active")
     
     def on_update(self):
         """Actions on update"""
@@ -44,3 +28,14 @@ class AgileSprint(Document):
         self.db_set('completed_points', metrics['completed_points'], update_modified=False)
         self.db_set('progress_percentage', metrics['progress_percentage'], update_modified=False)
         self.db_set('velocity', metrics['velocity'], update_modified=False)
+        
+@frappe.whitelist()
+def check_active_sprint(project, name):
+    existing = frappe.db.sql("""
+        SELECT name FROM `tabAgile Sprint`
+        WHERE project = %s
+        AND sprint_state = 'Active'
+        AND name != %s
+    """, (project, name or ''))
+
+    return existing[0][0] if existing else None
