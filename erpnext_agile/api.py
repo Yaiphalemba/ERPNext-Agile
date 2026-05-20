@@ -725,6 +725,8 @@ def sync_agile_issue_to_github(task_name):
 
 @frappe.whitelist()
 def move_tasks_to_sprint(current_sprint, target_sprint, issues_to_move):
+    from erpnext_agile.agile_sprint_manager import AgileSprintManager
+
     """
     Moves selected issues from the current sprint to a target sprint.
     """
@@ -748,8 +750,10 @@ def move_tasks_to_sprint(current_sprint, target_sprint, issues_to_move):
     for issue_name in issues_to_move:
         frappe.db.set_value("Task", issue_name, "current_sprint", target_sprint)
         moved_count += 1
+    
+    current_sprint_doc = frappe.get_doc("Agile Sprint", current_sprint)
+    current_sprint_doc.calculate_metrics()
 
     # Commit the changes to the database
-    # frappe.db.commit()
 
     return {"status": "success", "moved_count": moved_count}
