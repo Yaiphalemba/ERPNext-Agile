@@ -4,6 +4,12 @@ frappe.ui.form.on('Project', {
         if (frm.doc.enable_agile) {
             add_agile_project_buttons(frm);
         }
+        frm.remove_custom_button("Gantt Chart", "View");
+        frm.remove_custom_button("Kanban Board", "View");
+        frm.remove_custom_button("Set Project Status", "Actions");
+        frm.remove_custom_button("Duplicate Project with Tasks", "Actions");
+        frm.remove_custom_button("Update Costing and Billing", "Actions");
+        
     },
     
     enable_agile: function(frm) {
