@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-21 12:41:09.036601",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "version"
+ ],
+ "fields": [
+  {
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Version",
+   "options": "Agile Release Version",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-21 12:49:53.204242",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Release Version Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
