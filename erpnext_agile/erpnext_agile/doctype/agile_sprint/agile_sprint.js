@@ -55,7 +55,7 @@ function show_complete_sprint_dialog(frm) {
             if (r.message && r.message.issues) {
                 // Filter out issues that are already completed
                 // Note: Adjust the status array below based on your actual completion statuses
-                let completion_statuses = ['Done', 'Completed', 'Closed', 'Resolved'];
+                let completion_statuses = ['Done', 'Completed', 'Closed'];
                 let incomplete_issues = r.message.issues.filter(
                     issue => !completion_statuses.includes(issue.issue_status)
                 );
@@ -84,7 +84,7 @@ function render_complete_dialog(frm, issues) {
                     return {
                         filters: {
                             project: frm.doc.project,
-                            sprint_state: 'Future'
+                            sprint_state: ["in", ['Future', "Active"]]
                         }
                     };
                 }
@@ -193,6 +193,30 @@ function render_complete_dialog(frm, issues) {
             <div style="margin-top: 15px;">
                 <p class="" style="color: blue">${__('Select the issues you want to move. Click "Move Tasks Only" to move them to above selected sprint.')}</p>
                 <p class="" style="color: blue">${__('Click "Complete Sprint" to move the incomplete tasks to backlog and close the sprint.')}</p>
+                <div style="margin-bottom: 10px;">
+                    <strong>
+                        ${__('Selected Tasks')}:
+                        <span id="selected-count">${issues.length}</span>
+                    </strong>
+                </div>
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-6">
+                        <input 
+                            type="text" 
+                            id="filter-issue-id" 
+                            class="form-control"
+                            placeholder="${__('Filter by Task ID')}"
+                        >
+                    </div>
+                    <div class="col-md-6">
+                        <input 
+                            type="text" 
+                            id="filter-issue-subject" 
+                            class="form-control"
+                            placeholder="${__('Filter by Subject')}"
+                        >
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm">
                         <thead class="bg-light">
@@ -200,7 +224,7 @@ function render_complete_dialog(frm, issues) {
                                 <th style="width: 40px; text-align: center;">
                                     <input type="checkbox" id="select-all-issues" checked>
                                 </th>
-                                <th>${__('Key')}</th>
+                                <th>${__('Name')}</th>
                                 <th>${__('Summary')}</th>
                                 <th>${__('Status')}</th>
                                 <th>${__('Points')}</th>
@@ -216,7 +240,7 @@ function render_complete_dialog(frm, issues) {
                                 <td style="text-align: center;">
                                     <input type="checkbox" class="issue-checkbox" data-issue-name="${issue.name}" checked>
                                 </td>
-                                <td><strong>${issue.issue_key}</strong></td>
+                                <td><strong>${issue.name}</strong></td>
                                 <td>${issue.subject}</td>
                                 <td><span class="badge badge-secondary">${issue.issue_status}</span></td>
                                 <td>${issue.story_points || '-'}</td>
@@ -250,14 +274,65 @@ function render_complete_dialog(frm, issues) {
     d.$wrapper.on('change', '#select-all-issues', function() {
         let is_checked = $(this).is(':checked');
         d.$wrapper.find('.issue-checkbox').prop('checked', is_checked);
+        update_selected_count();
     });
+    
+    d.$wrapper.on('change', '.issue-checkbox', function() {
+
+        let total = d.$wrapper.find('.issue-checkbox').length;
+        let checked = d.$wrapper.find('.issue-checkbox:checked').length;
+
+        $('#select-all-issues').prop('checked', total === checked);
+
+        update_selected_count();
+    });
+
+    d.$wrapper.on('keyup','#filter-issue-id, #filter-issue-subject',
+        function() {
+            filter_issues_table();
+        }
+    );
+    
     d.$wrapper.on('click', '.open-issue', function() {
         let issue_name = $(this).data('issue-name');
         frappe.set_route('Form', 'Task', issue_name);
     });
 
     d.show();
+
+    function update_selected_count() {
+        let selected_count = d.$wrapper.find('.issue-checkbox:checked').length;
+        d.$wrapper.find('#selected-count').text(selected_count);
+    }
+
+    function filter_issues_table() {
+
+        let id_filter = d.$wrapper
+            .find('#filter-issue-id')
+            .val()
+            .toLowerCase();
+
+        let subject_filter = d.$wrapper
+            .find('#filter-issue-subject')
+            .val()
+            .toLowerCase();
+
+        d.$wrapper.find('#incomplete-issues-body tr').each(function() {
+            let row = $(this);
+            let issue_id = row.find('td:nth-child(2)').text().toLowerCase();
+            let subject = row.find('td:nth-child(3)').text().toLowerCase();
+            
+            let matches_id =
+                !id_filter || issue_id.includes(id_filter);
+            let matches_subject =
+                !subject_filter || subject.includes(subject_filter);
+
+            row.toggle(matches_id && matches_subject);
+        });
+    }
 }
+
+
 function show_create_sprint_dialog(frm, callback) {
     let d = new frappe.ui.Dialog({
         title: __('Create New Sprint'),
