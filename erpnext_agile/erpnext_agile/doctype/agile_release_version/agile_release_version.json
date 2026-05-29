@@ -44,15 +44,13 @@
    "fieldname": "release_type",
    "fieldtype": "Select",
    "label": "Release Type",
-   "options": "\nMajor\nMinor\nPatch\nHotfix",
-   "reqd": 1
+   "options": "\nMajor\nMinor\nPatch\nHotfix"
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "\nPlanned\nUnreleased\nReleased\nArchived",
-   "reqd": 1
+   "options": "\nPlanned\nUnreleased\nReleased\nArchived"
   },
   {
    "fieldname": "release_date",
@@ -135,8 +133,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-15 12:01:36.147916",
- "modified_by": "Administrator",
+ "modified": "2026-05-22 13:51:25.476857",
+ "modified_by": "mangshatabams@rapifuzz.com",
  "module": "Erpnext Agile",
  "name": "Agile Release Version",
  "naming_rule": "Expression",
