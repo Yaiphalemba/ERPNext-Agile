@@ -61,7 +61,6 @@ def _get_rq_job():
     except Exception:
         return None
 
-
 def _fetch_rq_job_by_id(job_id):
     """Fetch a stored RQ job by ID for read-only progress inspection."""
     try:
@@ -141,22 +140,29 @@ def verify_connection():
 
 @frappe.whitelist()
 def start_migration(project_key):
-    # Reset control state to "running" before launching
-    control_key = f"jira_migration_control_{project_key}"
-    frappe.cache().hset(control_key, "state", "running")
+    # Reset control state
+    frappe.cache().hset(f"jira_migration_control_{project_key}", "state", "running")
 
-    job = frappe.enqueue(
+    # Initialize the reliable cache state manually before the worker even starts
+    initial_state = {
+        "project_key": project_key,
+        "status": "running",
+        "phase": "Queued in Background...",
+        "percent": 0.0,
+        "processed": 0,
+        "failed": 0,
+        "total": 0,
+        "start_time": str(now_datetime()),
+        "last_heartbeat": str(now_datetime())
+    }
+    frappe.cache().set_value(f"jira_migration_state_{project_key}", initial_state, expires_in_sec=86400)
+
+    frappe.enqueue(
         'erpnext_agile.jira_sync.run_migration_engine',
         queue='long', timeout=7200,
         project_key=project_key
     )
-
-    # Persist job ID so get_migration_progress can fetch meta from RQ directly
-    frappe.cache().set_value(
-        f"jira_migration_job_id_{project_key}",
-        job.id,
-        expires_in_sec=7200
-    )
+    
     return "Migration started in background"
 
 
@@ -165,17 +171,14 @@ def start_migration(project_key):
 # ──────────────────────────────────────────────
 
 def resolve_dynamic_fields(fields, names_map):
-    # Use .strip() just in case Jira throws in random trailing spaces
     rev_map = {str(v).lower().strip(): k for k, v in names_map.items()}
     
-    # Safely extract epic link (handling both string and dict returns)
     epic_field_key = rev_map.get("epic link", "")
     epic_val = fields.get("customfield_10110") or (fields.get(epic_field_key) if epic_field_key else None)
     
     if isinstance(epic_val, dict):
         epic_val = epic_val.get("key") or epic_val.get("value")
         
-    # Same safety check for parent_link
     parent_field_key = rev_map.get("parent link", "")
     parent_val = fields.get(parent_field_key) if parent_field_key else None
     
@@ -371,8 +374,22 @@ def _map_jira_status(raw):
 
 
 # ──────────────────────────────────────────────
-# MIGRATION ENGINE
+# THE MIGRATION ENGINE (STATE MACHINE)
 # ──────────────────────────────────────────────
+def pulse_worker(project_key, phase_text=None, percent=None):
+    """Pings the cache to keep the heartbeat alive and update the UI phase dynamically."""
+    if not project_key:
+        return
+    state_key = f"jira_migration_state_{project_key}"
+    state = frappe.cache().get_value(state_key)
+    if state:
+        state["last_heartbeat"] = str(now_datetime())
+        if phase_text:
+            state["phase"] = phase_text
+        if percent is not None:
+            state["percent"] = percent
+        frappe.cache().set_value(state_key, state, expires_in_sec=86400)
+
 
 def run_migration_engine(project_key):
     settings = frappe.get_single("Jira Data Migration Tool")
@@ -389,31 +406,29 @@ def run_migration_engine(project_key):
     frappe.cache().delete_value(redis_hierarchy_key)
     frappe.cache().delete_value(failure_key)
 
-    # ── Local counters — source of truth for this job ──
+    # ── Local counters ──
     processed  = 0
     failed     = 0
     total      = 0
     start_time = str(now_datetime())
 
-    # ── Grab the RQ job handle once ──
-    _job = _get_rq_job()
-
-    def save_progress(status="running"):
-        """Write counters into RQ job.meta (visible to get_migration_progress)."""
-        if not _job:
-            return
-        _job.meta.update({
+    def save_progress(status="running", phase="Initializing...", percent=0.0):
+        """Write precise states directly to Frappe Cache, skipping RQ meta."""
+        state = {
             "project_key":    project_key,
             "processed":      processed,
             "failed":         failed,
             "total":          total,
             "status":         status,
+            "phase":          phase,
+            "percent":        percent,
             "start_time":     start_time,
             "last_heartbeat": str(now_datetime()),
-        })
-        _job.save_meta()
+        }
+        # Dump it straight to Redis where it can't be touched by the worker crashing
+        frappe.cache().set_value(f"jira_migration_state_{project_key}", state, expires_in_sec=86400)
 
-    save_progress()
+    save_progress("running", "Preparing Migration...", 0)
 
     existing_tasks = {
         d.issue_key: d.name
@@ -430,10 +445,12 @@ def run_migration_engine(project_key):
     comments_buf     = []
 
     try:
+        # ──────────────────────────────────────────────
+        # PHASE 1: FETCH & CREATE TASKS (0% - 70%)
+        # ──────────────────────────────────────────────
         while True:
-            # ── Control check (returns "running" | "paused" | "stopped") ──
             if check_control(project_key) == "stopped":
-                save_progress("stopped")
+                save_progress("stopped", "Migration Halted by User", 0)
                 _flush_inserts(tasks_insert_buf)
                 _flush_updates(tasks_update_buf)
                 frappe.db.commit()
@@ -460,7 +477,6 @@ def run_migration_engine(project_key):
             issues    = data.get("issues", [])
             names_map = data.get("names", {})
             total     = data.get("total", 0)
-            save_progress()
 
             if not issues:
                 break
@@ -470,9 +486,8 @@ def run_migration_engine(project_key):
             )
 
             for issue in issues:
-                # Per-issue control check
                 if check_control(project_key) == "stopped":
-                    save_progress("stopped")
+                    save_progress("stopped", "Migration Halted by User", 0)
                     _flush_inserts(tasks_insert_buf)
                     _flush_updates(tasks_update_buf)
                     frappe.db.commit()
@@ -516,55 +531,63 @@ def run_migration_engine(project_key):
                     failed += 1
                     frappe.cache().rpush(failure_key, jira_key)
 
-                # Push to job meta every 5 issues
+                # Dynamic progress scaling for Phase 1 (caps at 70%)
                 if (processed + failed) % 5 == 0:
-                    save_progress()
+                    current_percent = min(round((processed / total) * 70, 2), 70) if total else 0
+                    save_progress("running", "Fetching & Creating Tasks", current_percent)
 
-            # ── Batch flush ──
+            # Batch flush
             if len(tasks_insert_buf) >= BATCH_SIZE:
-                new_fails        = _flush_inserts(tasks_insert_buf)
-                failed          += new_fails
+                failed += _flush_inserts(tasks_insert_buf)
                 tasks_insert_buf = []
-                save_progress()
 
             if len(tasks_update_buf) >= BATCH_SIZE:
-                new_fails        = _flush_updates(tasks_update_buf)
-                failed          += new_fails
+                failed += _flush_updates(tasks_update_buf)
                 tasks_update_buf = []
-                save_progress()
 
             start_at += len(issues)
             if start_at >= total:
                 break
 
-        # ── Final flush ──
+        # Final flush for tasks
         failed += _flush_inserts(tasks_insert_buf)
         failed += _flush_updates(tasks_update_buf)
         frappe.db.commit()
 
+        # ──────────────────────────────────────────────
+        # SECONDARY PHASES (Run Sequentially with Pulses)
+        # ──────────────────────────────────────────────
+        
         if attachments_buf:
-            frappe.enqueue('erpnext_agile.jira_sync.process_attachments_queue',
-                           attachments_buffer=attachments_buf, auth=auth, queue='long', timeout=3600)
+            save_progress("running", "Starting Attachment Sync...", 75.0)
+            process_attachments_queue(attachments_buf, auth, project_key)
+            
         if worklogs_buf:
-            frappe.enqueue('erpnext_agile.jira_sync.process_worklogs_queue',
-                           worklogs_buffer=worklogs_buf, queue='long', timeout=3600)
+            save_progress("running", "Starting Worklog Sync...", 80.0)
+            process_worklogs_queue(worklogs_buf, project_key)
+            
         if comments_buf:
-            frappe.enqueue('erpnext_agile.jira_sync.process_comments_queue',
-                           comments_buffer=comments_buf, domain=jira_domain, auth=auth,
-                           queue='long', timeout=3600)
+            save_progress("running", "Starting Comment Sync...", 85.0)
+            process_comments_queue(comments_buf, jira_domain, auth, project_key)
 
-        weave_hierarchies(redis_hierarchy_key)
+        save_progress("running", "Building Task Hierarchy...", 90.0)
+        weave_hierarchies(redis_hierarchy_key, project_key)
         build_hierarchy_from_dependencies(project_key)
         update_parent_end_dates()
 
+        save_progress("running", "Rebuilding Tree Structure...", 95.0)
         frappe.log_error("Rebuilding Task Tree NestedSet...", "Jira Hierarchy Update")
         rebuild_tree("Task", "parent_task")
+        
+        save_progress("running", "Patching Epic Links...", 98.0)
+        patch_epic_links_from_jira(project_key)
 
-        save_progress("completed")
+        # Everything is strictly complete. Hit 100%.
+        save_progress("completed", "Migration Complete ✅", 100.0)
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Jira Migration Engine Failed")
-        save_progress("failed")
+        save_progress("failed", "Migration Failed (Check Logs)", 0)
 
 
 # ──────────────────────────────────────────────
@@ -574,7 +597,7 @@ def run_migration_engine(project_key):
 def check_control(project_key):
     """
     Returns "running" | "paused" | "stopped".
-    Blocks (sleeps) while paused. Never throws — callers decide what to do with "stopped".
+    Blocks (sleeps) while paused.
     """
     control_key = f"jira_migration_control_{project_key}"
 
@@ -598,63 +621,52 @@ def check_control(project_key):
 
 @frappe.whitelist()
 def get_migration_progress(project_key):
-    job_id = frappe.cache().get_value(f"jira_migration_job_id_{project_key}")
+    # Fetch directly from the cache we set
+    state = frappe.cache().get_value(f"jira_migration_state_{project_key}")
 
-    if job_id:
-        job = _fetch_rq_job_by_id(job_id)
-        if job:
-            meta = job.meta or {}
-            # Only use this job's meta if it actually belongs to this project
-            if meta.get("project_key") == project_key:
-                processed  = int(meta.get("processed", 0))
-                total      = int(meta.get("total",     0))
-                failed     = int(meta.get("failed",    0))
-                status     = meta.get("status", "running")
-                heartbeat  = meta.get("last_heartbeat")
-                start_time = meta.get("start_time")
+    if state and state.get("project_key") == project_key:
+        processed  = int(state.get("processed", 0))
+        total      = int(state.get("total",     0))
+        failed     = int(state.get("failed",    0))
+        status     = state.get("status", "running")
+        phase      = state.get("phase", "Initializing...")
+        percent    = float(state.get("percent", 0.0))
+        heartbeat  = state.get("last_heartbeat")
+        start_time = state.get("start_time")
 
-                # Cross-check: if RQ itself says the job failed, trust that
-                try:
-                    rq_status = str(job.get_status())
-                    if rq_status in ("failed",) and status not in ("completed", "stopped"):
-                        status = "failed"
-                except Exception:
-                    pass
+        warning = None
+        if heartbeat and status == "running":
+            try:
+                # If 2 minutes pass without a heartbeat, the worker died.
+                if (now_datetime() - get_datetime(heartbeat)).total_seconds() > 120:
+                    warning = "Migration heartbeat expired (no progress for 2 minutes). Worker likely crashed."
+                    status = "failed"
+                    phase = "Worker Crashed/Timeout"
+            except Exception:
+                pass
 
-                percent = round((processed / total) * 100, 2) if total else 0
+        eta = None
+        if start_time and processed >= 10:
+            try:
+                elapsed = (now_datetime() - get_datetime(start_time)).total_seconds()
+                if elapsed > 0:
+                    speed = processed / elapsed
+                    eta   = round(max(total - processed, 0) / speed, 2) if speed else None
+            except Exception:
+                pass
 
-                # Stale heartbeat warning
-                warning = None
-                if heartbeat and status == "running":
-                    try:
-                        if (now_datetime() - get_datetime(heartbeat)).total_seconds() > 120:
-                            warning = "Migration heartbeat expired (no progress for 2 minutes)."
-                    except Exception:
-                        pass
+        return {
+            "status":    status,
+            "phase":     phase,
+            "total":     total,
+            "processed": processed,
+            "failed":    failed,
+            "percent":   percent,
+            "eta":       eta,
+            "warning":   warning,
+        }
 
-                # ETA
-                eta = None
-                if start_time and processed >= 10:
-                    try:
-                        elapsed = (now_datetime() - get_datetime(start_time)).total_seconds()
-                        if elapsed > 0:
-                            speed = processed / elapsed
-                            eta   = round(max(total - processed, 0) / speed, 2) if speed else None
-                    except Exception:
-                        pass
-
-                return {
-                    "status":    status,
-                    "total":     total,
-                    "processed": processed,
-                    "failed":    failed,
-                    "percent":   percent,
-                    "eta":       eta,
-                    "warning":   warning,
-                }
-
-    return {"status": "idle", "total": 0, "processed": 0, "failed": 0, "percent": 0, "eta": None}
-
+    return {"status": "idle", "phase": "Awaiting Start...", "total": 0, "processed": 0, "failed": 0, "percent": 0, "eta": None}
 
 @frappe.whitelist()
 def pause_migration(project_key):
@@ -677,8 +689,6 @@ def stop_migration(project_key):
 # ──────────────────────────────────────────────
 
 def build_hierarchy_from_dependencies(project_key=None):
-    frappe.log_error("Starting Pass 3: Building Hierarchy from Dependencies", "Jira Hierarchy Debug")
-
     filter_sql = """
     AND parent IN (
         SELECT name FROM `tabTask`
@@ -731,13 +741,9 @@ def build_hierarchy_from_dependencies(project_key=None):
                         update_modified=False
                     )
                 except Exception as e:
-                    frappe.log_error(
-                        f"Failed linking {child_name} -> {parent_name}: {str(e)}",
-                        "Jira Hierarchy Debug"
-                    )
+                    pass
 
     frappe.db.commit()
-    frappe.log_error("Finished Pass 3: Building Hierarchy", "Jira Hierarchy Debug")
 
 
 def update_parent_end_dates():
@@ -747,7 +753,6 @@ def update_parent_end_dates():
         WHERE parent_task IS NOT NULL AND parent_task != ''
     """, as_dict=True)
 
-    updated_count = 0
     for p in parent_names:
         parent_name = p.parent_task
         parent_doc  = frappe.get_doc("Task", parent_name)
@@ -762,10 +767,8 @@ def update_parent_end_dates():
 
         if max_end and (parent_doc.exp_end_date is None or parent_doc.exp_end_date < max_end):
             frappe.db.set_value("Task", parent_name, "exp_end_date", max_end, update_modified=False)
-            updated_count += 1
 
     frappe.db.commit()
-    frappe.log_error(f"Updated {updated_count} parent tasks' end dates", "Jira Hierarchy Update")
 
 
 # ──────────────────────────────────────────────
@@ -796,11 +799,16 @@ def batch_fetch_watcher_emails(issue_keys, domain, auth):
 
 
 # ──────────────────────────────────────────────
-# BACKGROUND WORKLOG MIGRATION
+# BACKGROUND PROCESSORS (With Live UI Pulses)
 # ──────────────────────────────────────────────
 
-def process_worklogs_queue(worklogs_buffer):
-    for item in worklogs_buffer:
+def process_worklogs_queue(worklogs_buffer, project_key=None):
+    total = len(worklogs_buffer)
+    for i, item in enumerate(worklogs_buffer, 1):
+        # Pulse the UI every 5 items
+        if i % 5 == 0 or i == 1:
+            pulse_worker(project_key, f"Syncing Worklogs ({i}/{total})...")
+            
         jira_key  = item.get("jira_key")
         worklogs  = item.get("worklogs", [])
         task_name = frappe.db.get_value("Task", {"issue_key": jira_key}, "name")
@@ -841,12 +849,12 @@ def process_worklogs_queue(worklogs_buffer):
     frappe.db.commit()
 
 
-# ──────────────────────────────────────────────
-# BACKGROUND COMMENTS MIGRATION
-# ──────────────────────────────────────────────
-
-def process_comments_queue(comments_buffer, domain, auth):
-    for item in comments_buffer:
+def process_comments_queue(comments_buffer, domain, auth, project_key=None):
+    total = len(comments_buffer)
+    for i, item in enumerate(comments_buffer, 1):
+        # HTTP requests are slow, pulse every single time so the UI doesn't freeze
+        pulse_worker(project_key, f"Fetching Comments ({i}/{total})...")
+        
         jira_key  = item.get("jira_key")
         task_name = frappe.db.get_value("Task", {"issue_key": jira_key}, "name")
         if not task_name:
@@ -858,7 +866,6 @@ def process_comments_queue(comments_buffer, domain, auth):
             r.raise_for_status()
             comments = r.json().get("comments", [])
         except Exception as e:
-            frappe.log_error(f"Comment API fetch failed for {jira_key}: {str(e)}", "Jira Sync Error")
             continue
 
         if not comments:
@@ -904,14 +911,10 @@ def process_comments_queue(comments_buffer, domain, auth):
                     frappe.db.set_value("Comment", doc.name, "modified", created_dt, update_modified=False)
 
             except Exception as e:
-                frappe.log_error(f"Comment Migration Failed for {jira_key}: {str(e)}", "Jira Sync Error")
+                pass
 
     frappe.db.commit()
 
-
-# ──────────────────────────────────────────────
-# ISSUE LINKS → TASK DEPENDENCIES
-# ──────────────────────────────────────────────
 
 def resolve_issue_links(issuelinks, current_issue_key):
     if not issuelinks:
@@ -952,12 +955,12 @@ def resolve_issue_links(issuelinks, current_issue_key):
     return unique_rows
 
 
-# ──────────────────────────────────────────────
-# BACKGROUND ATTACHMENT MIGRATION
-# ──────────────────────────────────────────────
-
-def process_attachments_queue(attachments_buffer, auth):
-    for item in attachments_buffer:
+def process_attachments_queue(attachments_buffer, auth, project_key=None):
+    total = len(attachments_buffer)
+    for i, item in enumerate(attachments_buffer, 1):
+        # Pulse every time because downloading files is network-heavy
+        pulse_worker(project_key, f"Downloading Attachments ({i}/{total})...")
+        
         jira_key  = item.get("jira_key")
         task_name = frappe.db.get_value("Task", {"issue_key": jira_key}, "name")
         if not task_name:
@@ -986,16 +989,13 @@ def process_attachments_queue(attachments_buffer, auth):
                     "is_private":         1,
                 }).insert(ignore_permissions=True)
             except Exception as e:
-                frappe.log_error(
-                    f"Attachment '{file_name}' failed for {jira_key}: {str(e)}",
-                    "Jira Attachment Error"
-                )
+                pass
 
     frappe.db.commit()
 
 
 # ──────────────────────────────────────────────
-# RETRY FAILED
+# RETRY FAILED (Left as async for one-offs)
 # ──────────────────────────────────────────────
 
 @frappe.whitelist()
@@ -1036,7 +1036,7 @@ def run_single_issue(issue, domain, auth, names_map):
         issue, domain, auth, names_map
     )
 
-    raw_emails        = batch_fetch_watcher_emails([jira_key], domain, auth).get(jira_key, [])
+    raw_emails = batch_fetch_watcher_emails([jira_key], domain, auth).get(jira_key, [])
     task_dict["watchers"] = [{"user": resolve_user(email)} for email in raw_emails]
 
     existing = frappe.db.get_value("Task", {"issue_key": jira_key}, "name")
@@ -1087,12 +1087,16 @@ def run_single_issue(issue, domain, auth, names_map):
 # HIERARCHY
 # ──────────────────────────────────────────────
 
-def weave_hierarchies(redis_key):
+def weave_hierarchies(redis_key, project_key=None):
     relationships = frappe.cache().hgetall(redis_key)
     if not relationships:
         return
-
-    for child, parent in relationships.items():
+        
+    total = len(relationships)
+    for i, (child, parent) in enumerate(relationships.items(), 1):
+        if i % 10 == 0 or i == 1:
+            pulse_worker(project_key, f"Mapping Epic Links ({i}/{total})...")
+            
         child  = child.decode()  if isinstance(child,  bytes) else child
         parent = parent.decode() if isinstance(parent, bytes) else parent
 
@@ -1101,17 +1105,14 @@ def weave_hierarchies(redis_key):
 
         if child_name and parent_name:
             try:
-                # 1. Ensure the Epic is marked as a group
                 if not frappe.db.get_value("Task", parent_name, "is_group"):
                     frappe.db.set_value("Task", parent_name, "is_group", 1, update_modified=False)
 
-                # 2. Map the parent issue and parent task directly on the child
                 frappe.db.set_value("Task", child_name, {
                     "parent_task":  parent_name,
                     "parent_issue": parent_name,
                 }, update_modified=False)
 
-                # 3. Explicitly add the child task to the Epic's depends_on table
                 epic_doc = frappe.get_doc("Task", parent_name)
                 existing_deps = [d.task for d in epic_doc.get("depends_on", [])]
                 
@@ -1123,10 +1124,7 @@ def weave_hierarchies(redis_key):
                     epic_doc.save(ignore_permissions=True)
 
             except Exception as e:
-                frappe.log_error(
-                    f"Hierarchy weave failed {child} → {parent}: {str(e)}", 
-                    "Jira Hierarchy Error"
-                )
+                pass
 
     frappe.db.commit()
     frappe.cache().delete_key(redis_key)
@@ -1143,7 +1141,6 @@ def parse_story_points(val):
     try:
         num = float(val)
     except (ValueError, TypeError):
-        frappe.log_error(f"Invalid story_points value: {val} (type: {type(val)})", "Jira Story Points")
         return "0"
     closest = min(allowed, key=lambda x: abs(x - num))
     return str(closest)
@@ -1191,8 +1188,8 @@ def resolve_sprint(sprint_payload, project_name):
                 "start_date":   final_start,
                 "end_date":     final_end,
             }).insert(ignore_permissions=True)
-        except Exception as e:
-            frappe.log_error(f"Sprint create failed {sprint_name}: {str(e)}", "Jira Sprint Sync")
+        except Exception:
+            pass
     return sprint_name
 
 def resolve_version_table(versions_data, project_name):
@@ -1206,7 +1203,7 @@ def resolve_version_table(versions_data, project_name):
         existing = frappe.db.exists("Agile Release Version", {"version_name": v_name, "project": project_name})
         if not existing:
             try:
-                doc      = frappe.get_doc({
+                doc = frappe.get_doc({
                     "doctype":      "Agile Release Version",
                     "version_name": v_name,
                     "project":      project_name,
@@ -1261,11 +1258,9 @@ def map_resolution(val):
 
 # ──────────────────────────────────────────────
 # INTERNAL BATCH FLUSH HELPERS
-# Returns the number of failures encountered.
 # ──────────────────────────────────────────────
 
 def _flush_inserts(buf):
-    """Insert buffered tasks. Returns count of failures."""
     fail_count = 0
     for task_data in buf:
         ik = task_data.get("issue_key")
@@ -1279,17 +1274,14 @@ def _flush_inserts(buf):
                     continue
                 except Exception:
                     pass
-            frappe.log_error(f"Insert failed [{ik}]: {str(e)}", "Jira Sync Error")
             fail_count += 1
     frappe.db.commit()
     return fail_count
 
 
 def _flush_updates(buf):
-    """Update buffered tasks. Returns count of failures."""
     fail_count = 0
     for payload in buf:
-        ik = payload["data"].get("issue_key")
         try:
             doc     = frappe.get_doc("Task", payload["name"])
             changes = _get_changes(doc, payload["data"])
@@ -1310,9 +1302,7 @@ def _flush_updates(buf):
                     continue
                 except Exception:
                     pass
-            frappe.log_error(f"Update failed [{ik}]: {str(e)}", "Jira Sync Error")
             fail_count += 1
-
     frappe.db.commit()
     return fail_count
 

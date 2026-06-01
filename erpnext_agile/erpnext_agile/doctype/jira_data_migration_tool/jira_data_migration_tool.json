@@ -7,12 +7,12 @@
  "field_order": [
   "jira_domain",
   "jira_email",
-  "connected_user",
-  "project_key",
+  "jira_api_token",
   "is_active",
   "column_break_fati",
-  "dashboard_html",
-  "jira_api_token"
+  "connected_user",
+  "project_key",
+  "dashboard_html"
  ],
  "fields": [
   {
@@ -67,8 +67,8 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-26 17:53:01.019847",
- "modified_by": "mangshatabams@rapifuzz.com",
+ "modified": "2026-06-01 12:42:30.555948",
+ "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Jira Data Migration Tool",
  "owner": "mangshatabams@rapifuzz.com",
