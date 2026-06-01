@@ -1257,24 +1257,35 @@ def map_resolution(val):
 
 
 # ──────────────────────────────────────────────
-# INTERNAL BATCH FLUSH HELPERS
+# INTERNAL BATCH FLUSH HELPERS (Now with proper logging)
 # ──────────────────────────────────────────────
 
 def _flush_inserts(buf):
     fail_count = 0
     for task_data in buf:
-        ik = task_data.get("issue_key")
+        ik = task_data.get("issue_key", "Unknown")
         try:
             frappe.get_doc(task_data).insert(ignore_permissions=True)
         except Exception as e:
+            # If it's a circular dependency, we strip dependencies and try one more time
             if "Circular" in str(e):
                 try:
                     frappe.clear_messages()
                     frappe.get_doc({**task_data, "depends_on": []}).insert(ignore_permissions=True)
                     continue
-                except Exception:
-                    pass
+                except Exception as fallback_e:
+                    frappe.log_error(
+                        f"Fallback insert failed [{ik}]: {str(fallback_e)}\n\n{frappe.get_traceback()}", 
+                        "Jira Sync Error"
+                    )
+            else:
+                # Log the actual failure reason for everything else
+                frappe.log_error(
+                    f"Insert failed [{ik}]: {str(e)}\n\n{frappe.get_traceback()}", 
+                    "Jira Sync Error"
+                )
             fail_count += 1
+            
     frappe.db.commit()
     return fail_count
 
@@ -1282,6 +1293,7 @@ def _flush_inserts(buf):
 def _flush_updates(buf):
     fail_count = 0
     for payload in buf:
+        ik = payload["data"].get("issue_key", "Unknown")
         try:
             doc     = frappe.get_doc("Task", payload["name"])
             changes = _get_changes(doc, payload["data"])
@@ -1300,9 +1312,19 @@ def _flush_updates(buf):
                         doc.update(changes)
                         doc.save(ignore_permissions=True)
                     continue
-                except Exception:
-                    pass
+                except Exception as fallback_e:
+                    frappe.log_error(
+                        f"Fallback update failed [{ik}]: {str(fallback_e)}\n\n{frappe.get_traceback()}", 
+                        "Jira Sync Error"
+                    )
+            else:
+                # Log the actual failure reason for everything else
+                frappe.log_error(
+                    f"Update failed [{ik}]: {str(e)}\n\n{frappe.get_traceback()}", 
+                    "Jira Sync Error"
+                )
             fail_count += 1
+            
     frappe.db.commit()
     return fail_count
 
