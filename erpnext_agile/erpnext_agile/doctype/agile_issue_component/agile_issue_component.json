@@ -33,8 +33,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Project",
-   "options": "Project",
-   "reqd": 1
+   "options": "Project"
   }
  ],
  "links": [
@@ -53,8 +52,8 @@
    "table_fieldname": "components"
   }
  ],
- "modified": "2026-04-17 14:50:13.550948",
- "modified_by": "Administrator",
+ "modified": "2026-05-26 11:12:50.012599",
+ "modified_by": "mangshatabams@rapifuzz.com",
  "module": "Erpnext Agile",
  "name": "Agile Issue Component",
  "naming_rule": "By fieldname",
