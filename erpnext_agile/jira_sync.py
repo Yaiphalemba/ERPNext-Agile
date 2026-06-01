@@ -890,6 +890,7 @@ def process_comments_queue(comments_buffer, domain, auth, project_key=None):
             author_email = (c.get("author") or {}).get("emailAddress")
             author_name  = (c.get("author") or {}).get("displayName", "Unknown User")
             created_str  = c.get("created")
+            author_id = resolve_user(author_email) if author_email else "Administrator"
 
             try:
                 doc = frappe.get_doc({
@@ -900,6 +901,7 @@ def process_comments_queue(comments_buffer, domain, auth, project_key=None):
                     "content":          content,
                     "comment_email":    resolve_user(author_email) if author_email else "Administrator",
                     "comment_by":       author_name,
+                    "owner":            author_id,
                 })
                 doc.flags.ignore_permissions = True
                 doc.insert(ignore_permissions=True)
