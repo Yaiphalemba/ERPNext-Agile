@@ -1425,8 +1425,41 @@ def patch_epic_links_from_jira(project_key):
     
     return f"✅ Fetched from Jira and successfully mapped {patched_count} child tasks to their Epics!"
 
+
+@frappe.whitelist()
+def quick_fix_comment_owners(project_key):
+    """Instantly fixes ghost comments by copying comment_email to owner for a specific project"""
+    if not project_key:
+        frappe.throw("Please provide a Project Key to fix comments.")
+
+    # We use a JOIN to peek at the Task table's issue_key while updating the Comment table
+    frappe.db.sql("""
+        UPDATE `tabComment` c
+        JOIN `tabTask` t ON c.reference_name = t.name
+        SET c.owner = c.comment_email
+        WHERE c.reference_doctype = 'Task' 
+          AND c.owner = 'Administrator'
+          AND c.comment_email != 'Administrator'
+          AND c.comment_email IS NOT NULL
+          AND t.issue_key LIKE %(project_key_pattern)s
+    """, values={"project_key_pattern": f"{project_key}%"})
+    
+    frappe.db.commit()
+    
+    return f"✅ Instantly fixed ownership for {project_key} comments!"
+
 # frappe.call({
 #     method: "erpnext_agile.jira_sync.patch_epic_links_from_jira",
+#     args: {
+#         project_key: "CRISISIM"
+#     },
+#     callback: function(r) {
+#         console.log(r.message);
+#     }
+# });
+
+# frappe.call({
+#     method: "erpnext_agile.jira_sync.quick_fix_comment_owners",
 #     args: {
 #         project_key: "CRISISIM"
 #     },
