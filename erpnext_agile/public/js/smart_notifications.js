@@ -11,8 +11,8 @@
 
         // The keyword map. Add or tweak these based on your Doctypes!
         const tab_map = {
-            'projects': ['Task', 'Issue', 'Project', 'Agile Release'],
-            'hr': ['Leave', 'Referral', 'Applicant', 'Employee']
+            'projects': ['Task', 'Issue', 'Project', 'Agile Release Version', 'Agile Sprint', 'Timesheet', 'Test Case', 'Test Cycle', 'Test Execution', 'Sprint'],
+            'hr': ['Leave', 'Referral', 'Applicant', 'Employee', 'Attendance', 'Payroll', 'Expense Claim', 'HR', 'Onboarding', 'Offboarding', 'Appraisal', 'Resignation', 'Promotion', 'Transfer', 'KRA', 'Checkin', 'Work From Home', 'On Duty', 'Attendance Request', 'Performance', 'Appreciation', 'Award', 'POSH', 'Job', 'Applicant', 'HR']
         };
 
         // Clean, modern, minimalistic UI for the pills. 
