@@ -339,3 +339,83 @@ def task_watcher_sync_on_mention(doc, method=None):
                     task.reload()  # Refresh to get updated watchers list
                 except Exception as e:
                     frappe.log(f"Failed to add watcher {user} to task {task.name}: {str(e)}")
+                    
+                    
+def patch_task_versions():
+    # 1. Fetch the actual values in the query to avoid unnecessary processing later
+    tasks = frappe.get_all("Task", 
+        filters={"is_agile": 1},
+        or_filters={
+            "custom_affect_version": ["is", "set"],
+            "custom_fix_version": ["is", "set"]
+        }, 
+        fields=["name", "custom_affect_version", "custom_fix_version"]
+    )
+    
+    total_tasks = len(tasks)
+    processed_count = 0
+    modified_count = 0
+
+    for task in tasks:
+        try:
+            # Only fetch the doc if we actually need to process it
+            task_doc = frappe.get_doc("Task", task.name)
+            is_modified = False
+            
+            # 2. Tell the ORM to chill out. We are just migrating data, 
+            # so we can skip heavy validation hooks to speed up the save.
+            task_doc.flags.ignore_validate = True
+            task_doc.flags.ignore_links = True
+
+            # Process Affect Version
+            if task.custom_affect_version:
+                affect_exists = any(row.version == task.custom_affect_version for row in task_doc.get("custom_affect_versions", []))
+                if not affect_exists:
+                    task_doc.append("custom_affect_versions", {
+                        "version": task.custom_affect_version
+                    })
+                    is_modified = True
+
+            # Process Fix Version
+            if task.custom_fix_version:
+                fix_exists = any(row.version == task.custom_fix_version for row in task_doc.get("custom_fix_versions", []))
+                if not fix_exists:
+                    task_doc.append("custom_fix_versions", {
+                        "version": task.custom_fix_version
+                    })
+                    is_modified = True
+
+            # 3. Save only if modified, and ignore versioning (saves a ton of DB writes)
+            if is_modified:
+                task_doc.save(ignore_permissions=True, ignore_version=True)
+                modified_count += 1
+            
+            processed_count += 1
+
+            # 4. Batch commits. 500 is a better sweet spot for DB I/O than 100.
+            if processed_count % 500 == 0:
+                frappe.db.commit()
+                # Optional: Log progress so you can track it in Error Log or via bench
+                frappe.logger().info(f"Processed {processed_count}/{total_tasks} tasks...")
+
+        except Exception as e:
+            # Don't let one bad apple stop the whole loop
+            frappe.log_error(f"Failed to process Task {task.name}: {str(e)}", "Task Version Patch Error")
+
+    # Final commit for the remaining records
+    frappe.db.commit()
+    frappe.log_error(
+        title="Task Migration Complete", 
+        message=f"Processed: {processed_count}, Modified: {modified_count}"
+    )
+
+
+# 5. Trigger this via background worker
+@frappe.whitelist()
+def trigger_migration():
+    frappe.enqueue(
+        patch_task_versions, 
+        queue="long",       # Use the long queue so we don't block short, urgent tasks
+        timeout=3600        # Give it up to an hour to finish (it won't take that long, but just in case)
+    )
+    return "Task version migration has been pushed to the background queue!"
