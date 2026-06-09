@@ -36,6 +36,7 @@ app_include_css = "/assets/erpnext_agile/css/task_gantt_override.css"
 # app_include_js = "/assets/erpnext_agile/js/erpnext_agile.js"
 app_include_js = [
             "/assets/erpnext_agile/js/task_gantt_override.js",
+            "/assets/erpnext_agile/js/smart_notifications.js",
         ]
 
 # include js, css files in header of web template
