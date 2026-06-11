@@ -16,6 +16,10 @@ class AgileTask(Task):
             log_issue_activity(self.name, "created this issue")
             self.handle_assignment_for_new_tasks()
     
+    def before_validate(self):
+        if self.is_agile:
+            self.validate_parent_expected_end_date = lambda: None
+            
     def validate(self):
         super().validate()
         if self.is_agile:
@@ -207,6 +211,7 @@ class AgileTask(Task):
                         f"changed status from {old_value} to {new_value}",
                         data={"from_status": old_value, "to_status": new_value}
                     )
+                    self.notify_qa_review(old_value, new_value)
                 elif field == "current_sprint":
                     if new_value and not old_value:
                         log_issue_activity(
@@ -250,6 +255,66 @@ class AgileTask(Task):
     # Make sure you import 'remove' at the top of your file if you haven't already:
     # from frappe.desk.form.assign_to import add, remove, clear 
 
+    def notify_qa_review(self, old_status, new_status):
+        if new_status != "QA Review":
+            return
+
+        recipients = []
+
+        # 1. Get Tester assignees from assigned_to_users child table
+        assigned_users = [d.user for d in self.get("assigned_to_users", [])]
+
+        tester_users = []
+
+        for user in assigned_users:
+            if "Tester" in frappe.get_roles(user):
+                tester_users.append(user)
+
+        if tester_users:
+            recipients = tester_users
+
+        # 2. If no Tester assignee, notify QA Leads from Project Users
+        else:
+            project_users = frappe.get_all(
+                "Project User",
+                filters={"parent": self.project},
+                fields=["user"]
+            )
+
+            for row in project_users:
+                if "QA Lead" in frappe.get_roles(row.user):
+                    recipients.append(row.user)
+
+        recipients = list(set(filter(None, recipients)))
+
+        if not recipients:
+            return
+
+        task_url = frappe.utils.get_url_to_form("Task", self.name)
+
+        frappe.sendmail(
+            recipients=recipients,
+            subject=f"[QA Review] {self.name} - {self.subject}",
+            message=f"""
+            <p>Hello,</p>
+
+            <p>The following task has been moved to <b>QA Review</b>.</p>
+
+            <table>
+                <tr><td><b>Task</b></td><td>{self.name}</td></tr>
+                <tr><td><b>Subject</b></td><td>{self.subject}</td></tr>
+                <tr><td><b>Project</b></td><td>{self.project}</td></tr>
+            </table>
+
+            <br>
+
+            <a href="{task_url}">Open Task</a>
+
+            <br><br>
+            """
+        )
+    
+    
     def track_assignee_changes(self):
         """Track changes to assignees"""
         old_doc = self.get_doc_before_save()
@@ -336,6 +401,8 @@ class AgileTask(Task):
         """Keep parent_task and parent_issue in sync"""
         if self.parent_issue:
             self.parent_task = self.parent_issue
+        else:
+            self.parent_task = None
             
     def sync_expected_time(self):
         """Sync original_estimate to expected_time"""
