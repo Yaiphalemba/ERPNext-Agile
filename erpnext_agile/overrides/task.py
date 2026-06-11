@@ -16,6 +16,10 @@ class AgileTask(Task):
             log_issue_activity(self.name, "created this issue")
             self.handle_assignment_for_new_tasks()
     
+    def before_validate(self):
+        if self.is_agile:
+            self.validate_parent_expected_end_date = lambda: None
+            
     def validate(self):
         super().validate()
         if self.is_agile:
