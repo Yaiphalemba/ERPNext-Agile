@@ -278,7 +278,7 @@ def _aggregate(assignees, task_map):
 
         tt = task["task_type"]
         # Bugs Reported
-        if (tt or "").upper() == "Bug":
+        if (tt or "").upper() == "BUG":
             s["bugs_reported"] += 1
 
         # Overdue Tasks
