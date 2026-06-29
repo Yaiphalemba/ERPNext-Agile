@@ -57,6 +57,8 @@ def get_columns(filters):
         {"label": _("Total Assigned Tasks"), "fieldname": "total_assigned_tasks", "fieldtype": "Int",     "width": 140},
         {"label": _("Completed"),            "fieldname": "tasks_completed",      "fieldtype": "Int",     "width": 110},
         {"label": _("In Progress"),          "fieldname": "tasks_in_progress",    "fieldtype": "Int",     "width": 110},
+        {"label": _("Overdue Tasks"),        "fieldname": "tasks_overdue",        "fieldtype": "Int",     "width": 110},
+        {"label": _("Bugs Reported"),        "fieldname": "bugs_reported",        "fieldtype": "Int",     "width": 110},
         {"label": _("Raw Story Pts"),        "fieldname": "raw_story_points",     "fieldtype": "Float",   "precision": 1,    "width": 130},
         {"label": _("Weighted Pts"),         "fieldname": "weighted_points",      "fieldtype": "Float",   "precision": 2,    "width": 130},
         {"label": _("Avg Contribution %"),   "fieldname": "avg_contribution_pct", "fieldtype": "Percent", "width": 140},
@@ -138,6 +140,9 @@ def _fetch_tasks(filters):
             t.project,
             CAST(COALESCE(NULLIF(t.story_points, ''), '0') AS UNSIGNED)  AS story_points,
             t.status                                                      AS task_status,
+            t.issue_type                                                  AS task_type,
+            t.exp_end_date,
+            t.completed_on,
             COALESCE(ais.status_category, 'To Do')                       AS status_category,
             (
                 SELECT COUNT(DISTINCT a2.user)
@@ -236,6 +241,8 @@ def _aggregate(assignees, task_map):
     result = defaultdict(lambda: defaultdict(lambda: {
         "full_name":             "",
         "tasks_completed":       0,
+        "tasks_overdue":         0,
+        "bugs_reported":         0,  
         "tasks_in_progress":     0,
         "total_assigned_tasks":  0,
         "raw_story_points":      0.0,
@@ -269,6 +276,29 @@ def _aggregate(assignees, task_map):
         s["weighted_points"]       += sp * contrib
         s["contribution_pct_sum"]  += contrib * 100
 
+        tt = task["task_type"]
+        # Bugs Reported
+        if (tt or "").upper() == "Bug":
+            s["bugs_reported"] += 1
+
+        # Overdue Tasks
+        is_overdue = False
+
+        # Explicit overdue status
+        if (task.get("task_status") or "").lower() == "overdue":
+            is_overdue = True
+
+        # Completed after expected end date
+        elif (
+            task.get("completed_on")
+            and task.get("expected_end_date")
+            and task["completed_on"] > task["expected_end_date"]
+        ):
+            is_overdue = True
+
+        if is_overdue:
+            s["tasks_overdue"] += 1
+
         ds = task["derived_status"]
         if ds == "completed":
             s["tasks_completed"]   += 1
@@ -296,12 +326,14 @@ def _calc_performance(s):
 
 
 def _make_row(rank, user, project_display, s, project_total_tasks=0, indent=0):
-    tc     = s["tasks_completed"]
-    tip    = s["tasks_in_progress"]
-    total  = s["total_assigned_tasks"]
-    wp     = flt(s["weighted_points"])
-    rsp    = flt(s["raw_story_points"])
-    csum   = flt(s["contribution_pct_sum"])
+    tc      = s["tasks_completed"]
+    tip     = s["tasks_in_progress"]
+    total   = s["total_assigned_tasks"]
+    wp      = flt(s["weighted_points"])
+    rsp     = flt(s["raw_story_points"])
+    csum    = flt(s["contribution_pct_sum"])
+    overdue = s["tasks_overdue"]
+    bugs    = s["bugs_reported"]
 
     avg_contrib = round(csum / total, 1)       if total > 0 else 0
     avg_pts     = round(wp / tc, 2)            if tc > 0    else round(wp / total, 2) if total > 0 else 0
@@ -316,6 +348,8 @@ def _make_row(rank, user, project_display, s, project_total_tasks=0, indent=0):
         "project_total_tasks":  project_total_tasks,
         "total_assigned_tasks": total,
         "tasks_completed":      tc,
+        "tasks_overdue":        overdue,
+        "bugs_reported":        bugs,
         "tasks_in_progress":    tip,
         "raw_story_points":     round(rsp, 1),
         "weighted_points":      round(wp, 2),
@@ -337,6 +371,8 @@ def _section_header(label, stats, project_display=""):
         "project_total_tasks":  None,
         "total_assigned_tasks": None,
         "tasks_completed":      None,
+        "tasks_overdue":        None,
+        "bugs_reported":        None,
         "tasks_in_progress":    None,
         "raw_story_points":     None,
         "weighted_points":      None,
@@ -366,6 +402,8 @@ def _build_overall(assignees, task_map, project_totals, filters):
             "tasks_in_progress":     0,
             "total_assigned_tasks":  0,
             "raw_story_points":      0.0,
+            "tasks_overdue":         0,
+            "bugs_reported":         0,
             "weighted_points":       0.0,
             "contribution_pct_sum":  0.0,
             "projects":              set(),
@@ -375,6 +413,8 @@ def _build_overall(assignees, task_map, project_totals, filters):
             agg["tasks_completed"]       += s["tasks_completed"]
             agg["tasks_in_progress"]     += s["tasks_in_progress"]
             agg["total_assigned_tasks"]  += s["total_assigned_tasks"]
+            agg["tasks_overdue"]         += s["tasks_overdue"]
+            agg["bugs_reported"]         += s["bugs_reported"]
             agg["raw_story_points"]      += s["raw_story_points"]
             agg["weighted_points"]       += s["weighted_points"]
             agg["contribution_pct_sum"]  += s["contribution_pct_sum"]
