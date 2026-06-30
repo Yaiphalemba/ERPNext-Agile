@@ -35,10 +35,16 @@ def execute(filters=None):
 def get_columns():
     return [
         {
-            "label": "Project / Sprint",
-            "fieldname": "project_or_sprint",
+            "label": "Project",
+            "fieldname": "project",
             "fieldtype": "Data",
-            "width": 260,
+            "width": 250,
+        },
+        {
+            "label": "Sprint",
+            "fieldname": "sprint",
+            "fieldtype": "Data",
+            "width": 250,
         },
         {
             "label": "Planned Tasks",
@@ -62,13 +68,13 @@ def get_columns():
             "label": "Shifted Story Points",
             "fieldname": "shifted_story_points",
             "fieldtype": "Float",
-            "width": 160,
+            "width": 150,
         },
         {
             "label": "Carry Forward %",
             "fieldname": "carry_forward_percentage",
             "fieldtype": "Percent",
-            "width": 140,
+            "width": 130,
         },
     ]
 
@@ -245,6 +251,22 @@ def prepare_data(sprint_stats):
 
     project_map = defaultdict(list)
 
+    project_names = {
+        d.name: d.project_name
+        for d in frappe.get_all(
+            "Project",
+            fields=["name", "project_name"]
+        )
+    }
+
+    sprint_names = {
+        d.name: d.sprint_name if hasattr(d, "sprint_name") else d.name
+        for d in frappe.get_all(
+            "Agile Sprint",
+            fields=["name", "sprint_name"]
+        )
+    }
+
     # Create sprint rows
     for sprint, values in sprint_stats.items():
 
@@ -257,7 +279,8 @@ def prepare_data(sprint_stats):
         )
 
         project_map[values["project"]].append({
-            "project_or_sprint": sprint,
+            "project": "",
+            "sprint": f"{sprint_names.get(sprint, sprint)} ({sprint})",
             "indent": 1,
             "planned_tasks": planned_tasks,
             "planned_story_points": values["planned_story_points"],
@@ -273,7 +296,7 @@ def prepare_data(sprint_stats):
 
         sprint_rows = sorted(
             project_map[project],
-            key=lambda x: x["project_or_sprint"]
+            key=lambda x: x["sprint"]
         )
 
         total_planned = sum(r["planned_tasks"] for r in sprint_rows)
@@ -287,7 +310,8 @@ def prepare_data(sprint_stats):
         )
 
         rows.append({
-            "project_or_sprint": project,
+            "project": f"{project_names.get(project, project)} ({project})",
+            "sprint": "",
             "indent": 0,
             "planned_tasks": total_planned,
             "planned_story_points": total_planned_sp,
@@ -379,8 +403,7 @@ def get_chart(data):
     return {
         "data": {
             "labels": [
-                d["project_or_sprint"]
-                for d in sprint_rows
+                d["sprint"] for d in sprint_rows
             ],
             "datasets": [
                 {
@@ -400,6 +423,5 @@ def get_chart(data):
             ]
         },
         "type": "bar",
-        "height": 320,
-        "colors": ["#ff6b6b", "#ffa502"]
+        "height": 320
     }
