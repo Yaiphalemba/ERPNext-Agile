@@ -200,7 +200,7 @@ function render_complete_dialog(frm, issues) {
                     </strong>
                 </div>
                 <div class="row" style="margin-bottom: 15px;">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <input 
                             type="text" 
                             id="filter-issue-id" 
@@ -208,12 +208,20 @@ function render_complete_dialog(frm, issues) {
                             placeholder="${__('Filter by Task ID')}"
                         >
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <input 
                             type="text" 
                             id="filter-issue-subject" 
                             class="form-control"
                             placeholder="${__('Filter by Subject')}"
+                        >
+                    </div>
+                    <div class="col-md-4">
+                        <input 
+                            type="text" 
+                            id="filter-issue-type"
+                            class="form-control"
+                            placeholder="${__('Filter by Type')}"
                         >
                     </div>
                 </div>
@@ -226,6 +234,7 @@ function render_complete_dialog(frm, issues) {
                                 </th>
                                 <th>${__('Name')}</th>
                                 <th>${__('Summary')}</th>
+                                <th>${__('Type')}</th>
                                 <th>${__('Status')}</th>
                                 <th>${__('Points')}</th>
                                 <th style="width: 40px; text-align: center;">${__('Actions')}</th>
@@ -242,6 +251,7 @@ function render_complete_dialog(frm, issues) {
                                 </td>
                                 <td><strong>${issue.name}</strong></td>
                                 <td>${issue.subject}</td>
+                                <td>${issue.issue_type}</td>
                                 <td><span class="badge badge-secondary">${issue.issue_status}</span></td>
                                 <td>${issue.story_points || '-'}</td>
                                 <td style="text-align: center;">
@@ -287,7 +297,7 @@ function render_complete_dialog(frm, issues) {
         update_selected_count();
     });
 
-    d.$wrapper.on('keyup','#filter-issue-id, #filter-issue-subject',
+    d.$wrapper.on('keyup','#filter-issue-id, #filter-issue-subject, #filter-issue-type',
         function() {
             filter_issues_table();
         }
@@ -317,17 +327,25 @@ function render_complete_dialog(frm, issues) {
             .val()
             .toLowerCase();
 
+        let type_filter = d.$wrapper
+            .find('#filter-issue-type')
+            .val()
+            .toLowerCase();
+
         d.$wrapper.find('#incomplete-issues-body tr').each(function() {
             let row = $(this);
             let issue_id = row.find('td:nth-child(2)').text().toLowerCase();
             let subject = row.find('td:nth-child(3)').text().toLowerCase();
+            let type = row.find('td:nth-child(4)').text().toLowerCase();
             
             let matches_id =
                 !id_filter || issue_id.includes(id_filter);
             let matches_subject =
                 !subject_filter || subject.includes(subject_filter);
+            let matches_type =
+                !type_filter || type.includes(type_filter);
 
-            row.toggle(matches_id && matches_subject);
+            row.toggle(matches_id && matches_subject && matches_type);
         });
     }
 }
