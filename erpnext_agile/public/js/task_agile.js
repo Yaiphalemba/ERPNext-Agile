@@ -10,6 +10,7 @@ frappe.ui.form.on('Task', {
     },
     refresh: function(frm) {
         if (frm.doc.is_agile) {
+            toggle_exp_end_date(frm);
             hide_sidebar_assignment(frm);
             parent_issue_query(frm);
             sprint_query(frm);
@@ -97,6 +98,20 @@ frappe.ui.form.on('Task', {
         assignee_users_query(frm);
     }
 });
+
+function toggle_exp_end_date(frm) {
+    frm.set_df_property('exp_end_date', 'reqd', 1);
+
+        if (!frm.is_new()) {
+            if (!frappe.user.has_role('Project Manager')) {
+                frm.set_df_property('exp_end_date', 'read_only', 1);
+            } else {
+                frm.set_df_property('exp_end_date', 'read_only', 0);
+            }
+        } else {
+            frm.set_df_property('exp_end_date', 'read_only', 0);
+        }
+}
 
 function hide_sidebar_assignment(frm) {
     // Implementation for hiding sidebar assignment
