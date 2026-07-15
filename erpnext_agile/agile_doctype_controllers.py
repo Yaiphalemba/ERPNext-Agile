@@ -41,6 +41,9 @@ def task_on_update(doc, method):
     ## Reflection: Tasks Linked into other task's child table as dependincies were not getting updated on task update. Hence added a method to update the same.
     sync_dependent_task_details(doc)
     ## Reflection: Test Cases Linked into This task's child table will also reflect this tasks into its linked tasks child table.
+    add_reviewer_to_assignees(doc)
+    add_bug_reporter_to_watchers(doc)
+    add_owner_to_watchers(doc)
     link_task_to_test_cases(doc)
     remove_unlinked_test_cases(doc)    
 
@@ -108,6 +111,42 @@ def remove_unlinked_test_cases(doc):
             # Set the flag to prevent the Test case from triggering another sync back
             tc_doc.flags.sync_in_progress = True
             tc_doc.save(ignore_permissions=True)
+
+def add_reviewer_to_assignees(doc):
+    """
+    If the task has a reviewer assigned, ensure that the reviewer is also in the assignees list.
+    This ensures that reviewers are always notified and have access to the task.
+    """
+    
+    if doc.custom_reviewer and not any(assignee.user == doc.custom_reviewer for assignee in doc.assigned_to_users):
+        # Add the reviewer to the assignees list
+        doc.append('assigned_to_users', {
+            'user': doc.custom_reviewer
+        })
+    
+def add_bug_reporter_to_watchers(doc):
+    """
+    If the task has a bug reporter assigned, ensure that the bug reporter is also in the watcher list.
+    This ensures that bug reporter are always notified and have access to the task.
+    """
+    
+    if doc.custom_bug_raised_by and not any(watcher.user == doc.custom_bug_raised_by for watcher in doc.watchers):
+        # Add the Bug reporter to the watcher list
+        doc.append('watchers', {
+            'user': doc.custom_bug_raised_by
+        })
+
+def add_owner_to_watchers(doc):
+    """
+    If the task has an owner assigned, ensure that the owner is also in the watcher list.
+    This ensures that owner are always notified and have access to the task.
+    """
+    
+    if doc.custom_original_owner and not any(watcher.user == doc.custom_original_owner for watcher in doc.watchers):
+        # Add the Owner to the watcher list
+        doc.append('watchers', {
+            'user': doc.custom_original_owner
+        })
 
 def task_after_insert(doc, method):
     """Actions after task insert"""
