@@ -12,6 +12,7 @@
   "original_owner",
   "test_type",
   "estimated_time",
+  "browser",
   "automated",
   "column_break_1",
   "project",
@@ -23,6 +24,8 @@
   "description",
   "preconditions",
   "testcase_document_url",
+  "developer_comments",
+  "tester_comments",
   "section_break_3",
   "test_steps",
   "section_break_4",
@@ -217,6 +220,21 @@
    "fieldtype": "Small Text",
    "label": "Testcase Document URL",
    "options": "URL"
+  },
+  {
+   "fieldname": "browser",
+   "fieldtype": "Data",
+   "label": "Browser"
+  },
+  {
+   "fieldname": "developer_comments",
+   "fieldtype": "Small Text",
+   "label": "Developer Comments"
+  },
+  {
+   "fieldname": "tester_comments",
+   "fieldtype": "Small Text",
+   "label": "Tester Comments"
   }
  ],
  "grid_page_length": 50,
@@ -227,8 +245,8 @@
    "link_fieldname": "test_case"
   }
  ],
- "modified": "2026-03-18 09:47:59.670288",
- "modified_by": "Administrator",
+ "modified": "2026-07-20 11:26:53.963910",
+ "modified_by": "mangshatabams@rapifuzz.com",
  "module": "Erpnext Agile",
  "name": "Test Case",
  "naming_rule": "Expression",

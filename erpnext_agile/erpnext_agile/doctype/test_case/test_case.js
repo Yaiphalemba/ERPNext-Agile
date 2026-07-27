@@ -89,6 +89,44 @@ frappe.ui.form.on('Test Case Link', {
         let row = locals[cdt][cdn];
         row.link_name = '';
         frm.refresh_field('linked_items');
+    },
+    link_name(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        
+        // Early exit: If we don't have what we need, bail out.
+        if (!row.link_doctype || !row.link_name) return;
+
+        // A clean map of DocTypes to the fields we want to fetch
+        const fieldMap = {
+            'Task': ['subject', 'issue_type'],
+            'Project': ['project_name', 'project_type']
+        };
+
+        const fieldsToFetch = fieldMap[row.link_doctype];
+        
+        // If it's not a Task or Project, we don't care.
+        if (!fieldsToFetch) return;
+
+        // ONE server call to rule them all
+        frappe.db.get_value(row.link_doctype, row.link_name, fieldsToFetch)
+            .then(r => {
+                // Check if the document actually exists/returned data
+                if (!r.message || Object.keys(r.message).length === 0) {
+                    frappe.msgprint(__('Invalid {0}: {1}', [row.link_doctype, row.link_name]));
+                    frappe.model.set_value(cdt, cdn, 'link_name', '');
+                    return;
+                }
+
+                // Destructure or fallback to map the right fields
+                const title = r.message.subject || r.message.project_name;
+                const type = r.message.issue_type || r.message.project_type;
+
+                // Set multiple values at once. Frappe handles the grid refresh automatically!
+                frappe.model.set_value(cdt, cdn, {
+                    'title': title,
+                    'type': type
+                });
+            });
     }
 });
 

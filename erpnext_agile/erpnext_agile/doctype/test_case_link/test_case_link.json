@@ -7,39 +7,62 @@
  "engine": "InnoDB",
  "field_order": [
   "link_doctype",
-  "link_name"
+  "link_name",
+  "column_break_jnyf",
+  "title",
+  "type"
  ],
  "fields": [
   {
+   "columns": 1,
+   "default": "Task",
    "fieldname": "link_doctype",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Link Type",
    "options": "Task\nProject",
-   "reqd": 1,
-   "in_list_view": 1,
-   "columns": 2
+   "reqd": 1
   },
   {
+   "columns": 2,
    "fieldname": "link_name",
    "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
    "label": "Link To",
    "options": "link_doctype",
-   "reqd": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_jnyf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 3,
+   "fieldname": "title",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "columns": 5
+   "label": "Title"
+  },
+  {
+   "columns": 1,
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-21 12:18:48.364355",
- "modified_by": "Administrator",
+ "modified": "2026-07-20 10:55:06.548742",
+ "modified_by": "mangshatabams@rapifuzz.com",
  "module": "Erpnext Agile",
  "name": "Test Case Link",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
