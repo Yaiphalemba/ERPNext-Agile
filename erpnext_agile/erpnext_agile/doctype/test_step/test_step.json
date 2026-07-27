@@ -9,9 +9,7 @@
   "step_number",
   "action",
   "expected_result",
-  "actual_result",
-  "test_data",
-  "result"
+  "test_data"
  ],
  "fields": [
   {
@@ -43,28 +41,14 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Test Data"
-  },
-  {
-   "columns": 2,
-   "fieldname": "actual_result",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "Actual Result"
-  },
-  {
-   "columns": 1,
-   "fieldname": "result",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Result"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-07-20 11:14:17.853112",
- "modified_by": "mangshatabams@rapifuzz.com",
+ "modified": "2026-07-27 11:54:25.184366",
+ "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Step",
  "owner": "Administrator",
