@@ -7,8 +7,17 @@ frappe.query_reports["Sprint Carry Forward Analysis"] = {
             fieldname: "project",
             label: __("Project"),
             fieldtype: "Link",
-            options: "Project",
-            reqd: 1
+            options: "Project"
+        },
+        {
+            fieldname: "from_date",
+            label: __("From Date"),
+            fieldtype: "Date"
+        },
+        {
+            fieldname: "to_date",
+            label: __("To Date"),
+            fieldtype: "Date"
         }
     ],
 
@@ -18,6 +27,9 @@ frappe.query_reports["Sprint Carry Forward Analysis"] = {
 
         if (!data) {
             return value;
+        }
+        if(data.indent === 0) {
+            value = `<span style="font-weight:700;">${value}</span>`;
         }
 
         if (column.fieldname === "carry_forward_percentage") {

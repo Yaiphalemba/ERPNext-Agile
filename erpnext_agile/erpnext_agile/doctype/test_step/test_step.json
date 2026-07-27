@@ -9,19 +9,21 @@
   "step_number",
   "action",
   "expected_result",
-  "test_data"
+  "actual_result",
+  "test_data",
+  "result"
  ],
  "fields": [
   {
-   "columns": 1,
    "fieldname": "step_number",
    "fieldtype": "Int",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Step #",
    "read_only": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "action",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -29,26 +31,40 @@
    "reqd": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "expected_result",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Expected Result"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "test_data",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Test Data"
+  },
+  {
+   "columns": 2,
+   "fieldname": "actual_result",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Actual Result"
+  },
+  {
+   "columns": 1,
+   "fieldname": "result",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Result"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-06 10:29:54.126159",
- "modified_by": "Administrator",
+ "modified": "2026-07-20 11:14:17.853112",
+ "modified_by": "mangshatabams@rapifuzz.com",
  "module": "Erpnext Agile",
  "name": "Test Step",
  "owner": "Administrator",

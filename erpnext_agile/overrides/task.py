@@ -291,10 +291,11 @@ class AgileTask(Task):
             return
 
         task_url = frappe.utils.get_url_to_form("Task", self.name)
+        proj_key, project_name = frappe.db.get_value("Project", self.project, ["project_key", "project_name"])
 
         frappe.sendmail(
             recipients=recipients,
-            subject=f"[QA Review] {self.name} - {self.subject}",
+            subject=f"[QA Review] - {proj_key or self.project} - {self.name} - {self.subject}",
             message=f"""
             <p>Hello,</p>
 
@@ -303,7 +304,7 @@ class AgileTask(Task):
             <table>
                 <tr><td><b>Task</b></td><td>{self.name}</td></tr>
                 <tr><td><b>Subject</b></td><td>{self.subject}</td></tr>
-                <tr><td><b>Project</b></td><td>{self.project}</td></tr>
+                <tr><td><b>Project</b></td><td>{self.project} - {proj_key} - {project_name}</td></tr>
             </table>
 
             <br>
