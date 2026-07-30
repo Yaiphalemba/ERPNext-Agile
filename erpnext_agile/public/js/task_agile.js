@@ -101,12 +101,12 @@ frappe.ui.form.on('Task', {
 
 function toggle_exp_end_date(frm) {
     frm.set_df_property('exp_end_date', 'reqd', 1);
-
+ 
         if (!frm.is_new()) {
-            if (!frappe.user.has_role('Project Manager')) {
-                frm.set_df_property('exp_end_date', 'read_only', 1);
-            } else {
+            if (frappe.user.has_role('Project Manager') || !frm.doc.exp_end_date) {
                 frm.set_df_property('exp_end_date', 'read_only', 0);
+            } else {
+                frm.set_df_property('exp_end_date', 'read_only', 1);
             }
         } else {
             frm.set_df_property('exp_end_date', 'read_only', 0);
