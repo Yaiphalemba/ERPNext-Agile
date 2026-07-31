@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-31 13:08:38.202622",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sprint",
+  "transferred_on",
+  "transferred_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "sprint",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "label": "Sprint",
+   "options": "Agile Sprint"
+  },
+  {
+   "fieldname": "transferred_on",
+   "fieldtype": "Date",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "label": "Transferred On"
+  },
+  {
+   "fieldname": "transferred_by",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "label": "Transferred By",
+   "options": "User"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-31 13:12:45.701622",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Task Sprint History",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
