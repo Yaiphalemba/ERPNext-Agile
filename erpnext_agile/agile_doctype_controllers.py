@@ -41,7 +41,7 @@ def task_on_update(doc, method):
     ## Reflection: Tasks Linked into other task's child table as dependincies were not getting updated on task update. Hence added a method to update the same.
     sync_dependent_task_details(doc)
     ## Reflection: Test Cases Linked into This task's child table will also reflect this tasks into its linked tasks child table.
-    add_reviewer_to_assignees(doc)
+    add_reviewer_to_watchers(doc)
     add_bug_reporter_to_watchers(doc)
     add_owner_to_watchers(doc)
     link_task_to_test_cases(doc)
@@ -112,15 +112,15 @@ def remove_unlinked_test_cases(doc):
             tc_doc.flags.sync_in_progress = True
             tc_doc.save(ignore_permissions=True)
 
-def add_reviewer_to_assignees(doc):
+def add_reviewer_to_watchers(doc):
     """
     If the task has a reviewer assigned, ensure that the reviewer is also in the assignees list.
     This ensures that reviewers are always notified and have access to the task.
     """
     
-    if doc.custom_reviewer and not any(assignee.user == doc.custom_reviewer for assignee in doc.assigned_to_users):
+    if doc.custom_reviewer and not any(watcher.user == doc.custom_reviewer for watcher in doc.watchers):
         # Add the reviewer to the assignees list
-        doc.append('assigned_to_users', {
+        doc.append('watchers', {
             'user': doc.custom_reviewer
         })
     
