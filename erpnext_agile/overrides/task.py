@@ -7,7 +7,7 @@ from erpnext.projects.doctype.task.task import Task
 from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
     log_issue_activity,
 )
-from frappe.utils import getdate
+from frappe.utils import getdate, now_datetime, today
 
 class AgileTask(Task):
     def after_insert(self):
@@ -65,6 +65,8 @@ class AgileTask(Task):
                 self.update_sprint_metrics()
             if self.current_sprint and self.has_value_changed("current_sprint"):
                 self.update_sprint_metrics()
+                frappe.msgprint("value changed for sprint")
+                self.update_sprint_statistics()
             elif self.story_points and self.has_value_changed("story_points"):
                 self.update_sprint_metrics()
                 
@@ -103,6 +105,41 @@ class AgileTask(Task):
         # Update parent
         frappe.db.set_value("Task", self.parent_issue, "progress", progress, update_modified=False)
     
+
+    def update_sprint_statistics(self):
+
+        old_doc = self.get_doc_before_save()
+
+        if not old_doc:
+            return
+
+        old_sprint = old_doc.current_sprint
+        new_sprint = self.current_sprint
+
+        # Nothing changed
+        if old_sprint == new_sprint:
+            return
+
+        if old_sprint:
+
+            self.append("custom_task_sprint_history", {
+                "sprint": old_sprint,
+                "transferred_on": today(),
+                "transferred_by": frappe.session.user
+            })
+
+            self.flags.ignore_on_update = True
+            self.save(ignore_permissions=True)
+
+
+        if old_sprint:
+            update_sprint_counts(old_sprint)
+
+
+        if new_sprint:
+            update_sprint_counts(new_sprint)
+
+
     def update_sprint_metrics(self):
         """Update sprint metrics when task status changes"""
         if not self.current_sprint:
@@ -440,6 +477,33 @@ class AgileTask(Task):
             if self.exp_end_date < datetime.now().date():
                 self.db_set("status", "Overdue", update_modified=False)
                 self.update_project()
+
+def update_sprint_counts(sprint_name):
+
+        if not sprint_name:
+            return
+
+        sprint = frappe.get_doc("Agile Sprint", sprint_name)
+
+        total = frappe.db.count(
+            "Task",
+            {
+                "current_sprint": sprint_name
+            }
+        )
+
+
+        transferred = frappe.db.count(
+            "Task Sprint History",
+            {
+                "parenttype": "Task",
+                "sprint": sprint_name
+            }
+        )
+
+        sprint.db_set("custom_total_task_count", total)
+        sprint.db_set("custom_transferred_task_count", transferred)
+
 
 def format_seconds(seconds):
     """Format seconds to human readable time"""
