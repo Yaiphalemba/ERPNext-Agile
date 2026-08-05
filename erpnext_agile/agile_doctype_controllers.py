@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.share import add_docshare
 
 def task_validate(doc, method):
     """Extend Task validation for agile features"""
@@ -42,6 +43,7 @@ def task_on_update(doc, method):
     sync_dependent_task_details(doc)
     ## Reflection: Test Cases Linked into This task's child table will also reflect this tasks into its linked tasks child table.
     add_reviewer_to_watchers(doc)
+    share_doc_with_watchers(doc)
     add_bug_reporter_to_watchers(doc)
     add_owner_to_watchers(doc)
     link_task_to_test_cases(doc)
@@ -124,6 +126,31 @@ def add_reviewer_to_watchers(doc):
             'user': doc.custom_reviewer
         })
     
+def share_doc_with_watchers(doc):
+    """
+    Share the document with all users listed in the watchers table.
+    """
+    if not getattr(doc, "watchers", None):
+        return
+
+    for watcher in doc.watchers:
+        if watcher.user:
+            try:
+                add_docshare(
+                    doctype=doc.doctype,
+                    name=doc.name,
+                    user=watcher.user,
+                    read=1,      
+                    write=1,     
+                    share=0,     
+                    notify=0     
+                )
+            except Exception as e:
+                frappe.log_error(
+                    title=f"Failed to share {doc.doctype} with {watcher.user}", 
+                    message=str(e)
+                )
+
 def add_bug_reporter_to_watchers(doc):
     """
     If the task has a bug reporter assigned, ensure that the bug reporter is also in the watcher list.
