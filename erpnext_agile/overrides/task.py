@@ -65,7 +65,6 @@ class AgileTask(Task):
                 self.update_sprint_metrics()
             if self.current_sprint and self.has_value_changed("current_sprint"):
                 self.update_sprint_metrics()
-                frappe.msgprint("value changed for sprint")
                 self.update_sprint_statistics()
             elif self.story_points and self.has_value_changed("story_points"):
                 self.update_sprint_metrics()

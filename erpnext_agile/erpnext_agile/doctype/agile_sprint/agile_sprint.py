@@ -1,12 +1,15 @@
 # erpnext_agile/erpnext_agile/doctype/agile_sprint/agile_sprint.py
 import frappe
 from frappe.model.document import Document
+from erpnext_agile.overrides.task import update_sprint_counts
 from frappe.utils import today, add_days
 
 class AgileSprint(Document):
     def validate(self):
         """Validate sprint data"""
         # Validate dates
+        if not self.is_new():
+            update_sprint_counts(self.name)
         if self.start_date and self.end_date:
             if self.end_date < self.start_date:
                 frappe.throw("End date cannot be before start date")
