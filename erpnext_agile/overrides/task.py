@@ -26,8 +26,8 @@ class AgileTask(Task):
             self.validate_agile_fields()
             # Validate workflow transitions BEFORE other validations
             self.validate_workflow_transition()
-        if self.parent_issue:
-            self.sync_parent_task()
+        # if self.parent_issue:
+        self.sync_parent_task()
         # sync original_estimate → expected_time
         if self.expected_time:
             self.sync_expected_time()
@@ -65,7 +65,6 @@ class AgileTask(Task):
                 self.update_sprint_metrics()
             if self.current_sprint and self.has_value_changed("current_sprint"):
                 self.update_sprint_metrics()
-                frappe.msgprint("value changed for sprint")
                 self.update_sprint_statistics()
             elif self.story_points and self.has_value_changed("story_points"):
                 self.update_sprint_metrics()
@@ -436,12 +435,34 @@ class AgileTask(Task):
             )
 
     def sync_parent_task(self):
-        """Keep parent_task and parent_issue in sync"""
+        """
+        Keep parent_task and parent_issue in sync 
+        This ensures that if a parent_issue is set, the parent_task field is also updated accordingly.
+        Also the task will be removed from the old parent task's depends_on child table if the parent_issue is changed.
+        """
+        old_parent_task = None
+        if not self.is_new():
+            old_doc = self.get_doc_before_save()
+            if old_doc and old_doc.parent_issue:
+                old_parent_task = old_doc.parent_issue
+
         if self.parent_issue:
             self.parent_task = self.parent_issue
         else:
             self.parent_task = None
-            
+
+        if old_parent_task and old_parent_task != self.parent_issue and self.name:
+            if old_parent_task and old_parent_task != self.parent_task and self.name:
+                try:
+                    parent_doc = frappe.get_doc("Task", old_parent_task)
+                    
+                    original_row_count = len(parent_doc.depends_on)
+                    parent_doc.depends_on = [row for row in parent_doc.depends_on if row.task != self.name]
+                    
+                    if len(parent_doc.depends_on) < original_row_count:
+                        parent_doc.save(ignore_permissions=True)
+                except frappe.DoesNotExistError:
+                    pass
     def sync_expected_time(self):
         """Sync original_estimate to expected_time"""
         # if self.original_estimate:
