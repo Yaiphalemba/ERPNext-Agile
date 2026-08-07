@@ -748,7 +748,9 @@ def move_tasks_to_sprint(current_sprint, target_sprint, issues_to_move):
     moved_count = 0
     
     for issue_name in issues_to_move:
-        frappe.db.set_value("Task", issue_name, "current_sprint", target_sprint)
+        task = frappe.get_doc("Task", issue_name)
+        task.current_sprint = target_sprint
+        task.save(ignore_permissions=True) 
         moved_count += 1
     
     current_sprint_doc = frappe.get_doc("Agile Sprint", current_sprint)
