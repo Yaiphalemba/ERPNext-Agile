@@ -72,3 +72,20 @@ def cleanup_old_timers():
             )
         except Exception as e:
             frappe.log_error(f"Error cleaning up timer {timer.name}: {str(e)}")
+
+def check_overdue_flag_in_tasks():
+    """Check and update the overdue flag for tasks"""
+    overdue_tasks = frappe.get_all('Task',
+        filters={
+            'is_agile': 1,
+            'exp_end_date': ['<', today()],
+            'custom_overdue': 0
+        },
+        fields=['name']
+    )
+    
+    for task in overdue_tasks:
+        try:
+            frappe.db.set_value('Task', task.name, 'custom_overdue', 1)
+        except Exception as e:
+            frappe.log_error(f"Error updating overdue flag for task {task.name}: {str(e)}")

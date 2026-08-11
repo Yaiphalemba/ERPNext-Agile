@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import today, getdate
 from frappe.share import add_docshare
 
 def task_validate(doc, method):
@@ -27,6 +28,9 @@ def task_validate(doc, method):
 def task_on_update(doc, method):
     """Actions on task update"""
     if doc.is_agile:
+        if doc.exp_end_date and getdate(doc.exp_end_date) < getdate(today()):
+            frappe.db.set_value(doc.doctype, doc.name, 'custom_overdue', 1)
+            doc.reload()
         # Sync to GitHub if enabled
         project_doc = frappe.get_doc('Project', doc.project)
         
