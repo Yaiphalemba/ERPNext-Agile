@@ -295,6 +295,9 @@ def _aggregate(assignees, task_map):
             and task["completed_on"] > task["expected_end_date"]
         ):
             is_overdue = True
+            
+        elif (task.get("custom_overdue") == 1):
+            is_overdue = True
 
         if is_overdue:
             s["tasks_overdue"] += 1
