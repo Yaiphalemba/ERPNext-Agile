@@ -1,6 +1,6 @@
 # erpnext_agile/tasks/daily.py
 import frappe
-from frappe.utils import today, add_days, get_datetime
+from frappe.utils import today, add_days, get_datetime, getdate
 
 def send_sprint_digest():
     """Send daily sprint digest to team members"""
@@ -79,12 +79,16 @@ def check_overdue_flag_in_tasks():
         filters={
             'is_agile': 1,
             'exp_end_date': ['<', today()],
+            'status': ["not in", ["Cancelled", "Completed"]],
             'custom_overdue': 0
         },
-        fields=['name']
-    )
+        fields=['name', 'status', 'review_date']
+    )            
     
     for task in overdue_tasks:
+        if task.status == "Pending Review":
+            if getdate(task.review_date) > getdate(today()):
+                continue
         try:
             frappe.db.set_value('Task', task.name, 'custom_overdue', 1)
         except Exception as e:

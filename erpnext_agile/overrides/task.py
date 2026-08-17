@@ -506,7 +506,7 @@ def update_sprint_counts(sprint_name):
 
         sprint = frappe.get_doc("Agile Sprint", sprint_name)
 
-        total = frappe.db.count(
+        current_total = frappe.db.count(
             "Task",
             {
                 "current_sprint": sprint_name
@@ -522,8 +522,11 @@ def update_sprint_counts(sprint_name):
             }
         )
 
-        sprint.db_set("custom_total_task_count", total)
+        total = current_total + transferred
+
+        sprint.db_set("custom_current_task_count", current_total)
         sprint.db_set("custom_transferred_task_count", transferred)
+        sprint.db_set("custom_total_task_count", total)
 
 
 def format_seconds(seconds):
