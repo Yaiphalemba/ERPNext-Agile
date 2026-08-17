@@ -54,6 +54,8 @@ class AgileTask(Task):
         """Track field changes after update"""
         super().on_update()
         if self.is_agile:
+            update_sprint_counts(self.current_sprint)
+
             self.handle_issue_activity_update()
             
             # Update parent task progress if this is a subtask
