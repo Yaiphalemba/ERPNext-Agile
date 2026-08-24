@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "Agile Project",
  "links": [],
- "modified": "2026-06-30 11:48:31.220538",
+ "modified": "2026-08-18 09:28:00.841290",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Project",
@@ -56,7 +56,7 @@
   }
  ],
  "roles": [],
- "sequence_id": 12.0,
+ "sequence_id": 13.0,
  "shortcuts": [
   {
    "color": "Green",
