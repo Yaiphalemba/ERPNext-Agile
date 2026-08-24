@@ -54,7 +54,9 @@ class AgileTask(Task):
         """Track field changes after update"""
         super().on_update()
         if self.is_agile:
+            self.check_dependent_tasks_status()
             update_sprint_counts(self.current_sprint)
+            self.update_sprint_statistics()
 
             self.handle_issue_activity_update()
             
@@ -107,6 +109,83 @@ class AgileTask(Task):
         frappe.db.set_value("Task", self.parent_issue, "progress", progress, update_modified=False)
     
 
+    def check_dependent_tasks_status(self):
+        """
+        Prevent a task from being completed if any of its dependent
+        tasks are still open.
+        """
+
+        if not self.issue_status:
+            return
+
+        current_status_category = frappe.db.get_value(
+            "Agile Issue Status",
+            self.issue_status,
+            "status_category"
+        )
+
+        if current_status_category != "Done":
+            return
+
+        if self.status != "Completed":
+            return
+
+        dependencies = frappe.get_all(
+            "Task Depends On",
+            filters={
+                "parent": self.name
+            },
+            fields=["task"]
+        )
+
+        if not dependencies:
+            return
+
+        incomplete_tasks = []
+
+        for dependency in dependencies:
+            if not dependency.task:
+                continue
+
+            dependency_task = frappe.db.get_value(
+                "Task",
+                dependency.task,
+                ["name", "issue_status", "status"],
+                as_dict=True
+            )
+
+            if not dependency_task:
+                continue
+
+            dependency_status_category = None
+
+            if dependency_task.issue_status:
+                dependency_status_category = frappe.db.get_value(
+                    "Agile Issue Status",
+                    dependency_task.issue_status,
+                    "status_category"
+                )
+
+            if dependency_status_category != "Done":
+                incomplete_tasks.append(dependency_task.name)
+
+            if dependency_task.status != "Completed":
+                if dependency_task.name not in incomplete_tasks:
+                    incomplete_tasks.append(dependency_task.name)
+
+        if incomplete_tasks:
+            task_list = ", ".join(incomplete_tasks)
+            frappe.throw(
+                _(
+                    "Cannot complete task {0} because the following dependent "
+                    "task(s) are not completed: {1}"
+                ).format(
+                    self.name,
+                    task_list
+                ),
+                title=_("Dependent Tasks Not Completed")
+            )
+
     def update_sprint_statistics(self):
 
         old_doc = self.get_doc_before_save()
@@ -123,11 +202,12 @@ class AgileTask(Task):
 
         if old_sprint:
 
-            self.append("custom_task_sprint_history", {
-                "sprint": old_sprint,
-                "transferred_on": today(),
-                "transferred_by": frappe.session.user
-            })
+            if not frappe.db.exists("Task Sprint History", {"parent": self.name, "sprint": old_sprint}):
+                self.append("custom_task_sprint_history", {
+                    "sprint": old_sprint,
+                    "transferred_on": today(),
+                    "transferred_by": frappe.session.user
+                })
 
             self.flags.ignore_on_update = True
             self.save(ignore_permissions=True)
@@ -250,6 +330,7 @@ class AgileTask(Task):
                         data={"from_status": old_value, "to_status": new_value}
                     )
                     self.notify_qa_review(old_value, new_value)
+                    self.notify_on_reopen(old_value, new_value)
                 elif field == "current_sprint":
                     if new_value and not old_value:
                         log_issue_activity(
@@ -338,6 +419,49 @@ class AgileTask(Task):
             <p>Hello,</p>
 
             <p>The following task has been moved to <b>QA Review</b>.</p>
+
+            <table>
+                <tr><td><b>Task</b></td><td>{self.name}</td></tr>
+                <tr><td><b>Subject</b></td><td>{self.subject}</td></tr>
+                <tr><td><b>Project</b></td><td>{self.project} - {proj_key} - {project_name}</td></tr>
+            </table>
+
+            <br>
+
+            <a href="{task_url}">Open Task</a>
+
+            <br><br>
+            """
+        )
+
+    def notify_on_reopen(self, old_status, new_status):
+        if new_status != "Reopened":
+            return
+
+        recipients = []
+
+        # Get all assigned users
+        assigned_users = [d.user for d in self.get("assigned_to_users", [])]
+
+        if assigned_users:
+            recipients = assigned_users
+
+        recipients = list(set(filter(None, recipients)))
+        recipients.append(self.owner)
+
+        if not recipients:
+            return
+
+        task_url = frappe.utils.get_url_to_form("Task", self.name)
+        proj_key, project_name = frappe.db.get_value("Project", self.project, ["project_key", "project_name"])
+
+        frappe.sendmail(
+            recipients=recipients,
+            subject=f"[Reopened] - {proj_key or self.project} - {self.name} - {self.subject}",
+            message=f"""
+            <p>Hello,</p>
+
+            <p>The following task has been <b>reopened</b>.</p>
 
             <table>
                 <tr><td><b>Task</b></td><td>{self.name}</td></tr>

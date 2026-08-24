@@ -113,13 +113,16 @@ class AgileSprintManager:
         # Handle incomplete issues
         incomplete_issues = self.get_incomplete_sprint_issues(sprint_name)
         moved_count = 0
+        sprint_doc.save()
         
         for issue in incomplete_issues:
             # Move to backlog (remove from sprint)
-            frappe.db.set_value('Task', issue.name, 'current_sprint', '')
+            task_doc = frappe.get_doc('Task', issue.name)
+            task_doc.current_sprint = ''
+            task_doc.save(ignore_permissions=True)
+            # frappe.db.set_value('Task', issue.name, 'current_sprint', '')
             moved_count += 1
         
-        sprint_doc.save()
         
         # Create final burndown entry
         self.update_burndown_entry(sprint_doc, is_final=True)
