@@ -97,10 +97,7 @@ class AgileIssueManager:
         if workflow_scheme:
             # Get the first "To Do" category status
             default_status = frappe.db.get_value(
-                'Agile Issue Status', 
-                {'status_category': 'To Do'}, 
-                'name',
-                order_by='sort_order asc'
+                'Agile Workflow Scheme', workflow_scheme, 'default_initial_status'
             )
             return default_status
         return 'Open'  # Fallback to standard Task status
