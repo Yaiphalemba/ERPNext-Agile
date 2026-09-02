@@ -260,7 +260,8 @@ scheduler_events = {
     "daily": [
         "erpnext_agile.scheduler_events.daily.send_sprint_digest",
         "erpnext_agile.scheduler_events.daily.cleanup_old_timers",
-        "erpnext_agile.scheduler_events.daily.check_overdue_flag_in_tasks"
+        "erpnext_agile.scheduler_events.daily.check_overdue_flag_in_tasks",
+        "erpnext_agile.scheduler_events.daily.process_overdue_tasks",
     ],
     "weekly": [
         # "erpnext_agile.version_control.cleanup_all_old_versions",
