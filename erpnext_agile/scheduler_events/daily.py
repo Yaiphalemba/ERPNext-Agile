@@ -158,6 +158,10 @@ def process_overdue_tasks():
             for u in reporting_managers: queues[scenario]["Reporting Manager"][u].append(task)
             for u in business_analysts: queues[scenario]["Business Analyst"][u].append(task)
             
+        elif overdue_days == 1:
+            scenario = "DAY_1"
+            for u in assignees: queues[scenario]["Assignee"][u].append(task)
+
         elif overdue_days == 2:
             scenario = "DAY_2"
             for u in assignees: queues[scenario]["Assignee"][u].append(task)
@@ -218,6 +222,10 @@ def build_email_template(scenario, role, email, tasks):
     elif scenario == "DAY_2" and role == "Reporting Manager":
         subject = "Overdue Task Reminder"
         intro = "This is to inform you that the following task assigned is overdue."
+
+    elif scenario == "DAY_1" and role == "Assignee":
+        subject = "Overdue Task Reminder"
+        intro = "This is a reminder that the following task assigned is overdue as its expected end date has passed."
 
     # Template matching image_e20645.png (Assignee Reminder)
     elif role == "Assignee":
