@@ -1,5 +1,8 @@
 // erpnext_agile/public/js/task_agile.js
 frappe.ui.form.on('Task', {
+    onload: function(frm) {
+        frm.get_field('custom_task_sprint_history').grid.cannot_add_rows = true;
+    },
     before_save: function(frm) {
         if (frm.doc.is_agile && frappe.session.user != "Administrator") {
             if (['Completed', 'Cancelled'].includes(frm.doc.status)) {
