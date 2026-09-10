@@ -454,26 +454,44 @@ class AgileTask(Task):
 
         task_url = frappe.utils.get_url_to_form("Task", self.name)
         proj_key, project_name = frappe.db.get_value("Project", self.project, ["project_key", "project_name"])
+        reopened_by = frappe.db.get_value(
+            "User",
+            frappe.session.user,
+            "full_name"
+        ) or frappe.session.user
 
         frappe.sendmail(
             recipients=recipients,
             subject=f"[Reopened] - {proj_key or self.project} - {self.name} - {self.subject}",
             message=f"""
-            <p>Hello,</p>
+            <p>
+                Dear Assignee,
+            </p>
 
-            <p>The following task has been <b>reopened</b>.</p>
+            <p>
+                The following {self.issue_type} has been
+                reopened and requires your action.
+            </p>
 
-            <table>
-                <tr><td><b>Task</b></td><td>{self.name}</td></tr>
-                <tr><td><b>Subject</b></td><td>{self.subject}</td></tr>
-                <tr><td><b>Project</b></td><td>{self.project} - {proj_key} - {project_name}</td></tr>
-            </table>
+            <p>
+                <strong>Project Name:</strong> {project_name or self.project}<br>
+                <strong>Project Code:</strong> {proj_key or ""}<br>
+                <strong>Task:</strong> {self.subject or self.name}<br>
+                <strong>Task ID:</strong> {self.name}<br>
+                <strong>Reopened By:</strong> {reopened_by}<br>
+                <strong>Reopened Date:</strong> {frappe.utils.format_date(getdate(today()))}<br>
+            </p>
 
-            <br>
+            <p>
+                Please review the {self.issue_type} and take
+                the necessary action.
+                <a href="{task_url}">Open Task</a>
+            </p>
 
-            <a href="{task_url}">Open Task</a>
-
-            <br><br>
+            <p>
+                Regards,<br>
+                ERP System
+            </p>
             """
         )
     
