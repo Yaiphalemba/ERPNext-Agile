@@ -7,11 +7,10 @@
  "docstatus": 0,
  "doctype": "Report",
  "filters": [],
- "idx": 0,
+ "idx": 4,
  "is_standard": "Yes",
- "letter_head": "",
- "letterhead": null,
- "modified": "2025-10-23 09:37:02.048813",
+ "letter_head": null,
+ "modified": "2026-09-18 10:19:25.648846",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Defect Trends",
@@ -28,10 +27,13 @@
    "role": "QA Lead"
   },
   {
-   "role": "QA Tester"
+   "role": "HR Manager"
   },
   {
-   "role": "QA Viewer"
+   "role": "Projects Manager"
+  },
+  {
+   "role": "Management"
   }
  ],
  "timeout": 0

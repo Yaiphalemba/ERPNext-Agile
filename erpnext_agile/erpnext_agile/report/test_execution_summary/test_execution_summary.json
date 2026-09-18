@@ -7,11 +7,10 @@
  "docstatus": 0,
  "doctype": "Report",
  "filters": [],
- "idx": 1,
+ "idx": 4,
  "is_standard": "Yes",
- "letter_head": "Ramognee Technologies Pvt Ltd",
- "letterhead": null,
- "modified": "2025-11-11 14:20:03.502468",
+ "letter_head": null,
+ "modified": "2026-09-18 10:20:20.218575",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Test Execution Summary",
@@ -31,10 +30,10 @@
    "role": "QA Lead"
   },
   {
-   "role": "QA Tester"
+   "role": "Management"
   },
   {
-   "role": "QA Viewer"
+   "role": "HR Manager"
   }
  ],
  "timeout": 0
