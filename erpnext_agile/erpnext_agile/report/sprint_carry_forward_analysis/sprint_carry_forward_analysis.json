@@ -3,9 +3,6 @@
  "add_translate_data": 0,
  "columns": [],
  "creation": "2026-06-29 15:16:25.295757",
- "custom_create_view": 0,
- "custom_refresh_frequency": 0,
- "custom_view_type": "Logical",
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
@@ -13,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": null,
- "modified": "2026-06-29 15:16:25.295757",
+ "modified": "2026-09-18 10:04:32.683826",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Sprint Carry Forward Analysis",
@@ -24,10 +21,16 @@
  "report_type": "Script Report",
  "roles": [
   {
-   "role": "Projects User"
+   "role": "Project Manager"
   },
   {
-   "role": "Employee Self Service"
+   "role": "Management"
+  },
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "System Manager"
   }
  ],
  "timeout": 0
