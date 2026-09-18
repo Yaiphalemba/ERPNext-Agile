@@ -384,6 +384,8 @@ class AgileTask(Task):
         assigned_users = [d.user for d in self.get("assigned_to_users", [])]
 
         tester_users = []
+        if self.custom_original_owner:
+            tester_users.append(self.custom_original_owner)
 
         for user in assigned_users:
             if "Tester" in frappe.get_roles(user):
