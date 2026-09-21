@@ -641,7 +641,7 @@ class AgileTask(Task):
         if self.status not in ("Cancelled", "Completed", "Pending Review") and self.exp_end_date:
             from datetime import datetime
 
-            if self.exp_end_date < datetime.now().date():
+            if self.exp_end_date < datetime.now().date() and self.issue_status not in ("Blocked", "On Hold"):
                 self.db_set("status", "Overdue", update_modified=False)
                 self.update_project()
 
@@ -840,8 +840,8 @@ def transition_task_status(task_name, to_status, comment=None, completed_by=None
     if completed_on:
         doc.completed_on = getdate(completed_on)
         doc.progress = 100  # Mark as complete if completed_on is set
-    if to_status in ["Blocked", "On Hold"]:
-        doc.exp_end_date = None  # Clear end date if blocked
+    # if to_status in ["Blocked", "On Hold"]:
+    #     doc.exp_end_date = None
     if to_status in ["In Progress", "Working"] and not doc.custom_actual_start_date:
         doc.custom_actual_start_date = frappe.utils.nowdate()  # Set start date if moving to In Progress and no start date
         
