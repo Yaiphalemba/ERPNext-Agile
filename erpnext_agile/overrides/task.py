@@ -26,6 +26,7 @@ class AgileTask(Task):
             self.validate_agile_fields()
             # Validate workflow transitions BEFORE other validations
             self.validate_workflow_transition()
+            self.validate_parent_task()
         # if self.parent_issue:
         self.sync_parent_task()
         # sync original_estimate → expected_time
@@ -297,6 +298,15 @@ class AgileTask(Task):
             )
         elif self.is_group:
             self.story_points = 0
+            
+    def validate_parent_task(self):
+        """
+        Validate that the parent task is not completed or closed
+        """
+        if self.parent_issue:
+            parent_task = frappe.get_doc("Task", self.parent_issue)
+            if parent_task.is_group == 0:
+                frappe.throw(_("Cannot assign a subtask to a non-parent task."))
     
     def handle_issue_activity_update(self):
         """Handle activity tracking for field changes"""
