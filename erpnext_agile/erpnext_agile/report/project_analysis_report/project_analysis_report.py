@@ -143,6 +143,7 @@ def _fetch_tasks(filters):
             t.issue_type                                                  AS task_type,
             t.exp_end_date,
             t.completed_on,
+            t.custom_overdue,
             COALESCE(ais.status_category, 'To Do')                       AS status_category,
             (
                 SELECT COUNT(DISTINCT a2.user)
@@ -495,8 +496,10 @@ def _build_per_project(assignees, task_map, project_totals, filters):
 
         total_assigned  = sum(s["total_assigned_tasks"] for _, s in ranked)
         total_completed = sum(s["tasks_completed"] for _, s in ranked)
+        total_overdue   = sum(s["tasks_overdue"] for _, s in ranked)
+        total_bugs      = sum(s["bugs_reported"] for _, s in ranked)
         total_wp        = sum(flt(s["weighted_points"]) for _, s in ranked)
-        stats = f"<b>{proj_total} total tasks · {total_assigned} assigned · "f"{total_completed} completed · {round(total_wp, 1)} pts</b>"
+        stats = f"<b>{proj_total} total tasks · {total_assigned} assigned · "f"{total_completed} completed · {total_overdue} overdue · {total_bugs} bugs · {round(total_wp, 1)} pts</b>"
 
         data.append(_section_header(
             f"📁  {project_display}  ",
