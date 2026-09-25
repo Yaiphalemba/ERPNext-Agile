@@ -29,8 +29,9 @@ def task_on_update(doc, method):
     """Actions on task update"""
     if doc.is_agile:
         if doc.exp_end_date and getdate(doc.exp_end_date) < getdate(today()):
-            frappe.db.set_value(doc.doctype, doc.name, 'custom_overdue', 1)
-            doc.reload()
+            if doc.status not in ['Closed', 'Cancelled', 'Completed']:
+                frappe.db.set_value(doc.doctype, doc.name, 'custom_overdue', 1)
+                doc.reload()
         # Sync to GitHub if enabled
         project_doc = frappe.get_doc('Project', doc.project)
         
