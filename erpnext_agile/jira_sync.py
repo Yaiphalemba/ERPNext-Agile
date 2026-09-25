@@ -319,7 +319,7 @@ def build_task_dict_from_jira(issue, domain, auth, names_map):
         "status":    mapped_status,
         "description": extract_description(fields.get("description")),
         "project":     proj_name,
-        "current_sprint": sprint_name,
+        "current_sprint": proj_name + " - " + sprint_name,
 
         "custom_fix_version":    fix_versions_table[0]["version"] if fix_versions_table else None,
         "custom_affect_version": affect_versions_table[0]["version"] if affect_versions_table else None,
