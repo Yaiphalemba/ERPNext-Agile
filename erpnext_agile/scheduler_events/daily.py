@@ -81,7 +81,7 @@ def check_overdue_flag_in_tasks():
         filters={
             'is_agile': 1,
             'exp_end_date': ['<', today()],
-            'status': ["not in", ["Cancelled", "Completed"]],
+            'status': ["not in", ["Cancelled", "Completed", "Closed"]],
             'custom_overdue': 0
         },
         fields=['name', 'status', 'review_date']
@@ -110,7 +110,7 @@ def process_overdue_tasks():
     tasks = frappe.get_all(
         "Task",
         filters={
-            "status": ["not in", ["Completed", "Closed", "Resolved"]],
+            "status": ["not in", ["Cancelled", "Completed", "Closed", "Resolved"]],
             "exp_end_date": ["<", today]
         },
         fields=[
