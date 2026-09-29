@@ -45,7 +45,7 @@ class AgileTask(Task):
         if self.status == "Pending Review" and not self.review_date:
             self.review_date = getdate()  # Set to current date to avoid overdue status
         if self.status == "Completed" and self.custom_overdue == 1:
-            if self.completed_on and self.completed_on <= self.exp_end_date:
+            if self.completed_on and self.exp_end_date and self.completed_on <= self.exp_end_date:
                 self.db_set("custom_overdue", 0, update_modified=False)
                 if self.review_date and self.review_date > self.completed_on:
                     self.db_set("review_date", self.completed_on, update_modified=False)
