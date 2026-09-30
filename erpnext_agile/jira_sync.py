@@ -1178,7 +1178,7 @@ def resolve_sprint(sprint_payload, project_name):
             m = re.search(r'endDate=([^,\]]+)', first)
             if m and m.group(1) != '<null>': end_date   = m.group(1)[:10]
 
-    if sprint_name and not frappe.db.exists("Agile Sprint", sprint_name):
+    if sprint_name and not frappe.db.exists("Agile Sprint", {"sprint_name": sprint_name}):
         try:
             final_start = getdate(start_date) if start_date else frappe.utils.today()
             final_end   = getdate(end_date)   if end_date   else frappe.utils.add_days(final_start, 14)
@@ -1192,7 +1192,8 @@ def resolve_sprint(sprint_payload, project_name):
             }).insert(ignore_permissions=True)
         except Exception:
             pass
-    return sprint_name
+    s_name = frappe.db.get_value("Agile Sprint", {"sprint_name": sprint_name}, "name")
+    return s_name
 
 def resolve_version_table(versions_data, project_name):
     if not versions_data:
