@@ -18,7 +18,7 @@
  "is_hidden": 0,
  "label": "Agile Project",
  "links": [],
- "modified": "2026-09-24 16:29:40.055163",
+ "modified": "2026-10-01 13:59:10.654171",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Project",
@@ -69,6 +69,14 @@
    "label": "Project",
    "link_to": "Project",
    "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Sub-Task",
+   "link_to": "Task",
+   "stats_filter": "[[\"Task\",\"issue_type\",\"=\",\"Sub-task\",false]]",
    "type": "DocType"
   },
   {
@@ -164,14 +172,6 @@
    "doc_view": "List",
    "label": "Test Case",
    "link_to": "Test Case",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "Sub-Task",
-   "link_to": "Task",
    "stats_filter": "[]",
    "type": "DocType"
   },
