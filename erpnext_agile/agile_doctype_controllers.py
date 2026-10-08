@@ -18,7 +18,12 @@ def task_validate(doc, method):
         manager = AgileIssueManager()
             
         # Auto-generate issue key if not set
-        if not doc.issue_key:
+        project_changed = not doc.is_new() and doc.has_value_changed("project")
+        
+        if not doc.issue_key or project_changed:
+            if project_changed:
+                frappe.msgprint('Shifted project, generating new issue key')
+                
             doc.issue_key = manager.generate_issue_key(project_doc)
         
         # Set default status if not set
