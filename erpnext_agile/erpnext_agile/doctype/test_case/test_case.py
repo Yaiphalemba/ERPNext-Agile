@@ -11,26 +11,26 @@ class TestCase(Document):
         # Handle assignment for new test cases
         self.handle_assignment_for_new_test_cases()
         
-    def autoname(self):
-        """Auto-generate test case ID"""
-        if not self.test_case_id:
-            # Get the last test case number
-            last_case = frappe.db.sql("""
-                SELECT test_case_id 
-                FROM `tabTest Case` 
-                WHERE test_case_id LIKE 'TC-%'
-                ORDER BY creation DESC 
-                LIMIT 1
-            """)
+    # def autoname(self):
+    #     """Auto-generate test case ID"""
+    #     if not self.test_case_id:
+    #         # Get the last test case number
+    #         last_case = frappe.db.sql("""
+    #             SELECT test_case_id 
+    #             FROM `tabTest Case` 
+    #             WHERE test_case_id LIKE 'TC-%'
+    #             ORDER BY creation DESC 
+    #             LIMIT 1
+    #         """)
             
-            if last_case:
-                last_num = int(last_case[0][0].split('-')[1])
-                new_num = last_num + 1
-            else:
-                new_num = 1
+    #         if last_case:
+    #             last_num = int(last_case[0][0].split('-')[1])
+    #             new_num = last_num + 1
+    #         else:
+    #             new_num = 1
             
-            self.test_case_id = f"TC-{new_num:05d}"
-            self.name = self.test_case_id
+    #         self.test_case_id = f"TC-{new_num:05d}"
+    #         self.name = self.test_case_id
             
     def validate(self):
         """Validate test case"""
