@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import today, getdate
+from frappe.utils import today, getdate, cint
 from frappe.share import add_docshare
 
 def task_validate(doc, method):
@@ -58,6 +58,7 @@ def task_on_update(doc, method):
     add_owner_to_watchers(doc)
     link_task_to_test_cases(doc)
     remove_unlinked_test_cases(doc)    
+    update_task_reopen_counter(doc)    
 
 def sync_dependent_task_details(doc):
     """
@@ -124,6 +125,20 @@ def remove_unlinked_test_cases(doc):
             tc_doc.flags.sync_in_progress = True
             tc_doc.save(ignore_permissions=True)
 
+def update_task_reopen_counter(doc):
+    if not doc.is_new() and doc.get_doc_before_save():
+        old_doc = doc.get_doc_before_save()
+        
+        # closed_states = frappe.db.get_list("Agile Issue Status", filters={"status_category": "Done"}, pluck="name")
+        
+        if doc.issue_status and old_doc.issue_status and old_doc.issue_status != doc.issue_status:
+            # frappe.msgprint('Reopened')
+            
+            if doc.issue_status == "Reopened":
+                doc.custom_task_reopen_count = cint(doc.custom_task_reopen_count) + 1
+                doc.save(ignore_permissions=True)
+    doc.reload()
+                
 def add_reviewer_to_watchers(doc):
     """
     If the task has a reviewer assigned, ensure that the reviewer is also in the assignees list.
