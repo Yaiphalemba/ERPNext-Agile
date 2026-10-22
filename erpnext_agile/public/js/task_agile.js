@@ -10,6 +10,100 @@ frappe.ui.form.on('Task', {
                 frappe.throw(__('Cannot save task in "{0}" status.', [frm.doc.status]));
             }
         }
+
+        if (frm.is_new()) return;
+
+        // Compare current form values against the baseline captured on refresh
+        let dates_changed = (frm.initial_start_date !== frm.doc.exp_start_date) || 
+                            (frm.initial_end_date !== frm.doc.exp_end_date);
+
+        if (dates_changed && !frm.timeline_reason_collected) {
+            
+            frappe.validated = false; // Halt the standard save process
+
+            let d = new frappe.ui.Dialog({
+                title: 'Reason for Timeline Change',
+                fields: [
+                    {
+                        label: 'Reason',
+                        fieldname: 'reason',
+                        fieldtype: 'Select',
+                        reqd: 1,
+                        options: [
+                            "",
+                            "Unplanned Production Escalation",
+                            "Deprioritized by Client/Product Owner",
+                            "Requirement Changed Mid-Sprint",
+                            "Resource Unavailable (Leave, Illness, Reallocation)",
+                            "Environment Outage (Server, Network, CI/CD Down)",
+                            "Estimation Issue",
+                            "Bugs found late in Sprint",
+                            "Bugs found in large number",
+                            "Code Drop delayed",
+                            "Waiting for Client / BA Clarifications",
+                            "Waiting for Client Sign-Off / UAT Approval",
+                            "Waiting for Internal BA / Lead Sign-Off",
+                            "Waiting for QA Sign-Off / Testing Completion",
+                            "Waiting for Dependent Module / Precursor Task",
+                            "Blocked on Code Review / PR Merge",
+                            "Data/Migration Issue",
+                            "API Integration Issue",
+                            "Access / Permissions / Credentials Pending",
+                            "Knowledge / Skill Gap (R&D or Senior Pairing Needed)",
+                            "Technical Debt/Refactoring",
+                            "Critical Security Vulnerability Identified",
+                            "Other (Specify in Remarks)"
+                        ]
+                    },
+                    {
+                        label: 'Remarks',
+                        fieldname: 'remarks',
+                        fieldtype: 'Small Text',
+                        depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"',
+                        mandatory_depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"'
+                    }
+                ],
+                primary_action_label: 'Submit & Save',
+                primary_action: function(values) {
+                    frm.add_child("custom_timeline_change", {
+                        changed_by: frappe.session.user,
+                        changed_on: frappe.datetime.now_datetime(),
+                        change_synopsis: `Start Date: ${frappe.datetime.str_to_user(frm.initial_start_date)} → ${frappe.datetime.str_to_user(frm.doc.exp_start_date)}, \nEnd Date: ${frappe.datetime.str_to_user(frm.initial_end_date)} → ${frappe.datetime.str_to_user(frm.doc.exp_end_date)}`,
+                        explanation: `${values.reason} \n${values.remarks || ''}`,
+                    });
+                    frm.refresh_field("custom_timeline_change");
+
+                    let comment = `<b>🗓️ Timeline Updated</b><br><b>Reason:</b> ${values.reason}`;
+                    if (values.remarks) {
+                        comment += `<br><b>Remarks:</b> ${values.remarks}`;
+                    }
+
+                    frappe.call({
+                        method: "frappe.desk.form.utils.add_comment",
+                        args: {
+                            reference_doctype: "Task",
+                            reference_name: frm.doc.name,
+                            content: comment,
+                            comment_email: frappe.session.user,
+                            comment_by: frappe.session.user
+                        },
+                        callback: function(r) {
+                            frm.timeline_reason_collected = true; 
+                            d.hide();
+                            frm.save(); // Re-trigger the save process
+                        }
+                    });
+                }
+            });
+            d.show();
+        }
+    },
+
+    after_save: function(frm) {
+        // Reset the variables so consecutive saves on the same page don't break
+        frm.timeline_reason_collected = false;
+        frm.initial_start_date = frm.doc.exp_start_date;
+        frm.initial_end_date = frm.doc.exp_end_date;
     },
     refresh: function(frm) {
         if (frm.doc.is_agile) {
@@ -46,6 +140,11 @@ frappe.ui.form.on('Task', {
             
             // Add custom indicators
             add_agile_indicators(frm);
+
+            if (!frm.is_new()) {
+                frm.initial_start_date = frm.doc.exp_start_date;
+                frm.initial_end_date = frm.doc.exp_end_date;
+            }
         }
         
         // Show agile status indicator if available
