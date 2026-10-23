@@ -326,6 +326,16 @@ class AgileTask(Task):
             "parent_issue": "parent issue",
             "original_estimate": "original estimate",
             "remaining_estimate": "remaining estimate",
+            "subject": "subject",
+            "description": "description",
+            "custom_reviewer": "reviewer",
+            "issue_priority": "priority",
+            "custom_components": "components",
+            "custom_labels": "labels",
+            "exp_start_date": "expected start date",
+            "exp_end_date": "expected end date",
+            "depends_on": "dependencies",
+            "custom_test_cases": "test cases",
         }
         
         # Track specific field changes
@@ -365,6 +375,93 @@ class AgileTask(Task):
                             f"moved from sprint {old_value} to {new_value}",
                             data={"from_sprint": old_value, "to_sprint": new_value}
                         )
+                elif field == "story_points":
+                    log_issue_activity(
+                        self.name,
+                        f"changed story points from {old_value} to {new_value}",
+                        data={"from_story_points": old_value, "to_story_points": new_value}
+                    )
+                elif field == "issue_type":
+                    log_issue_activity(
+                        self.name,
+                        f"changed issue type from {old_value} to {new_value}",
+                        data={"from_type": old_value, "to_type": new_value}
+                    )
+                elif field == "subject":
+                    log_issue_activity(
+                        self.name,
+                        f"updated subject from '{old_value}' to '{new_value}'",
+                        data={"old_subject": old_value, "new_subject": new_value}
+                    )
+                elif field == "description":
+                    log_issue_activity(
+                        self.name,
+                        f"updated description",
+                        data={"old_description": old_value, "new_description": new_value}
+                    )
+                elif field == "custom_reviewer":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set reviewer {new_value}",
+                            data={"reviewer": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed reviewer {old_value}",
+                            data={"reviewer": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed reviewer from {old_value} to {new_value}",
+                            data={"from_reviewer": old_value, "to_reviewer": new_value}
+                        )
+                elif field == "issue_priority":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set priority to {new_value}",
+                            data={"new_priority": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed priority {old_value}",
+                            data={"old_priority": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed priority from {old_value} to {new_value}",
+                            data={"old_priority": old_value, "new_priority": new_value}
+                        )
+                elif field == "parent_issue":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set parent issue to {new_value}",
+                            data={"new_parent_issue": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed parent issue {old_value}",
+                            data={"old_parent_issue": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed parent issue from {old_value} to {new_value}",
+                            data={"old_parent_issue": old_value, "new_parent_issue": new_value}
+                        )
+                elif field in ["exp_start_date", "exp_end_date"]:
+                    log_issue_activity(
+                        self.name,
+                        f"updated {display_field} from {old_value} to {new_value}",
+                        data={"field": display_field, "old_value": str(old_value), "new_value": str(new_value)}
+                    )
                 elif field in ["original_estimate", "remaining_estimate"]:
                     log_issue_activity(
                         self.name,
@@ -372,11 +469,12 @@ class AgileTask(Task):
                         data={"old_value": format_seconds(old_value), "new_value": format_seconds(new_value)}
                     )
                 else:
-                    log_issue_activity(
-                        self.name,
-                        f"set {display_field} to {new_value}",
-                        data={"old_value": str(old_value), "new_value": str(new_value)}
-                    )
+                    if field not in ["custom_components", "custom_labels", "depends_on", "custom_test_cases"]:
+                        log_issue_activity(
+                            self.name,
+                            f"set {display_field} to {new_value}",
+                            data={"old_value": str(old_value), "new_value": str(new_value)}
+                        )
         
         # Track assignee changes
         if self.has_value_changed("assigned_to_users"):
@@ -385,6 +483,22 @@ class AgileTask(Task):
         # Track watcher changes
         if self.has_value_changed("watchers"):
             self.track_watcher_changes()
+
+        # Track dependent tasks changes    
+        if self.has_value_changed("depends_on"):
+            self.track_dependent_tasks_changes()
+
+        # Track Test Cases Changes    
+        if self.has_value_changed("custom_test_cases"):
+            self.track_test_cases_changes()
+        
+        # Track Component changes    
+        if self.has_value_changed("custom_components"):
+            self.track_component_changes()
+
+        # Track Test Cases Changes    
+        if self.has_value_changed("custom_labels"):
+            self.track_label_changes()
     
     # Make sure you import 'remove' at the top of your file if you haven't already:
     # from frappe.desk.form.assign_to import add, remove, clear 
@@ -577,6 +691,86 @@ class AgileTask(Task):
                 user_name = frappe.get_cached_value("User", user, "full_name")
                 log_issue_activity(self.name, f"removed watcher {user_name}", data={"watcher": user})
 
+    def track_dependent_tasks_changes(self):
+        """Track changes to dependent tasks"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_dependencies = set([d.task for d in old_doc.get("depends_on", [])])
+        new_dependencies = set([d.task for d in self.get("depends_on", [])])
+        
+        added = new_dependencies - old_dependencies
+        removed = old_dependencies - new_dependencies
+        
+        if added:
+            for task in added:
+                log_issue_activity(self.name, f"added dependency on task {task}", data={"dependency": task})
+        
+        if removed:
+            for task in removed:
+                log_issue_activity(self.name, f"removed dependency on task {task}", data={"dependency": task})
+
+    def track_test_cases_changes(self):
+        """Track changes to test cases"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_test_cases = set([d.test_case for d in old_doc.get("custom_test_cases", [])])
+        new_test_cases = set([d.test_case for d in self.get("custom_test_cases", [])])
+        
+        added = new_test_cases - old_test_cases
+        removed = old_test_cases - new_test_cases
+        
+        if added:
+            for test_case in added:
+                log_issue_activity(self.name, f"added test case {test_case}", data={"test_case": test_case})
+        
+        if removed:
+            for test_case in removed:
+                log_issue_activity(self.name, f"removed test case {test_case}", data={"test_case": test_case})
+    
+    def track_component_changes(self):
+        """Track changes to components"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_components = set([d.component for d in old_doc.get("custom_components", [])])
+        new_components = set([d.component for d in self.get("custom_components", [])])
+        
+        added = new_components - old_components
+        removed = old_components - new_components
+        
+        if added:
+            for component in added:
+                log_issue_activity(self.name, f"added component {component}", data={"component": component})
+        
+        if removed:
+            for component in removed:
+                log_issue_activity(self.name, f"removed component {component}", data={"component": component})
+
+    def track_label_changes(self):
+        """Track changes to labels"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_labels = set([d.label for d in old_doc.get("custom_labels", [])])
+        new_labels = set([d.label for d in self.get("custom_labels", [])])
+        
+        added = new_labels - old_labels
+        removed = old_labels - new_labels
+        
+        if added:
+            for label in added:
+                log_issue_activity(self.name, f"added label {label}", data={"label": label})
+        
+        if removed:
+            for label in removed:
+                log_issue_activity(self.name, f"removed label {label}", data={"label": label})
+    
     def handle_assignment_for_new_tasks(self):
         # For new documents, assign to users in assigned_to_users field
         new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
