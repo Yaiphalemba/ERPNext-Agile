@@ -581,7 +581,23 @@ function get_activity_icon(activity_type) {
         'version_restored': '↺',
         'watcher_added': '👁',
         'watcher_removed': '👁',
-        'attachment_added': '📎'
+        'attachment_added': '📎',
+        'issue_type_changed': '🔄',
+        'priority_changed': '⚡',
+        'subject_changed': '✏️',
+        'description_updated': '📝',
+        'reviewer_changed': '👀',
+        'story_points_changed': '🎯',
+        'timeline_changed': '📅',
+        'dependent_task_added': '🔗',
+        'dependent_task_removed': '✂️',
+        'test_case_added': '🧪',
+        'test_case_removed': '🗑️',
+        'component_added': '🧩',
+        'component_removed': '➖',
+        'label_added': '🏷️',
+        'label_removed': '✂️',
+        'parent_issue_changed': '🗂️'
     };
     return icons[activity_type] || '•';
 }
@@ -601,15 +617,28 @@ function get_activity_color(activity_type) {
         'version_restored': '#e83e8c',
         'watcher_added': '#17a2b8',
         'watcher_removed': '#dc3545',
-        'commented': '#6c757d'
+        'commented': '#6c757d',
+        'issue_type_changed': '#17a2b8',
+        'priority_changed': '#dc3545',
+        'subject_changed': '#6c757d',
+        'description_updated': '#6c757d',
+        'reviewer_changed': '#17a2b8',
+        'story_points_changed': '#fd7e14',
+        'timeline_changed': '#ffc107',
+        'dependent_task_added': '#007bff',
+        'dependent_task_removed': '#dc3545',
+        'test_case_added': '#28a745',
+        'test_case_removed': '#dc3545',
+        'component_added': '#20c997',
+        'component_removed': '#ffc107',
+        'label_added': '#007bff',
+        'label_removed': '#dc3545',
+        'parent_issue_changed': '#6f42c1' // Purple
     };
     return colors[activity_type] || '#6c757d';
 }
 
 function get_activity_description(activity) {
-    // The action string is now stored in the activity, not constructed from type
-    // But for backward compatibility, we can extract it from the data or construct it
-    
     let data = {};
     try {
         data = activity.data ? JSON.parse(activity.data) : {};
@@ -618,53 +647,111 @@ function get_activity_description(activity) {
     }
     
     const activity_type = activity.activity_type;
+    const action_str = (activity.action || "").toLowerCase();
     
-    // Check if we have specific data to build a better description
+    // Status & Assignment
     if (activity_type === 'status_changed' && data.from_status && data.to_status) {
         return `changed status from <span class="badge" style="background: #e0e0e0;">${data.from_status}</span> to <span class="badge" style="background: #007bff; color: white;">${data.to_status}</span>`;
     }
-    
+    if (activity_type === 'issue_type_changed' && data.from_type && data.to_type) {
+        return `changed issue type from <span class="badge" style="background: #e0e0e0;">${data.from_type}</span> to <span class="badge" style="background: #007bff; color: white;">${data.to_type}</span>`;
+    }
     if (activity_type === 'assigned' && data.assignees) {
         let assignees = Array.isArray(data.assignees) ? data.assignees : [data.assignees];
         return `assigned to <strong>${assignees.join(', ')}</strong>`;
     }
-    
     if (activity_type === 'unassigned' && data.unassigned) {
         let unassigned = Array.isArray(data.unassigned) ? data.unassigned : [data.unassigned];
         return `unassigned from <strong>${unassigned.join(', ')}</strong>`;
     }
-    
-    if (activity_type === 'work_logged' && data.time_spent) {
-        return `logged <span class="badge" style="background: #6610f2; color: white;">${data.time_spent}</span> of work`;
+    if (activity_type === 'reviewer_changed' && data.reviewer) {
+        return `updated reviewer to <strong>${data.reviewer}</strong>`;
     }
-    
-    if (activity_type === 'estimation_changed' && data.old_value && data.new_value) {
-        return `updated estimate from <span class="badge" style="background: #e0e0e0;">${data.old_value}</span> to <span class="badge" style="background: #fd7e14; color: white;">${data.new_value}</span>`;
-    }
-    
-    if (activity_type === 'sprint_added' && data.sprint) {
-        return `added to sprint <span class="badge" style="background: #20c997; color: white;">${data.sprint}</span>`;
-    }
-    
-    if (activity_type === 'sprint_removed' && data.sprint) {
-        return `removed from sprint <span class="badge" style="background: #ffc107;">${data.sprint}</span>`;
-    }
-    
     if (activity_type === 'watcher_added') {
         return `added watcher <strong>${data.watcher}</strong>`;
     }
-    
     if (activity_type === 'watcher_removed') {
         return `removed watcher <strong>${data.unwatcher}</strong>`;
     }
+
+    // Work & Metrics
+    if (activity_type === 'work_logged' && data.time_spent) {
+        return `logged <span class="badge" style="background: #6610f2; color: white;">${data.time_spent}</span> of work`;
+    }
+    if (activity_type === 'estimation_changed' && data.old_value && data.new_value) {
+        return `updated estimate from <span class="badge" style="background: #e0e0e0;">${data.old_value}</span> to <span class="badge" style="background: #fd7e14; color: white;">${data.new_value}</span>`;
+    }
+    if (activity_type === 'story_points_changed' && data.old_value && data.new_value) {
+        return `updated story points from <span class="badge" style="background: #e0e0e0;">${data.old_value}</span> to <span class="badge" style="background: #fd7e14; color: white;">${data.new_value}</span>`;
+    }
     
-    // Generic descriptions based on activity type
+    // Priorities & Sprints
+    if (activity_type === 'priority_changed' && data.old_value && data.new_value) {
+        return `changed priority from <span class="badge" style="background: #e0e0e0;">${data.old_value}</span> to <span class="badge" style="background: #dc3545; color: white;">${data.new_value}</span>`;
+    }
+    if (activity_type === 'sprint_added' && data.sprint) {
+        return `added to sprint <span class="badge" style="background: #20c997; color: white;">${data.sprint}</span>`;
+    }
+    if (activity_type === 'sprint_removed' && data.sprint) {
+        return `removed from sprint <span class="badge" style="background: #ffc107;">${data.sprint}</span>`;
+    }
+
+    // Parent Issue Logic (Set, Removed, Changed)
+    if (activity_type === 'parent_issue_changed') {
+        if (data.old_parent_issue && data.new_parent_issue) {
+            return `changed parent issue from <span class="badge" style="background: #e0e0e0; color: #333;">${frappe.utils.escape_html(data.old_parent_issue)}</span> to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(data.new_parent_issue)}</span>`;
+        }
+        if (data.old_parent_issue || (data.parent_issue && action_str.includes("removed"))) {
+            let val = data.old_parent_issue || data.parent_issue;
+            return `removed parent issue <del style="color: #dc3545;"><strong>${frappe.utils.escape_html(val)}</strong></del>`;
+        }
+        if (data.new_parent_issue || data.parent_issue) {
+            let val = data.new_parent_issue || data.parent_issue;
+            return `set parent issue to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(val)}</span>`;
+        }
+    }
+
+    if (activity_type === 'priority_changed') {
+        if (data.old_priority && data.new_priority) {
+            return `changed priority from <span class="badge" style="background: #e0e0e0; color: #333;">${frappe.utils.escape_html(data.old_priority)}</span> to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(data.new_priority)}</span>`;
+        }
+        if (data.old_priority || (data.priority && action_str.includes("removed"))) {
+            let val = data.old_priority || data.priority;
+            return `removed priority <del style="color: #dc3545;"><strong>${frappe.utils.escape_html(val)}</strong></del>`;
+        }
+        if (data.new_priority || data.priority) {
+            let val = data.new_priority || data.priority;
+            return `set priority to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(val)}</span>`;
+        }
+    }
+
+    if (activity_type === 'timeline_changed' && data.reason) {
+        return `updated the timeline. <strong>Reason:</strong> ${data.reason}`;
+    }
+    
+    // Generic Fallbacks
     const descriptions = {
         'created': 'created this issue',
         'commented': 'added a comment',
         'github_synced': 'synced with GitHub',
         'version_restored': `restored to version ${data.version_number || '?'}`,
-        'attachment_added': 'added an attachment'
+        'attachment_added': 'added an attachment',
+        'issue_type_changed': 'changed the issue type',
+        'priority_changed': 'updated the priority',
+        'subject_changed': 'updated the subject',
+        'description_updated': 'updated the description',
+        'reviewer_changed': 'updated the reviewer',
+        'story_points_changed': 'updated the story points',
+        'timeline_changed': 'updated the task timeline dates',
+        'dependent_task_added': 'added a dependency',
+        'dependent_task_removed': 'removed a dependency',
+        'test_case_added': 'added a test case',
+        'test_case_removed': 'removed a test case',
+        'component_added': 'added a component',
+        'component_removed': 'removed a component',
+        'label_added': 'added a label',
+        'label_removed': 'removed a label',
+        'parent_issue_changed': 'updated the parent issue'
     };
     
     return descriptions[activity_type] || activity_type.replace(/_/g, ' ');
@@ -673,63 +760,93 @@ function get_activity_description(activity) {
 function render_activity_details(activity_type, data) {
     let html = '';
     
-    // Show work description for work logs
+    // Work Logs
     if (activity_type === 'work_logged' && data.description) {
         html += `
-            <div style="
-                margin-top: 8px;
-                padding: 10px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                font-size: 0.9em;
-                border-left: 3px solid #6610f2;
-            ">
+            <div style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 0.9em; border-left: 3px solid #6610f2;">
                 <strong>Work Description:</strong><br>
                 ${frappe.utils.escape_html(data.description)}
             </div>
         `;
     }
     
-    // Show sprint transitions
+    // Sprint Transitions
     if (activity_type === 'sprint_added' || activity_type === 'sprint_removed') {
         if (data.from_sprint && data.to_sprint) {
             html += `
-                <div style="
-                    margin-top: 8px;
-                    padding: 8px;
-                    background: #fff3cd;
-                    border-radius: 4px;
-                    font-size: 0.85em;
-                ">
+                <div style="margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 0.85em;">
                     <i class="fa fa-arrow-right"></i> 
-                    Moved from <strong>${data.from_sprint}</strong> to <strong>${data.to_sprint}</strong>
+                    Moved from <strong>${frappe.utils.escape_html(data.from_sprint)}</strong> to <strong>${frappe.utils.escape_html(data.to_sprint)}</strong>
+                </div>
+            `;
+        }
+    }
+
+    // Timeline Changes (Reason & Remarks)
+    if (activity_type === 'timeline_changed' && (data.field || data.old_value || data.new_value)) {
+        html += `<div style="margin-top: 8px; padding: 10px; background: #fff8e1; border-radius: 4px; font-size: 0.9em; border-left: 3px solid #ffc107;">`;
+        if (data.field) {
+            html += `<strong>Field:</strong>${frappe.utils.escape_html(data.field)}<br>`;
+        }
+        if (data.old_value) {
+            html += `<strong>Old Value:</strong><br>${frappe.utils.escape_html(data.old_value)}<br>`;
+        }
+        if (data.new_value) {
+            html += `<strong>New Value:</strong><br>${frappe.utils.escape_html(data.new_value)}`;
+        }
+        // if (data.reason) {
+        //     html += `<strong>Reason for Timeline Change:</strong><br>${frappe.utils.escape_html(data.reason)}`;
+        // }
+        // if (data.remarks) {
+        //     let topMargin = data.reason ? 'margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ffe082;' : '';
+        //     html += `<div style="${topMargin}"><strong>Remarks:</strong><br>${frappe.utils.escape_html(data.remarks)}</div>`;
+        // }
+        html += `</div>`;
+    }
+
+    // Tags/Badges for Components, Labels, Dependencies, and Test Cases
+    const addition_types = ['component_added', 'label_added', 'dependent_task_added', 'test_case_added'];
+    const removal_types = ['component_removed', 'label_removed', 'dependent_task_removed', 'test_case_removed'];
+
+    if (addition_types.includes(activity_type) || removal_types.includes(activity_type)) {
+        let item_name = data.label || data.component || data.task || data.dependent_task || data.dependency || data.test_case || data.item || data.value;
+        if (item_name) {
+            let is_added = addition_types.includes(activity_type);
+            let icon = is_added ? '<i class="fa fa-plus" style="color: #28a745;"></i>' : '<i class="fa fa-minus" style="color: #dc3545;"></i>';
+            let item_display = is_added ? `<strong>${frappe.utils.escape_html(item_name)}</strong>` : `<del style="color: #6c757d;"><strong>${frappe.utils.escape_html(item_name)}</strong></del>`;
+            let bg_color = is_added ? '#e8f5e9' : '#ffebee';
+            let border_color = is_added ? '#c8e6c9' : '#ffcdd2';
+            
+            html += `
+                <div style="margin-top: 8px; padding: 4px 10px; background: ${bg_color}; border: 1px solid ${border_color}; border-radius: 12px; font-size: 0.85em; display: inline-block;">
+                    ${icon} <span style="margin-left: 6px;">${item_display}</span>
                 </div>
             `;
         }
     }
     
-    // Show old and new values for field changes
-    if (data.old_value && data.new_value && activity_type !== 'estimation_changed') {
+    // Stop types that already format their data into the main description string from rendering generic code blocks
+    const exclude_from_generic_values = [
+        'estimation_changed', 
+        'priority_changed', 
+        'story_points_changed',
+        'parent_issue_changed'
+    ];
+
+    // Standard field changes (Old vs New)
+    if (data.old_value && data.new_value && !exclude_from_generic_values.includes(activity_type)) {
         html += `
-            <div style="
-                margin-top: 8px;
-                padding: 8px;
-                background: #e7f3ff;
-                border-radius: 4px;
-                font-size: 0.85em;
-                display: flex;
-                gap: 10px;
-            ">
-                <div style="flex: 1;">
+            <div style="margin-top: 8px; padding: 8px; background: #e7f3ff; border-radius: 4px; font-size: 0.85em; display: flex; gap: 10px;">
+                <div style="flex: 1; overflow-wrap: anywhere;">
                     <div style="color: #666; font-size: 0.9em;">Old:</div>
-                    <code>${frappe.utils.escape_html(data.old_value)}</code>
+                    <code style="white-space: pre-wrap;">${frappe.utils.escape_html(data.old_value)}</code>
                 </div>
                 <div style="display: flex; align-items: center; color: #999;">
                     <i class="fa fa-arrow-right"></i>
                 </div>
-                <div style="flex: 1;">
+                <div style="flex: 1; overflow-wrap: anywhere;">
                     <div style="color: #666; font-size: 0.9em;">New:</div>
-                    <code>${frappe.utils.escape_html(data.new_value)}</code>
+                    <code style="white-space: pre-wrap;">${frappe.utils.escape_html(data.new_value)}</code>
                 </div>
             </div>
         `;

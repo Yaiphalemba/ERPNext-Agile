@@ -1,7 +1,6 @@
-import frappe
-from frappe.model.document import Document
 import json
-
+from frappe.model.document import Document
+import frappe
 
 class AgileIssueActivity(Document):
     def before_insert(self):
@@ -44,10 +43,10 @@ def determine_activity_type(action):
         return "created"
     elif "status" in action_lower or "transitioned" in action_lower:
         return "status_changed"
-    elif "assigned" in action_lower and "watcher" not in action_lower:
-        return "assigned"
     elif "unassigned" in action_lower and "watcher" not in action_lower:
         return "unassigned"
+    elif "assigned" in action_lower and "watcher" not in action_lower:
+        return "assigned"
     elif "added watcher" in action_lower:
         return "watcher_added"
     elif "removed watcher" in action_lower:
@@ -62,7 +61,37 @@ def determine_activity_type(action):
         return "sprint_added"
     elif "sprint" in action_lower and "removed" in action_lower:
         return "sprint_removed"
+    elif "parent issue" in action_lower:
+        return "parent_issue_changed"
+    elif "issue type" in action_lower:
+        return "issue_type_changed"
     elif "priority" in action_lower:
-        return "status_changed"
+        return "priority_changed"
+    elif "subject" in action_lower:
+        return "subject_changed"
+    elif "description" in action_lower:
+        return "description_updated"
+    elif "reviewer" in action_lower:
+        return "reviewer_changed"
+    elif "story points" in action_lower:
+        return "story_points_changed"
+    elif "date" in action_lower:
+        return "timeline_changed"
+    elif "added dependency" in action_lower:  
+        return "dependent_task_added"
+    elif "removed dependency" in action_lower:
+        return "dependent_task_removed"
+    elif "added test case" in action_lower:
+        return "test_case_added"
+    elif "removed test case" in action_lower:
+        return "test_case_removed"
+    elif "added component" in action_lower:
+        return "component_added"
+    elif "removed component" in action_lower:
+        return "component_removed"
+    elif "added label" in action_lower:
+        return "label_added"
+    elif "removed label" in action_lower:
+        return "label_removed"
     else:
         return "commented"
