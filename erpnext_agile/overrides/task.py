@@ -1,0 +1,1082 @@
+# erpnext_agile/overrides/task.py
+import frappe
+from frappe import _
+import re
+from frappe.desk.form.assign_to import add, clear, remove
+from erpnext.projects.doctype.task.task import Task
+from erpnext_agile.erpnext_agile.doctype.agile_issue_activity.agile_issue_activity import (
+    log_issue_activity,
+)
+from frappe.utils import getdate, now_datetime, today
+
+class AgileTask(Task):
+    def after_insert(self):
+        """Log creation activity"""
+        if self.is_agile:
+            log_issue_activity(self.name, "created this issue")
+            self.handle_assignment_for_new_tasks()
+    
+    def before_validate(self):
+        if self.is_agile:
+            self.validate_parent_expected_end_date = lambda: None
+            
+    def validate(self):
+        super().validate()
+        if self.is_agile:
+            self.validate_agile_fields()
+            # Validate workflow transitions BEFORE other validations
+            self.validate_workflow_transition()
+            self.validate_parent_task()
+        # if self.parent_issue:
+        self.sync_parent_task()
+        # sync original_estimate → expected_time
+        if self.expected_time:
+            self.sync_expected_time()
+        # sync agile status → task status
+        if self.issue_status:
+            self.status = map_agile_status_to_task_status(self.issue_status)
+        if self.issue_type in ["Story", "Epic"]:
+            self.is_group = 1
+        # sync agile priority → task priority
+        if self.issue_priority:
+            self.priority = map_agile_priority_to_task_priority(self.issue_priority)
+
+        # setting date for review date to skip scheduled overdue marking
+        if self.status == "Pending Review" and not self.review_date:
+            self.review_date = getdate()  # Set to current date to avoid overdue status
+        if self.status == "Completed" and self.custom_overdue == 1:
+            if self.completed_on and self.exp_end_date and self.completed_on <= self.exp_end_date:
+                self.db_set("custom_overdue", 0, update_modified=False)
+                if self.review_date and self.review_date > self.completed_on:
+                    self.db_set("review_date", self.completed_on, update_modified=False)
+        if self.original_estimate:
+            self.custom_original_estimated_time = format_seconds(self.original_estimate)
+        if self.time_spent:
+            self.custom_total_time_spent = format_seconds(self.time_spent)
+        if self.remaining_estimate:
+            self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
+    
+    def on_update(self):
+        """Track field changes after update"""
+        super().on_update()
+        if self.is_agile:
+            self.check_dependent_tasks_status()
+            update_sprint_counts(self.current_sprint)
+            self.update_sprint_statistics()
+
+            self.handle_issue_activity_update()
+            
+            # Update parent task progress if this is a subtask
+            if self.parent_issue:
+                self.update_parent_progress()
+            
+            # Update sprint metrics if task is in a sprint
+            if self.current_sprint and self.has_value_changed("issue_status"):
+                self.update_sprint_metrics()
+            if self.current_sprint and self.has_value_changed("current_sprint"):
+                self.update_sprint_metrics()
+                self.update_sprint_statistics()
+            elif self.story_points and self.has_value_changed("story_points"):
+                self.update_sprint_metrics()
+                
+    def on_trash(self):
+        """Handle cleanup on deletion"""
+        if self.is_agile:
+            # Update sprint metrics if task is in a sprint
+            if self.current_sprint:
+                self.db_set("story_points", 0)  # Set story points to 0 before deletion to adjust sprint metrics
+                self.update_sprint_metrics()
+                
+    def update_parent_progress(self):
+        """Update parent task's completion percentage"""
+        if not self.parent_issue:
+            return
+        
+        # Get all subtasks
+        subtasks = frappe.get_all(
+            "Task",
+            filters={"parent_issue": self.parent_issue},
+            fields=["name", "issue_status"]
+        )
+        
+        if not subtasks:
+            return
+        
+        # Count completed subtasks
+        completed = len([
+            t for t in subtasks 
+            if frappe.db.get_value("Agile Issue Status", t.issue_status, "status_category") == "Done"
+        ])
+        
+        total = len(subtasks)
+        progress = (completed / total * 100) if total > 0 else 0
+        
+        # Update parent
+        frappe.db.set_value("Task", self.parent_issue, "progress", progress, update_modified=False)
+    
+
+    def check_dependent_tasks_status(self):
+        """
+        Prevent a task from being completed if any of its dependent
+        tasks are still open.
+        """
+
+        if not self.issue_status:
+            return
+
+        current_status_category = frappe.db.get_value(
+            "Agile Issue Status",
+            self.issue_status,
+            "status_category"
+        )
+
+        if current_status_category != "Done":
+            return
+
+        if self.status != "Completed":
+            return
+
+        dependencies = frappe.get_all(
+            "Task Depends On",
+            filters={
+                "parent": self.name
+            },
+            fields=["task"]
+        )
+
+        if not dependencies:
+            return
+
+        incomplete_tasks = []
+
+        for dependency in dependencies:
+            if not dependency.task:
+                continue
+
+            dependency_task = frappe.db.get_value(
+                "Task",
+                dependency.task,
+                ["name", "issue_status", "status"],
+                as_dict=True
+            )
+
+            if not dependency_task:
+                continue
+
+            dependency_status_category = None
+
+            if dependency_task.issue_status:
+                dependency_status_category = frappe.db.get_value(
+                    "Agile Issue Status",
+                    dependency_task.issue_status,
+                    "status_category"
+                )
+
+            if dependency_status_category != "Done":
+                incomplete_tasks.append(dependency_task.name)
+
+            if dependency_task.status != "Completed":
+                if dependency_task.name not in incomplete_tasks:
+                    incomplete_tasks.append(dependency_task.name)
+
+        if incomplete_tasks:
+            task_list = ", ".join(incomplete_tasks)
+            frappe.throw(
+                _(
+                    "Cannot complete task {0} because the following dependent "
+                    "task(s) are not completed: {1}"
+                ).format(
+                    self.name,
+                    task_list
+                ),
+                title=_("Dependent Tasks Not Completed")
+            )
+
+    def update_sprint_statistics(self):
+
+        old_doc = self.get_doc_before_save()
+
+        if not old_doc:
+            return
+
+        old_sprint = old_doc.current_sprint
+        new_sprint = self.current_sprint
+
+        # Nothing changed
+        if old_sprint == new_sprint:
+            return
+
+        if old_sprint:
+
+            if not frappe.db.exists("Task Sprint History", {"parent": self.name, "sprint": old_sprint}):
+                self.append("custom_task_sprint_history", {
+                    "sprint": old_sprint,
+                    "transferred_on": today(),
+                    "transferred_by": frappe.session.user
+                })
+
+            self.flags.ignore_on_update = True
+            self.save(ignore_permissions=True)
+
+
+        if old_sprint:
+            update_sprint_counts(old_sprint)
+
+
+        if new_sprint:
+            update_sprint_counts(new_sprint)
+
+
+    def update_sprint_metrics(self):
+        """Update sprint metrics when task status changes"""
+        if not self.current_sprint:
+            return
+        
+        try:
+            sprint = frappe.get_doc("Agile Sprint", self.current_sprint)
+            sprint.calculate_metrics()
+        except Exception as e:
+            frappe.log_error(f"Error updating sprint metrics: {str(e)}")
+            
+    def validate_workflow_transition(self):
+        """
+        Validate status transitions based on workflow scheme
+        This is the key method for conditional workflow validation
+        """
+        # Skip for new documents
+        if self.is_new():
+            return
+        
+        # Skip if no status change
+        if not self.has_value_changed("issue_status"):
+            return
+        
+        # Get old status
+        old_doc = self.get_doc_before_save()
+        if not old_doc or not old_doc.issue_status:
+            return
+        
+        old_status = old_doc.issue_status
+        new_status = self.issue_status
+        
+        # Get project's workflow scheme
+        if not self.project:
+            return
+        
+        project = frappe.get_cached_doc("Project", self.project)
+        
+        # If no workflow scheme, allow any transition
+        if not project.enable_agile or not project.workflow_scheme:
+            return
+        
+        # Validate the transition
+        scheme = frappe.get_doc("Agile Workflow Scheme", project.workflow_scheme)
+        
+        is_valid, error_message = scheme.validate_transition(
+            from_status=old_status,
+            to_status=new_status,
+            doc=self,
+            user=frappe.session.user
+        )
+        
+        if not is_valid:
+            frappe.throw(
+                _("Workflow Transition Error: {0}").format(error_message),
+                title=_("Invalid Status Change")
+            )
+    
+    def validate_issue_type_allowed(self):
+        """Check if issue type is allowed in this project"""
+        project = frappe.get_cached_doc("Project", self.project)
+        
+        if not project.issue_types_allowed:
+            return  # No restrictions
+        
+        allowed_types = [row.issue_type for row in project.issue_types_allowed]
+        
+        if self.issue_type not in allowed_types:
+            frappe.throw(
+                _("Issue Type '{0}' is not allowed in project '{1}'").format(
+                    self.issue_type, 
+                    self.project
+                )
+            )
+        elif self.is_group:
+            self.story_points = 0
+            
+    def validate_parent_task(self):
+        """
+        Validate that the parent task is not completed or closed
+        """
+        if self.parent_issue:
+            parent_task = frappe.get_doc("Task", self.parent_issue)
+            if parent_task.is_group == 0:
+                frappe.throw(_("Cannot assign a subtask to a non-parent task."))
+    
+    def handle_issue_activity_update(self):
+        """Handle activity tracking for field changes"""
+        # Field mapping for better display names
+        field_maps = {
+            "issue_status": "status",
+            "issue_priority": "priority",
+            "current_sprint": "sprint",
+            "issue_type": "type",
+            "reporter": "reporter",
+            "story_points": "story points",
+            "parent_issue": "parent issue",
+            "original_estimate": "original estimate",
+            "remaining_estimate": "remaining estimate",
+            "subject": "subject",
+            "description": "description",
+            "custom_reviewer": "reviewer",
+            "issue_priority": "priority",
+            "custom_components": "components",
+            "custom_labels": "labels",
+            "exp_start_date": "expected start date",
+            "exp_end_date": "expected end date",
+            "depends_on": "dependencies",
+            "custom_test_cases": "test cases",
+        }
+        
+        # Track specific field changes
+        for field in field_maps.keys():
+            if self.has_value_changed(field):
+                old_value = self.get_doc_before_save().get(field) if self.get_doc_before_save() else None
+                new_value = self.get(field)
+                
+                # Format the activity message
+                display_field = field_maps.get(field, field)
+                
+                # Special handling for status changes
+                if field == "issue_status":
+                    log_issue_activity(
+                        self.name,
+                        f"changed status from {old_value} to {new_value}",
+                        data={"from_status": old_value, "to_status": new_value}
+                    )
+                    self.notify_qa_review(old_value, new_value)
+                    self.notify_on_reopen(old_value, new_value)
+                elif field == "current_sprint":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"added to sprint {new_value}",
+                            data={"sprint": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed from sprint {old_value}",
+                            data={"sprint": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"moved from sprint {old_value} to {new_value}",
+                            data={"from_sprint": old_value, "to_sprint": new_value}
+                        )
+                elif field == "story_points":
+                    log_issue_activity(
+                        self.name,
+                        f"changed story points from {old_value} to {new_value}",
+                        data={"from_story_points": old_value, "to_story_points": new_value}
+                    )
+                elif field == "issue_type":
+                    log_issue_activity(
+                        self.name,
+                        f"changed issue type from {old_value} to {new_value}",
+                        data={"from_type": old_value, "to_type": new_value}
+                    )
+                elif field == "subject":
+                    log_issue_activity(
+                        self.name,
+                        f"updated subject from '{old_value}' to '{new_value}'",
+                        data={"old_subject": old_value, "new_subject": new_value}
+                    )
+                elif field == "description":
+                    log_issue_activity(
+                        self.name,
+                        f"updated description",
+                        data={"old_description": old_value, "new_description": new_value}
+                    )
+                elif field == "custom_reviewer":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set reviewer {new_value}",
+                            data={"reviewer": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed reviewer {old_value}",
+                            data={"reviewer": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed reviewer from {old_value} to {new_value}",
+                            data={"from_reviewer": old_value, "to_reviewer": new_value}
+                        )
+                elif field == "issue_priority":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set priority to {new_value}",
+                            data={"new_priority": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed priority {old_value}",
+                            data={"old_priority": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed priority from {old_value} to {new_value}",
+                            data={"old_priority": old_value, "new_priority": new_value}
+                        )
+                elif field == "parent_issue":
+                    if new_value and not old_value:
+                        log_issue_activity(
+                            self.name,
+                            f"set parent issue to {new_value}",
+                            data={"new_parent_issue": new_value}
+                        )
+                    elif old_value and not new_value:
+                        log_issue_activity(
+                            self.name,
+                            f"removed parent issue {old_value}",
+                            data={"old_parent_issue": old_value}
+                        )
+                    else:
+                        log_issue_activity(
+                            self.name,
+                            f"changed parent issue from {old_value} to {new_value}",
+                            data={"old_parent_issue": old_value, "new_parent_issue": new_value}
+                        )
+                elif field in ["exp_start_date", "exp_end_date"]:
+                    log_issue_activity(
+                        self.name,
+                        f"updated {display_field} from {old_value} to {new_value}",
+                        data={"field": display_field, "old_value": str(old_value), "new_value": str(new_value)}
+                    )
+                elif field in ["original_estimate", "remaining_estimate"]:
+                    log_issue_activity(
+                        self.name,
+                        f"updated {display_field} from {format_seconds(old_value)} to {format_seconds(new_value)}",
+                        data={"old_value": format_seconds(old_value), "new_value": format_seconds(new_value)}
+                    )
+                else:
+                    if field not in ["custom_components", "custom_labels", "depends_on", "custom_test_cases"]:
+                        log_issue_activity(
+                            self.name,
+                            f"set {display_field} to {new_value}",
+                            data={"old_value": str(old_value), "new_value": str(new_value)}
+                        )
+        
+        # Track assignee changes
+        if self.has_value_changed("assigned_to_users"):
+            self.track_assignee_changes()
+        
+        # Track watcher changes
+        if self.has_value_changed("watchers"):
+            self.track_watcher_changes()
+
+        # Track dependent tasks changes    
+        if self.has_value_changed("depends_on"):
+            self.track_dependent_tasks_changes()
+
+        # Track Test Cases Changes    
+        if self.has_value_changed("custom_test_cases"):
+            self.track_test_cases_changes()
+        
+        # Track Component changes    
+        if self.has_value_changed("custom_components"):
+            self.track_component_changes()
+
+        # Track Test Cases Changes    
+        if self.has_value_changed("custom_labels"):
+            self.track_label_changes()
+    
+    # Make sure you import 'remove' at the top of your file if you haven't already:
+    # from frappe.desk.form.assign_to import add, remove, clear 
+
+    def notify_qa_review(self, old_status, new_status):
+        if new_status != "QA Review":
+            return
+
+        recipients = []
+
+        # 1. Get Tester assignees from assigned_to_users child table
+        assigned_users = [d.user for d in self.get("assigned_to_users", [])]
+
+        tester_users = []
+        if self.custom_original_owner:
+            tester_users.append(self.custom_original_owner)
+
+        for user in assigned_users:
+            if "Tester" in frappe.get_roles(user):
+                tester_users.append(user)
+
+        if tester_users:
+            recipients = tester_users
+
+        # 2. If no Tester assignee, notify QA Leads from Project Users
+        else:
+            project_users = frappe.get_all(
+                "Project User",
+                filters={"parent": self.project},
+                fields=["user"]
+            )
+
+            for row in project_users:
+                if "QA Lead" in frappe.get_roles(row.user):
+                    recipients.append(row.user)
+
+        recipients = list(set(filter(None, recipients)))
+
+        if not recipients:
+            return
+
+        task_url = frappe.utils.get_url_to_form("Task", self.name)
+        proj_key, project_name = frappe.db.get_value("Project", self.project, ["project_key", "project_name"])
+
+        frappe.sendmail(
+            recipients=recipients,
+            subject=f"[QA Review] - {proj_key or self.project} - {self.name} - {self.subject}",
+            message=f"""
+            <p>Hello,</p>
+
+            <p>The following task has been moved to <b>QA Review</b>.</p>
+
+            <table>
+                <tr><td><b>Task</b></td><td>{self.name}</td></tr>
+                <tr><td><b>Subject</b></td><td>{self.subject}</td></tr>
+                <tr><td><b>Project</b></td><td>{self.project} - {proj_key} - {project_name}</td></tr>
+            </table>
+
+            <br>
+
+            <a href="{task_url}">Open Task</a>
+
+            <br><br>
+            """
+        )
+
+    def notify_on_reopen(self, old_status, new_status):
+        if new_status != "Reopened":
+            return
+
+        recipients = []
+
+        # Get all assigned users
+        assigned_users = [d.user for d in self.get("assigned_to_users", [])]
+
+        if assigned_users:
+            recipients = assigned_users
+
+        recipients = list(set(filter(None, recipients)))
+        recipients.append(self.owner)
+
+        if not recipients:
+            return
+
+        task_url = frappe.utils.get_url_to_form("Task", self.name)
+        proj_key, project_name = frappe.db.get_value("Project", self.project, ["project_key", "project_name"])
+        reopened_by = frappe.db.get_value(
+            "User",
+            frappe.session.user,
+            "full_name"
+        ) or frappe.session.user
+
+        frappe.sendmail(
+            recipients=recipients,
+            subject=f"[Reopened] - {proj_key or self.project} - {self.name} - {self.subject}",
+            message=f"""
+            <p>
+                Dear Assignee,
+            </p>
+
+            <p>
+                The following {self.issue_type} has been
+                reopened and requires your action.
+            </p>
+
+            <p>
+                <strong>Project Name:</strong> {project_name or self.project}<br>
+                <strong>Project Code:</strong> {proj_key or ""}<br>
+                <strong>Task:</strong> {self.subject or self.name}<br>
+                <strong>Task ID:</strong> {self.name}<br>
+                <strong>Reopened By:</strong> {reopened_by}<br>
+                <strong>Reopened Date:</strong> {frappe.utils.format_date(getdate(today()))}<br>
+            </p>
+
+            <p>
+                Please review the {self.issue_type} and take
+                the necessary action.
+                <a href="{task_url}">Open Task</a>
+            </p>
+
+            <p>
+                Regards,<br>
+                ERP System
+            </p>
+            """
+        )
+    
+    
+    def track_assignee_changes(self):
+        """Track changes to assignees"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        # Let's use set comprehensions here. Cleaner and slightly faster.
+        old_assignees = {d.user for d in old_doc.get("assigned_to_users", [])}
+        new_assignees = {d.user for d in self.get("assigned_to_users", [])}
+        
+        added = new_assignees - old_assignees
+        removed = old_assignees - new_assignees
+        
+        if added:
+            assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in added]
+            
+            add({
+                "assign_to": list(added),
+                "doctype": "Task",
+                "name": self.name,
+                "description": self.subject
+            })
+            
+            log_issue_activity(
+                self.name,
+                f"assigned to {', '.join(assignee_names)}",
+                data={"assignees": list(added)}
+            )
+        
+        if removed:
+            assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in removed]
+            
+            # THE FIX: Loop through the exact users removed and unassign them individually
+            for user in removed:
+                remove("Task", self.name, user)
+                
+            log_issue_activity(
+                self.name,
+                f"unassigned from {', '.join(assignee_names)}",
+                data={"unassigned": list(removed)}
+            )
+    
+    def track_watcher_changes(self):
+        """Track changes to watchers"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_watchers = set([d.user for d in old_doc.get("watchers", [])])
+        new_watchers = set([d.user for d in self.get("watchers", [])])
+        
+        added = new_watchers - old_watchers
+        removed = old_watchers - new_watchers
+        
+        if added:
+            for user in added:
+                user_name = frappe.get_cached_value("User", user, "full_name")
+                log_issue_activity(self.name, f"added watcher {user_name}", data={"watcher": user})
+        
+        if removed:
+            for user in removed:
+                user_name = frappe.get_cached_value("User", user, "full_name")
+                log_issue_activity(self.name, f"removed watcher {user_name}", data={"watcher": user})
+
+    def track_dependent_tasks_changes(self):
+        """Track changes to dependent tasks"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_dependencies = set([d.task for d in old_doc.get("depends_on", [])])
+        new_dependencies = set([d.task for d in self.get("depends_on", [])])
+        
+        added = new_dependencies - old_dependencies
+        removed = old_dependencies - new_dependencies
+        
+        if added:
+            for task in added:
+                log_issue_activity(self.name, f"added dependency on task {task}", data={"dependency": task})
+        
+        if removed:
+            for task in removed:
+                log_issue_activity(self.name, f"removed dependency on task {task}", data={"dependency": task})
+
+    def track_test_cases_changes(self):
+        """Track changes to test cases"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_test_cases = set([d.test_case for d in old_doc.get("custom_test_cases", [])])
+        new_test_cases = set([d.test_case for d in self.get("custom_test_cases", [])])
+        
+        added = new_test_cases - old_test_cases
+        removed = old_test_cases - new_test_cases
+        
+        if added:
+            for test_case in added:
+                log_issue_activity(self.name, f"added test case {test_case}", data={"test_case": test_case})
+        
+        if removed:
+            for test_case in removed:
+                log_issue_activity(self.name, f"removed test case {test_case}", data={"test_case": test_case})
+    
+    def track_component_changes(self):
+        """Track changes to components"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_components = set([d.component for d in old_doc.get("custom_components", [])])
+        new_components = set([d.component for d in self.get("custom_components", [])])
+        
+        added = new_components - old_components
+        removed = old_components - new_components
+        
+        if added:
+            for component in added:
+                log_issue_activity(self.name, f"added component {component}", data={"component": component})
+        
+        if removed:
+            for component in removed:
+                log_issue_activity(self.name, f"removed component {component}", data={"component": component})
+
+    def track_label_changes(self):
+        """Track changes to labels"""
+        old_doc = self.get_doc_before_save()
+        if not old_doc:
+            return
+        
+        old_labels = set([d.label for d in old_doc.get("custom_labels", [])])
+        new_labels = set([d.label for d in self.get("custom_labels", [])])
+        
+        added = new_labels - old_labels
+        removed = old_labels - new_labels
+        
+        if added:
+            for label in added:
+                log_issue_activity(self.name, f"added label {label}", data={"label": label})
+        
+        if removed:
+            for label in removed:
+                log_issue_activity(self.name, f"removed label {label}", data={"label": label})
+    
+    def handle_assignment_for_new_tasks(self):
+        # For new documents, assign to users in assigned_to_users field
+        new_assignees = set([d.user for d in self.get("assigned_to_users", [])])
+        if new_assignees:
+            assignee_names = [frappe.get_cached_value("User", user, "full_name") for user in new_assignees]
+            user_id = list(new_assignees)
+            add({
+                    "assign_to": user_id,
+                    "doctype": "Task",
+                    "name": self.name,
+                    "description": self.subject
+                })
+            log_issue_activity(
+                self.name,
+                f"assigned to {', '.join(assignee_names)}",
+                data={"assignees": user_id}
+            )
+
+    def sync_parent_task(self):
+        """
+        Keep parent_task and parent_issue in sync 
+        This ensures that if a parent_issue is set, the parent_task field is also updated accordingly.
+        Also the task will be removed from the old parent task's depends_on child table if the parent_issue is changed.
+        """
+        old_parent_task = None
+        if not self.is_new():
+            old_doc = self.get_doc_before_save()
+            if old_doc and old_doc.parent_issue:
+                old_parent_task = old_doc.parent_issue
+
+        if self.parent_issue:
+            self.parent_task = self.parent_issue
+        else:
+            self.parent_task = None
+
+        if old_parent_task and old_parent_task != self.parent_issue and self.name:
+            if old_parent_task and old_parent_task != self.parent_task and self.name:
+                try:
+                    parent_doc = frappe.get_doc("Task", old_parent_task)
+                    
+                    original_row_count = len(parent_doc.depends_on)
+                    parent_doc.depends_on = [row for row in parent_doc.depends_on if row.task != self.name]
+                    
+                    if len(parent_doc.depends_on) < original_row_count:
+                        parent_doc.save(ignore_permissions=True)
+                except frappe.DoesNotExistError:
+                    pass
+    def sync_expected_time(self):
+        """Sync original_estimate to expected_time"""
+        # if self.original_estimate:
+        #     self.expected_time = self.original_estimate/3600  # convert seconds to hours
+            
+        if self.expected_time:
+            self.original_estimate = self.expected_time*3600  # convert hours to seconds
+            self.custom_original_estimated_time = format_seconds(self.original_estimate)
+            if self.time_spent:
+                self.custom_total_time_spent = format_seconds(self.time_spent)
+                self.remaining_estimate = max(0, self.original_estimate - self.time_spent)
+                self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
+            else:
+                self.remaining_estimate = self.original_estimate
+                self.custom_remaining_estimated_time = format_seconds(self.remaining_estimate)
+    
+    def validate_agile_fields(self):
+        """Validate agile-specific fields"""
+        if self.issue_type and not frappe.db.exists("Agile Issue Type", self.issue_type):
+            frappe.throw(f"Invalid Issue Type: {self.issue_type}")
+        
+        # Validate issue type is allowed in project
+        if self.issue_type and self.project:
+            self.validate_issue_type_allowed()
+        
+        if self.issue_priority and not frappe.db.exists("Agile Issue Priority", self.issue_priority):
+            frappe.throw(f"Invalid Priority: {self.issue_priority}")
+
+    def update_status(self):
+        if self.status not in ("Cancelled", "Completed", "Pending Review") and self.exp_end_date:
+            from datetime import datetime
+
+            if self.exp_end_date < datetime.now().date() and self.issue_status not in ("Blocked", "On Hold"):
+                self.db_set("status", "Overdue", update_modified=False)
+                self.update_project()
+
+def update_sprint_counts(sprint_name):
+
+        if not sprint_name:
+            return
+
+        sprint = frappe.get_doc("Agile Sprint", sprint_name)
+
+        current_total = frappe.db.count(
+            "Task",
+            {
+                "current_sprint": sprint_name
+            }
+        )
+
+
+        transferred = frappe.db.count(
+            "Task Sprint History",
+            {
+                "parenttype": "Task",
+                "sprint": sprint_name
+            }
+        )
+
+        total = current_total + transferred
+
+        sprint.db_set("custom_current_task_count", current_total)
+        sprint.db_set("custom_transferred_task_count", transferred)
+        sprint.db_set("custom_total_task_count", total)
+
+
+def format_seconds(seconds):
+    """Format seconds to human readable time"""
+    if not seconds:
+        return "0m"
+    
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    
+    if hours > 0:
+        return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
+    return f"{minutes}m"
+
+@frappe.whitelist()
+def map_agile_status_to_task_status(agile_status):
+    """Map agile status to ERPNext task status"""
+    status_mapping = {
+        "Open": "Open",
+        "In Progress": "Working",
+        "Working": "Working",
+        "In Review": "Pending Review",
+        "QA Review": "Pending Review",
+        "Testing": "Pending Review",
+        "Resolved": "Pending Review",
+        "Pending Review": "Pending Review",
+        "On Hold": "Open",
+        "Closed": "Completed",
+        "Completed": "Completed",
+        "Reopened": "Open",
+        "Blocked": "Open",
+        "To Do": "Open",
+        "Done": "Completed",
+    }
+    if status_mapping.get(agile_status):
+        return status_mapping.get(agile_status, "Open")
+    else:
+        status_category = frappe.db.get_value("Agile Issue Status", agile_status, "status_category")
+        if status_category:
+            return status_mapping.get(status_category, "Open")
+
+
+def map_agile_priority_to_task_priority(agile_priority: str) -> str:
+    """Map agile priority scale to ERPNext Task priority."""
+    priority_mapping = {
+        "Lowest": "Low",
+        "Low": "Low",
+        "Medium": "Medium",
+        "High": "High",
+        "Critical": "Urgent"
+    }
+    return priority_mapping.get(agile_priority, "Medium")
+
+
+def get_allowed_status_changes(doc):
+    """
+    Get list of allowed status changes for a task
+    Used in UI to show only valid transitions
+    """
+    if not doc.is_agile or not doc.issue_status:
+        return []
+    
+    # Get project's workflow scheme
+    try:
+        project = frappe.get_doc("Project", doc.project)
+        if not project.enable_agile or not project.workflow_scheme:
+            # No workflow scheme, return all statuses
+            return frappe.get_all(
+                "Agile Issue Status",
+                pluck="name",
+                order_by="sort_order"
+            )
+         
+        # Get allowed transitions from workflow scheme
+        scheme = frappe.get_doc("Agile Workflow Scheme", project.workflow_scheme)
+        transitions = scheme.get_transitions(doc.issue_status, doc)
+        
+        # Filter by user permissions
+        user = frappe.session.user
+        allowed_statuses = [doc.issue_status]  # Always allow current status
+        
+        for t in transitions:
+            if t['required_permission']:
+                if scheme.check_user_permission(user, t['required_permission']):
+                    allowed_statuses.append(t['to_status'])
+            else:
+                allowed_statuses.append(t['to_status'])
+        
+        return allowed_statuses
+        
+    except Exception as e:
+        frappe.log_error(f"Error getting allowed status changes: {str(e)}")
+        # On error, return all statuses to not block user
+        return frappe.get_all(
+            "Agile Issue Status",
+            pluck="name",
+            order_by="sort_order"
+        )
+
+
+# Whitelisted method for client-side use
+@frappe.whitelist()
+def get_project_users(project):
+    """Get users from Project → project_users child table"""
+    if not project:
+        return []
+    
+    users = frappe.get_all("Project User", 
+        filters={"parent": project},
+        fields=["user"],
+        pluck="user"
+    )
+    return users
+
+@frappe.whitelist()
+def get_task_allowed_statuses(task_name):
+    """
+    Get allowed status transitions for a task
+    Called from JavaScript to dynamically filter status dropdown
+    """
+    if not frappe.db.exists("Task", task_name):
+        return []
+    
+    doc = frappe.get_doc("Task", task_name)
+    return get_allowed_status_changes(doc)
+
+
+@frappe.whitelist()
+def transition_task_status(task_name, to_status, comment=None, completed_by=None, completed_on=None):
+    """
+    Transition task to new status with workflow validation
+    
+    Args:
+        task_name: Name of task
+        to_status: Target status
+        comment: Optional comment for the transition
+    """
+    if not frappe.db.exists("Task", task_name):
+        frappe.throw(_("Task not found"))
+    
+    doc = frappe.get_doc("Task", task_name)
+    
+    # Validate transition
+    if doc.project:
+        project = frappe.get_doc("Project", doc.project)
+        if project.enable_agile and project.workflow_scheme:
+            scheme = frappe.get_doc("Agile Workflow Scheme", project.workflow_scheme)
+            is_valid, error_message = scheme.validate_transition(
+                from_status=doc.issue_status,
+                to_status=to_status,
+                doc=doc,
+                user=frappe.session.user
+            )
+            
+            if not is_valid:
+                frappe.throw(error_message)
+    
+    # Update status
+    old_status = doc.issue_status
+    doc.issue_status = to_status    
+
+    if completed_by:
+        doc.completed_by = completed_by
+    if completed_on:
+        doc.completed_on = getdate(completed_on)
+        doc.progress = 100  # Mark as complete if completed_on is set
+    # if to_status in ["Blocked", "On Hold"]:
+    #     doc.exp_end_date = None
+    if to_status in ["In Progress", "Working"] and not doc.custom_actual_start_date:
+        doc.custom_actual_start_date = frappe.utils.nowdate()  # Set start date if moving to In Progress and no start date
+        
+    doc.save()
+    
+    # Add comment if provided
+    if comment:
+        doc.add_comment(
+            "Comment",
+            f"Status changed from {old_status} to {to_status}: {comment}"
+        )
+    
+    # Log activity
+    frappe.get_doc({
+        "doctype": "Agile Issue Activity",
+        "issue": task_name,
+        "activity_type": "status_changed",
+        "user": frappe.session.user,
+        "data": frappe.as_json({
+            "old_status": old_status,
+            "new_status": to_status,
+            "comment": comment
+        })
+    }).insert(ignore_permissions=True)
+    
+    return {
+        "success": True,
+        "message": _("Status updated to {0}").format(to_status)
+    }

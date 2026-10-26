@@ -10,6 +10,7 @@
   "issue_type_name",
   "icon",
   "color",
+  "column_break_dryw",
   "description"
  ],
  "fields": [
@@ -36,11 +37,15 @@
    "fieldname": "description",
    "fieldtype": "Text",
    "label": "Description"
+  },
+  {
+   "fieldname": "column_break_dryw",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-22 10:05:14.891907",
+ "modified": "2025-09-30 17:05:50.849599",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Issue Type",

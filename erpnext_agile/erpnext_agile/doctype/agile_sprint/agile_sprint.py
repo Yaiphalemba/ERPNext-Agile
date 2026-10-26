@@ -1,60 +1,44 @@
+# erpnext_agile/erpnext_agile/doctype/agile_sprint/agile_sprint.py
 import frappe
 from frappe.model.document import Document
+from erpnext_agile.overrides.task import update_sprint_counts
+from frappe.utils import today, add_days
 
 class AgileSprint(Document):
-    def before_insert(self):
-        """Set default values"""
-        if not self.sprint_state:
-            self.sprint_state = "Future"
+    def validate(self):
+        """Validate sprint data"""
+        # Validate dates
+        if not self.is_new():
+            update_sprint_counts(self.name)
+        if self.start_date and self.end_date:
+            if self.end_date < self.start_date:
+                frappe.throw("End date cannot be before start date")
     
-    @frappe.whitelist()
-    def start_sprint(self):
-        """Start the sprint - Jira-style"""
-        self.sprint_state = "Active"
-        self.actual_start_date = frappe.utils.today()
-        
-        # Close any other active sprints in this project
-        frappe.db.sql("""
-            UPDATE `tabAgile Sprint` 
-            SET sprint_state = 'Completed' 
-            WHERE agile_project = %s AND sprint_state = 'Active' AND name != %s
-        """, (self.agile_project, self.name))
-        
-        self.save()
-        frappe.msgprint(f"Sprint '{self.sprint_name}' started!")
+    def on_update(self):
+        """Actions on update"""
+        # Update sprint metrics
+        if self.sprint_state == 'Active':
+            self.calculate_metrics()
     
-    @frappe.whitelist()
-    def complete_sprint(self):
-        """Complete the sprint"""
-        self.sprint_state = "Completed"
-        self.actual_end_date = frappe.utils.today()
+    def calculate_metrics(self):
+        """Calculate and update sprint metrics"""
+        from erpnext_agile.agile_sprint_manager import AgileSprintManager
+        manager = AgileSprintManager()
+        metrics = manager.calculate_sprint_metrics(self)
         
-        # Move incomplete issues to backlog
-        incomplete_issues = frappe.get_all("Agile Issue", {
-            "current_sprint": self.name,
-            "status": ["not in", ["Resolved", "Closed"]]
-        })
+        # Update fields without triggering another save
+        self.db_set('total_points', metrics['total_points'], update_modified=False)
+        self.db_set('completed_points', metrics['completed_points'], update_modified=False)
+        self.db_set('progress_percentage', metrics['progress_percentage'], update_modified=False)
+        self.db_set('velocity', metrics['velocity'], update_modified=False)
         
-        for issue in incomplete_issues:
-            frappe.db.set_value("Agile Issue", issue.name, "current_sprint", "")
-        
-        self.save()
-        frappe.msgprint(f"Sprint completed! {len(incomplete_issues)} issues moved to backlog")
-    
-    def get_sprint_progress(self):
-        """Calculate sprint progress"""
-        total_points = frappe.db.sql("""
-            SELECT SUM(story_points) FROM `tabAgile Issue` 
-            WHERE current_sprint = %s
-        """, self.name)[0][0] or 0
-        
-        completed_points = frappe.db.sql("""
-            SELECT SUM(story_points) FROM `tabAgile Issue` 
-            WHERE current_sprint = %s AND status IN ('Resolved', 'Closed')
-        """, self.name)[0][0] or 0
-        
-        return {
-            "total_points": total_points,
-            "completed_points": completed_points,
-            "progress_percentage": (completed_points / total_points * 100) if total_points > 0 else 0
-        }
+@frappe.whitelist()
+def check_active_sprint(project, name):
+    existing = frappe.db.sql("""
+        SELECT name FROM `tabAgile Sprint`
+        WHERE project = %s
+        AND sprint_state = 'Active'
+        AND name != %s
+    """, (project, name or ''))
+
+    return existing[0][0] if existing else None

@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-21 14:12:35.748493",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "jira_domain",
+  "jira_email",
+  "jira_api_token",
+  "is_active",
+  "column_break_fati",
+  "connected_user",
+  "project_key",
+  "dashboard_html"
+ ],
+ "fields": [
+  {
+   "fieldname": "jira_domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Jira Domain",
+   "reqd": 1
+  },
+  {
+   "fieldname": "jira_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Jira Email",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "column_break_fati",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "jira_api_token",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Jira API Token",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project_key",
+   "fieldtype": "Data",
+   "label": "Project Key"
+  },
+  {
+   "fieldname": "dashboard_html",
+   "fieldtype": "HTML",
+   "label": "Dashboard HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connected_user",
+   "fieldtype": "Data",
+   "label": "Connected User"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-06-01 12:42:30.555948",
+ "modified_by": "Administrator",
+ "module": "Erpnext Agile",
+ "name": "Jira Data Migration Tool",
+ "owner": "mangshatabams@rapifuzz.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

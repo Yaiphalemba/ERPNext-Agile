@@ -1,373 +1,421 @@
+# erpnext_agile/utils.py
+"""
+Utility functions for ERPNext Agile
+"""
+
 import frappe
-import re
-from frappe.utils import nowdate
+from frappe import _
+from frappe.utils import flt, cint, today, add_days, date_diff
+from frappe.desk.notifications import extract_mentions
+import json
 
-def sync_github_data():
-    """Daily sync of GitHub data for all agile projects"""
-    try:
-        if not frappe.db.exists("App", "erpnext_github_integration"):
-            return  # Skip if GitHub integration app is not installed
-        
-        agile_projects = frappe.get_all("Agile Project", {
-            "github_repository": ["!=", ""],
-            "github_sync_enabled": 1
-        }, ["name", "github_repository"])
-        
-        for project in agile_projects:
-            sync_project_github_data(project.name, project.github_repository)
-    except Exception as e:
-        frappe.log_error(f"GitHub sync failed: {str(e)}"[:140], "GitHub Sync Error")
+def get_project_metrics(project):
+    """Get comprehensive project metrics"""
+    
+    # Issue counts
+    total_issues = frappe.db.count('Task', {
+        'project': project,
+        'is_agile': 1,
+        'status': ['!=', 'Cancelled']
+    })
+    
+    done_statuses = get_done_statuses()
+    completed_issues = frappe.db.count('Task', {
+        'project': project,
+        'is_agile': 1,
+        'issue_status': ['in', done_statuses]
+    })
+    
+    # Sprint metrics
+    active_sprint = frappe.db.get_value('Agile Sprint', {
+        'project': project,
+        'sprint_state': 'Active'
+    }, ['name', 'completed_points', 'total_points'], as_dict=True)
+    
+    # Backlog size
+    backlog_size = frappe.db.count('Task', {
+        'project': project,
+        'is_agile': 1,
+        'current_sprint': ['in', ['', None]],
+        'status': ['!=', 'Cancelled']
+    })
+    
+    return {
+        'total_issues': total_issues,
+        'completed_issues': completed_issues,
+        'completion_rate': (completed_issues / total_issues * 100) if total_issues > 0 else 0,
+        'backlog_size': backlog_size,
+        'active_sprint': active_sprint
+    }
 
-def sync_project_github_data(agile_project, repository):
-    """Sync GitHub data for specific project"""
-    try:
-        # Sync issues
-        github_issues = frappe.call(
-            'erpnext_github_integration.github_api.list_issues',
-            repository=repository
-        ) or []
-        
-        for gh_issue in github_issues:
-            sync_github_issue_to_agile(gh_issue, agile_project)
-        
-        # Sync pull requests
-        github_prs = frappe.call(
-            'erpnext_github_integration.github_api.list_pull_requests',
-            repository=repository
-        ) or []
-        
-        for gh_pr in github_prs:
-            sync_github_pr_to_agile(gh_pr, agile_project)
-    except Exception as e:
-        frappe.log_error(f"GitHub sync failed for project {agile_project}: {str(e)}"[:140], "Project GitHub Sync Error")
+def get_done_statuses():
+    """Get all status names in Done category"""
+    return [s.name for s in frappe.get_all(
+        'Agile Issue Status',
+        filters={'status_category': 'Done'},
+        fields=['name']
+    )]
 
-def sync_github_issue_to_agile(gh_issue, agile_project):
-    """Sync a GitHub issue to an Agile Issue"""
-    try:
-        project_key = frappe.db.get_value("Agile Project", agile_project, "project_key")
-        issue_key = f"{project_key}-{gh_issue['number']}"
-        existing_issue = frappe.db.get_value("Agile Issue", {
-            "agile_project": agile_project,
-            "github_issue_number": gh_issue['number']
-        }, "name")
-        
-        issue_data = {
-            "doctype": "Agile Issue",
-            "agile_project": agile_project,
-            "issue_key": issue_key,
-            "summary": gh_issue['title'],
-            "description": gh_issue['body'] or "",
-            "github_issue_number": gh_issue['number'],
-            "status": map_github_status_to_agile(gh_issue['state']),
-            "reporter": gh_issue['user']['login'] if gh_issue.get('user') else None,
-            "assignee": gh_issue['assignee']['login'] if gh_issue.get('assignee') else None
+def get_in_progress_statuses():
+    """Get all status names in In Progress category"""
+    return [s.name for s in frappe.get_all(
+        'Agile Issue Status',
+        filters={'status_category': 'In Progress'},
+        fields=['name']
+    )]
+
+def calculate_velocity(project, sprint_count=5):
+    """Calculate team velocity based on recent sprints"""
+    
+    completed_sprints = frappe.get_all('Agile Sprint',
+        filters={'project': project, 'sprint_state': 'Completed'},
+        fields=['name', 'completed_points'],
+        order_by='end_date desc',
+        limit=sprint_count
+    )
+    
+    if not completed_sprints:
+        return 0
+    
+    total_points = sum(s.get('completed_points', 0) for s in completed_sprints)
+    return round(total_points / len(completed_sprints), 1)
+
+def get_user_issue_count(user, status_filter=None):
+    """Get issue count for a user"""
+    filters = {
+        'is_agile': 1,
+        'status': ['!=', 'Cancelled']
+    }
+    
+    if status_filter:
+        filters['issue_status'] = status_filter
+    
+    # Get issues where user is assigned
+    count = frappe.db.sql("""
+        SELECT COUNT(DISTINCT t.name)
+        FROM `tabTask` t
+        INNER JOIN `tabTask Assigned To` ta ON ta.parent = t.name
+        WHERE ta.user = %s
+        AND t.is_agile = 1
+        AND t.status != 'Cancelled'
+        {status_condition}
+    """.format(
+        status_condition=f"AND t.issue_status IN ({','.join(['%s'] * len(status_filter))})" 
+        if status_filter else ""
+    ), [user] + (status_filter if status_filter else []))[0][0]
+    
+    return count
+
+def validate_sprint_capacity(sprint_name):
+    """Validate if sprint capacity is exceeded"""
+    
+    sprint_doc = frappe.get_doc('Agile Sprint', sprint_name)
+    project_doc = frappe.get_doc('Project', sprint_doc.project)
+    
+    # Get sprint issues
+    sprint_points = frappe.db.sql("""
+        SELECT SUM(story_points) 
+        FROM `tabTask`
+        WHERE current_sprint = %s AND is_agile = 1
+    """, sprint_name)[0][0] or 0
+    
+    # Get team velocity
+    team_velocity = calculate_velocity(sprint_doc.project)
+    
+    # Calculate sprint duration in days
+    sprint_days = date_diff(sprint_doc.end_date, sprint_doc.start_date) or 14
+    
+    # Expected capacity (velocity * weeks)
+    weeks = sprint_days / 7
+    expected_capacity = team_velocity * weeks
+    
+    if sprint_points > expected_capacity * 1.2:  # 20% over capacity
+        return {
+            'over_capacity': True,
+            'sprint_points': sprint_points,
+            'expected_capacity': expected_capacity,
+            'percentage': (sprint_points / expected_capacity * 100) if expected_capacity > 0 else 0
         }
-        
-        if existing_issue:
-            issue = frappe.get_doc("Agile Issue", existing_issue)
-            issue.update(issue_data)
-        else:
-            issue = frappe.get_doc(issue_data)
-        
-        issue.insert(ignore_if_duplicate=True)
-    except Exception as e:
-        frappe.log_error(f"Failed to sync GitHub issue {gh_issue.get('number')} for project {agile_project}: {str(e)}"[:140], "GitHub Issue Sync Error")
+    
+    return {'over_capacity': False}
 
-def sync_github_pr_to_agile(gh_pr, agile_project):
-    """Sync a GitHub pull request to an Agile Issue"""
-    try:
-        issue_key = extract_issue_key_from_pr(gh_pr)
-        if not issue_key:
-            return
-        
-        existing_issue = frappe.db.get_value("Agile Issue", {
-            "agile_project": agile_project,
-            "issue_key": issue_key
-        }, "name")
-        
-        if existing_issue:
-            issue = frappe.get_doc("Agile Issue", existing_issue)
-            issue.github_pull_request = gh_pr['html_url']
-            issue.github_branch = gh_pr['head']['ref'] if gh_pr.get('head') else None
-            issue.status = "In Review" if gh_pr['state'] == "open" else issue.status
-            issue.save()
-    except Exception as e:
-        frappe.log_error(f"Failed to sync GitHub PR {gh_pr.get('number')} for project {agile_project}: {str(e)}"[:140], "GitHub PR Sync Error")
+def get_issue_link(issue_key):
+    """Get full URL to an issue"""
+    site_url = frappe.utils.get_url()
+    task_name = frappe.db.get_value('Task', {'issue_key': issue_key}, 'name')
+    if task_name:
+        return f"{site_url}/app/task/{task_name}"
+    return None
 
-def extract_issue_key_from_pr(gh_pr):
-    """Extract Agile Issue key from PR title or body"""
-    try:
-        pattern = r"[A-Z]+-\d+"
-        title = gh_pr.get('title', '')
-        body = gh_pr.get('body', '') or ''
-        match = re.search(pattern, title) or re.search(pattern, body)
-        return match.group(0) if match else None
-    except Exception as e:
-        frappe.log_error(f"Failed to extract issue key from PR: {str(e)}"[:140], "Issue Key Extraction Error")
-        return None
+def format_story_points(points):
+    """Format story points for display"""
+    if not points:
+        return "Unestimated"
+    return f"{flt(points)} pts"
 
-def create_agile_issue_from_task(task_doc, method):
-    """Create agile issue when task is created in agile project"""
-    try:
-        if not task_doc.project:
-            return
-        
-        agile_project = frappe.db.get_value("Agile Project", {"custom_erpnext_project": task_doc.project}, "name")
-        if agile_project:
-            create_linked_agile_issue(task_doc, agile_project)
-    except Exception as e:
-        frappe.log_error(f"Failed to create agile issue from task: {str(e)}"[:140], "Create Agile Issue Error")
+def get_available_transitions(task_name, current_status):
+    """Get available transitions for an issue"""
+    
+    task_doc = frappe.get_doc('Task', task_name)
+    project_doc = frappe.get_doc('Project', task_doc.project)
+    
+    workflow_scheme = project_doc.get('workflow_scheme')
+    
+    if workflow_scheme:
+        scheme_doc = frappe.get_doc('Agile Workflow Scheme', workflow_scheme)
+        return scheme_doc.get_transitions(current_status)
+    else:
+        # Default transitions
+        return [
+            {'to_status': 'In Progress', 'transition_name': 'Start Progress'},
+            {'to_status': 'Done', 'transition_name': 'Complete'},
+            {'to_status': 'Blocked', 'transition_name': 'Block'}
+        ]
 
-def create_linked_agile_issue(task_doc, agile_project):
-    """Create agile issue linked to task"""
-    try:
-        project_key = frappe.db.get_value("Agile Project", agile_project, "project_key")
-        last_issue = frappe.db.sql("""
-            SELECT issue_key FROM `tabAgile Issue`
-            WHERE agile_project = %s
-            ORDER BY creation DESC LIMIT 1
-        """, agile_project)
-        issue_number = int(last_issue[0][0].split('-')[-1]) + 1 if last_issue else 1
+def check_issue_permission(task_name, permission_type, user=None):
+    """Check if user has permission for an operation"""
+    
+    if not user:
+        user = frappe.session.user
+    
+    task_doc = frappe.get_doc('Task', task_name)
+    project_doc = frappe.get_doc('Project', task_doc.project)
+    
+    # Check permission scheme
+    permission_scheme = project_doc.get('permission_scheme')
+    
+    if permission_scheme:
+        scheme_doc = frappe.get_doc('Agile Permission Scheme', permission_scheme)
+        return scheme_doc.has_permission(permission_type, user)
+    
+    # Default: allow all for now
+    return True
+
+def create_default_agile_configuration(project):
+    """Create default agile configuration for a project"""
+    
+    project_doc = frappe.get_doc('Project', project)
+    
+    # Create default issue types if not exists
+    default_types = ['Story', 'Task', 'Bug', 'Epic']
+    for type_name in default_types:
+        if not frappe.db.exists('Agile Issue Type', type_name):
+            frappe.get_doc({
+                'doctype': 'Agile Issue Type',
+                'issue_type_name': type_name,
+                'icon': get_default_icon(type_name)
+            }).insert()
         
-        agile_issue = frappe.get_doc({
-            "doctype": "Agile Issue",
-            "summary": task_doc.subject,
-            "description": task_doc.description or "",
-            "agile_project": agile_project,
-            "issue_key": f"{project_key}-{issue_number}",
-            "issue_type": "Task",
-            "priority": "Medium",
-            "status": "Open",
-            "assignee": getattr(task_doc, 'custom_assigned_to', None),
-            "task": task_doc.name
+        # Add to project
+        project_doc.append('issue_types_allowed', {
+            'issue_type': type_name
         })
-        
-        agile_issue.insert()
-        
-        frappe.db.set_value("Task", task_doc.name, "custom_agile_issue", agile_issue.name)
-        frappe.msgprint(f"Agile Issue {agile_issue.issue_key} created for Task {task_doc.name}")
-    except Exception as e:
-        frappe.log_error(f"Failed to create linked agile issue: {str(e)}"[:140], "Linked Agile Issue Error")
+    
+    # Create default statuses if not exists
+    default_statuses = [
+        {'name': 'To Do', 'category': 'To Do', 'color': '#808080'},
+        {'name': 'In Progress', 'category': 'In Progress', 'color': '#0066ff'},
+        {'name': 'Done', 'category': 'Done', 'color': '#00aa00'},
+        {'name': 'Blocked', 'category': 'To Do', 'color': '#ff0000'}
+    ]
+    
+    for status in default_statuses:
+        if not frappe.db.exists('Agile Issue Status', status['name']):
+            frappe.get_doc({
+                'doctype': 'Agile Issue Status',
+                'status_name': status['name'],
+                'status_category': status['category'],
+                'color': status['color']
+            }).insert()
+    
+    # Create default priorities if not exists
+    default_priorities = [
+        {'name': 'Critical', 'color': '#ff0000', 'sort_order': 1},
+        {'name': 'High', 'color': '#ff9900', 'sort_order': 2},
+        {'name': 'Medium', 'color': '#ffcc00', 'sort_order': 3},
+        {'name': 'Low', 'color': '#0066ff', 'sort_order': 4}
+    ]
+    
+    for priority in default_priorities:
+        if not frappe.db.exists('Agile Issue Priority', priority['name']):
+            frappe.get_doc({
+                'doctype': 'Agile Issue Priority',
+                'priority_name': priority['name'],
+                'color': priority['color'],
+                'sort_order': priority['sort_order']
+            }).insert()
+    
+    project_doc.save()
 
-def sync_task_to_agile_issue(doc, method):
-    """Sync Task updates to Agile Issue"""
-    try:
-        if not doc.project:
+def get_default_icon(issue_type):
+    """Get default icon for issue type"""
+    icons = {
+        'Story': '📖',
+        'Task': '✓',
+        'Bug': '🐛',
+        'Epic': '🎯'
+    }
+    return icons.get(issue_type, '📝')
+
+def cleanup_completed_sprint(sprint_name):
+    """Clean up after sprint completion"""
+    
+    sprint_doc = frappe.get_doc('Agile Sprint', sprint_name)
+    
+    # Move incomplete issues to backlog
+    incomplete_issues = frappe.get_all('Task',
+        filters={
+            'current_sprint': sprint_name,
+            'is_agile': 1,
+            'issue_status': ['not in', get_done_statuses()]
+        }
+    )
+    
+    for issue in incomplete_issues:
+        frappe.db.set_value('Task', issue.name, 'current_sprint', '')
+    
+    return len(incomplete_issues)
+
+def get_sprint_health(sprint_name):
+    """Get sprint health indicators"""
+    
+    sprint_doc = frappe.get_doc('Agile Sprint', sprint_name)
+    
+    # Calculate days remaining
+    days_total = date_diff(sprint_doc.end_date, sprint_doc.start_date) or 1
+    days_passed = date_diff(today(), sprint_doc.actual_start_date or sprint_doc.start_date)
+    days_remaining = days_total - days_passed
+    
+    # Calculate progress
+    total_points = sprint_doc.total_points or 0
+    completed_points = sprint_doc.completed_points or 0
+    
+    expected_completion = (days_passed / days_total) * 100 if days_total > 0 else 0
+    actual_completion = (completed_points / total_points) * 100 if total_points > 0 else 0
+    
+    # Determine health
+    health = 'green'
+    if actual_completion < expected_completion - 20:
+        health = 'red'
+    elif actual_completion < expected_completion - 10:
+        health = 'yellow'
+    
+    return {
+        'health': health,
+        'days_remaining': days_remaining,
+        'expected_completion': round(expected_completion, 1),
+        'actual_completion': round(actual_completion, 1),
+        'on_track': actual_completion >= expected_completion
+    }
+
+@frappe.whitelist()
+def get_available_transitions_api(task_name, from_status):
+    """API method to get available transitions"""
+    return get_available_transitions(task_name, from_status)
+
+def task_watcher_sync_on_mention(doc, method=None):
+    """
+    Sync task watchers when a user is mentioned in a comment on a Task.
+    Ensures mentioned users are added as watchers to the Task.
+    """
+    if doc.reference_doctype == "Task":
+        try:
+            task = frappe.get_doc("Task", doc.reference_name)
+        except frappe.DoesNotExistError:
+            frappe.log(f"Task {doc.reference_name} not found for watcher sync")
             return
         
-        agile_project = frappe.db.get_value("Agile Project", {"custom_erpnext_project": doc.project}, "name")
-        if not agile_project:
-            return
+        # Extract mentioned users from the comment content
+        mentioned_users = extract_mentions(doc.content)
+        existing_watchers = {watcher.user for watcher in task.watchers}
         
-        issue = frappe.db.get_value("Agile Issue", {
-            "task": doc.name,
-            "agile_project": agile_project
-        }, "name")
-        
-        if issue:
-            issue_doc = frappe.get_doc("Agile Issue", issue)
-            issue_doc.summary = doc.subject
-            issue_doc.description = doc.description or ""
-            issue_doc.status = map_task_status_to_agile(doc.status)
-            issue_doc.save()
-    except Exception as e:
-        frappe.log_error(f"Failed to sync task to agile issue: {str(e)}"[:140], "Sync Task Error")
+        # Add mentioned users as watchers to the task
+        for user in mentioned_users:
+            if user not in task.get("watchers", []):
+                try:
+                    if user not in existing_watchers:
+                        task.append("watchers", {"user": user})
+                    task.save(ignore_permissions=True)
+                    task.reload()  # Refresh to get updated watchers list
+                except Exception as e:
+                    frappe.log(f"Failed to add watcher {user} to task {task.name}: {str(e)}")
+                    
+                    
+def patch_task_versions():
+    # 1. Fetch the actual values in the query to avoid unnecessary processing later
+    tasks = frappe.get_all("Task", 
+        filters={"is_agile": 1},
+        or_filters={
+            "custom_affect_version": ["is", "set"],
+            "custom_fix_version": ["is", "set"]
+        }, 
+        fields=["name", "custom_affect_version", "custom_fix_version"]
+    )
+    
+    total_tasks = len(tasks)
+    processed_count = 0
+    modified_count = 0
 
-def update_sprint_progress():
-    """Update sprint progress metrics"""
-    try:
-        active_sprints = frappe.get_all("Agile Sprint", {
-            "status": "Active"
-        }, ["name", "agile_project"])
-        
-        for sprint in active_sprints:
-            issues = frappe.get_all("Agile Issue", {
-                "current_sprint": sprint.name,
-                "agile_project": sprint.agile_project
-            }, ["story_points", "status"])
+    for task in tasks:
+        try:
+            # Only fetch the doc if we actually need to process it
+            task_doc = frappe.get_doc("Task", task.name)
+            is_modified = False
             
-            total_points = sum(issue.story_points or 0 for issue in issues)
-            completed_points = sum(
-                issue.story_points or 0 
-                for issue in issues 
-                if issue.status in ["Resolved", "Closed"]
-            )
-            
-            sprint_doc = frappe.get_doc("Agile Sprint", sprint.name)
-            sprint_doc.total_points = total_points
-            sprint_doc.completed_points = completed_points
-            sprint_doc.progress_percentage = (completed_points / total_points * 100) if total_points else 0
-            sprint_doc.save()
-    except Exception as e:
-        frappe.log_error(f"Failed to update sprint progress: {str(e)}"[:140], "Sprint Progress Error")
+            # 2. Tell the ORM to chill out. We are just migrating data, 
+            # so we can skip heavy validation hooks to speed up the save.
+            task_doc.flags.ignore_validate = True
+            task_doc.flags.ignore_links = True
 
-def map_task_status_to_agile(task_status):
-    """Map ERPNext Task status to Agile Issue status"""
-    try:
-        status_map = {
-            "Open": "Open",
-            "Working": "In Progress",
-            "Completed": "Closed",
-            "Cancelled": "Closed"
-        }
-        return status_map.get(task_status, "Open")
-    except Exception as e:
-        frappe.log_error(f"Failed to map task status: {str(e)}"[:140], "Task Status Map Error")
-        return "Open"
+            # Process Affect Version
+            if task.custom_affect_version:
+                affect_exists = any(row.version == task.custom_affect_version for row in task_doc.get("custom_affect_versions", []))
+                if not affect_exists:
+                    task_doc.append("custom_affect_versions", {
+                        "version": task.custom_affect_version
+                    })
+                    is_modified = True
 
-def map_github_status_to_agile(github_status):
-    """Map GitHub issue status to Agile Issue status"""
-    try:
-        status_map = {
-            "open": "Open",
-            "closed": "Closed"
-        }
-        return status_map.get(github_status, "Open")
-    except Exception as e:
-        frappe.log_error(f"Failed to map GitHub status: {str(e)}"[:140], "GitHub Status Map Error")
-        return "Open"
+            # Process Fix Version
+            if task.custom_fix_version:
+                fix_exists = any(row.version == task.custom_fix_version for row in task_doc.get("custom_fix_versions", []))
+                if not fix_exists:
+                    task_doc.append("custom_fix_versions", {
+                        "version": task.custom_fix_version
+                    })
+                    is_modified = True
 
-def check_agile_project_creation(doc, method=None):
-    """Check and setup Agile Project on ERPNext Project creation"""
-    try:
-        if getattr(doc, "flags", {}).get("ignore_agile_hook"):
-            return  # Skip to avoid recursive loop
-        
-        if doc.custom_enable_agile and not frappe.db.exists("Agile Project", {"custom_erpnext_project": doc.name}):
-            # Generate project_key from project_name
-            project_key = "".join(c for c in doc.project_name.upper() if c.isalpha())[:10]
-            if not project_key or len(project_key) < 2:
-                project_key = "PRJ" + str(frappe.db.count("Agile Project") + 1).zfill(3)
-            if not re.match(r'^[A-Z]{2,10}$', project_key):
-                frappe.log_error(f"Invalid project_key generated: {project_key}"[:140], "Agile Project Creation Error")
-                frappe.throw("Generated Project Key is invalid")
+            # 3. Save only if modified, and ignore versioning (saves a ton of DB writes)
+            if is_modified:
+                task_doc.save(ignore_permissions=True, ignore_version=True)
+                modified_count += 1
             
-            agile_project = frappe.get_doc({
-                "doctype": "Agile Project",
-                "project_name": doc.project_name,
-                "project_key": project_key,
-                "project_type": "Scrum",
-                "project_lead": doc.owner,
-                "workflow_scheme": "Default Agile Workflow",
-                "permission_scheme": "Default Permission Scheme",
-                "enable_email_notifications": 0,
-                "github_sync_enabled": 0,
-                "custom_erpnext_project": doc.name
-            })
-            agile_project.flags.ignore_erpnext_project = True  # Prevent recursive ERPNext Project creation
-            agile_project.insert()
-            
-            frappe.db.set_value("Project", doc.name, "custom_agile_project", agile_project.name)
-            frappe.msgprint(f"Agile Project {project_key} created for ERPNext Project {doc.name}")
-    except Exception as e:
-        frappe.log_error(f"Failed to create Agile Project for ERPNext Project {doc.name}: {str(e)}"[:140], "Agile Project Creation Error")
-        raise
+            processed_count += 1
 
-def create_default_workflows(agile_project):
-    """Create default workflow scheme and transitions for a new Agile Project"""
-    try:
-        if not frappe.db.exists("Agile Workflow Scheme", {"agile_project": agile_project.name}):
-            workflow_scheme = frappe.get_doc({
-                "doctype": "Agile Workflow Scheme",
-                "scheme_name": f"Default Workflow for {agile_project.project_name}",
-                "description": f"Default workflow scheme for {agile_project.project_name}",
-                "agile_project": agile_project.name,
-                "transitions": [
-                    {
-                        "from_status": "Open",
-                        "to_status": "In Progress",
-                        "transition_name": "Start Progress",
-                        "required_permission": "All"
-                    },
-                    {
-                        "from_status": "Open",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Open",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "In Review",
-                        "transition_name": "Send to Review",
-                        "required_permission": "Developer"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Progress",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "In Progress",
-                        "transition_name": "Return to Progress",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "Testing",
-                        "transition_name": "Send to Testing",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "In Review",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "In Review",
-                        "transition_name": "Return to Review",
-                        "required_permission": "Tester"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "Resolved",
-                        "transition_name": "Resolve",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Testing",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Resolved",
-                        "to_status": "Closed",
-                        "transition_name": "Close",
-                        "required_permission": "Project Manager"
-                    },
-                    {
-                        "from_status": "Resolved",
-                        "to_status": "Reopened",
-                        "transition_name": "Reopen",
-                        "required_permission": "All"
-                    },
-                    {
-                        "from_status": "Closed",
-                        "to_status": "Reopened",
-                        "transition_name": "Reopen",
-                        "required_permission": "All"
-                    }
-                ]
-            })
-            workflow_scheme.insert()
-            
-            frappe.db.set_value("Agile Project", agile_project.name, "workflow_scheme", workflow_scheme.name)
-            frappe.msgprint(f"Default workflow scheme created for {agile_project.project_name}")
-    except Exception as e:
-        frappe.log_error(f"Failed to create default workflow for {agile_project.project_name}: {str(e)}"[:140], "Workflow Creation Error")
+            # 4. Batch commits. 500 is a better sweet spot for DB I/O than 100.
+            if processed_count % 500 == 0:
+                frappe.db.commit()
+                # Optional: Log progress so you can track it in Error Log or via bench
+                frappe.logger().info(f"Processed {processed_count}/{total_tasks} tasks...")
+
+        except Exception as e:
+            # Don't let one bad apple stop the whole loop
+            frappe.log_error(f"Failed to process Task {task.name}: {str(e)}", "Task Version Patch Error")
+
+    # Final commit for the remaining records
+    frappe.db.commit()
+    frappe.log_error(
+        title="Task Migration Complete", 
+        message=f"Processed: {processed_count}, Modified: {modified_count}"
+    )
+
+
+# 5. Trigger this via background worker
+@frappe.whitelist()
+def trigger_migration():
+    frappe.enqueue(
+        patch_task_versions, 
+        queue="long",       # Use the long queue so we don't block short, urgent tasks
+        timeout=3600        # Give it up to an hour to finish (it won't take that long, but just in case)
+    )
+    return "Task version migration has been pushed to the background queue!"
