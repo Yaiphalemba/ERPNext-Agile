@@ -728,7 +728,15 @@ function get_activity_description(activity) {
     if (activity_type === 'timeline_changed' && data.reason) {
         return `updated the timeline. <strong>Reason:</strong> ${data.reason}`;
     }
-    
+
+    if (activity_type === 'description_updated') {
+        return `updated the description from <del style="color: #dc3545;"><strong>${frappe.utils.escape_html(data.old_description) || ""}</strong></del> to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(data.new_description) || ""}</span>`;
+    }
+
+    if (activity_type === 'subject_changed') {
+        return `updated the subject from <del style="color: #dc3545;"><strong>${frappe.utils.escape_html(data.old_subject) || ""}</strong></del> to <span class="badge" style="background: #007bff; color: white;">${frappe.utils.escape_html(data.new_subject) || ""}</span>`;
+    }
+
     // Generic Fallbacks
     const descriptions = {
         'created': 'created this issue',
