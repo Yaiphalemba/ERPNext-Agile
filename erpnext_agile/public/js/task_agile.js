@@ -52,16 +52,16 @@ frappe.ui.form.on('Task', {
                             "Knowledge / Skill Gap (R&D or Senior Pairing Needed)",
                             "Technical Debt/Refactoring",
                             "Critical Security Vulnerability Identified",
-                            "Other (Specify in Remarks)"
+                            // "Other (Specify in Remarks)"
                         ]
                     },
-                    {
-                        label: 'Remarks',
-                        fieldname: 'remarks',
-                        fieldtype: 'Small Text',
-                        depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"',
-                        mandatory_depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"'
-                    }
+                    // {
+                    //     label: 'Remarks',
+                    //     fieldname: 'remarks',
+                    //     fieldtype: 'Small Text',
+                    //     depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"',
+                    //     mandatory_depends_on: 'eval:doc.reason == "Other (Specify in Remarks)"'
+                    // }
                 ],
                 primary_action_label: 'Submit & Save',
                 primary_action: function(values) {
@@ -69,7 +69,8 @@ frappe.ui.form.on('Task', {
                         changed_by: frappe.session.user,
                         changed_on: frappe.datetime.now_datetime(),
                         change_synopsis: `Start Date: ${frappe.datetime.str_to_user(frm.initial_start_date)} → ${frappe.datetime.str_to_user(frm.doc.exp_start_date)}, \nEnd Date: ${frappe.datetime.str_to_user(frm.initial_end_date)} → ${frappe.datetime.str_to_user(frm.doc.exp_end_date)}`,
-                        explanation: `${values.reason} \n${values.remarks || ''}`,
+                        // explanation: `${values.reason} \n${values.remarks || ''}`,
+                        explanation: values.reason,
                     });
                     frm.refresh_field("custom_timeline_change");
 
