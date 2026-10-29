@@ -51,6 +51,7 @@ def task_on_update(doc, method):
             )
     ## Reflection: Tasks Linked into other task's child table as dependincies were not getting updated on task update. Hence added a method to update the same.
     sync_dependent_task_details(doc)
+    sync_test_execution_defect_details(doc)
     ## Reflection: Test Cases Linked into This task's child table will also reflect this tasks into its linked tasks child table.
     add_reviewer_to_watchers(doc)
     share_doc_with_watchers(doc)
@@ -74,6 +75,20 @@ def sync_dependent_task_details(doc):
         WHERE 
             task = %s
     """, (doc.subject, doc.issue_status, doc.name))
+    
+def sync_test_execution_defect_details(doc):
+    """
+    Updates the status in the 'Defect' child table 
+    across all Test Executions that link to this document.
+    """
+    
+    frappe.db.sql("""
+        UPDATE `tabTest Execution Defect`
+        SET 
+            bug_status = %s
+        WHERE 
+            bug_task = %s
+    """, (doc.issue_status, doc.name))
 
 def link_task_to_test_cases(doc):
     """
@@ -89,7 +104,9 @@ def link_task_to_test_cases(doc):
             # If not linked, add it
             test_case_doc.append('linked_items', {
                 'link_doctype': 'Task',
-                'link_name': doc.name
+                'link_name': doc.name,
+                'title': doc.subject,
+                'type': doc.issue_type,
             })
             test_case_doc.flags.sync_in_progress = True
             test_case_doc.save(ignore_permissions=True)
