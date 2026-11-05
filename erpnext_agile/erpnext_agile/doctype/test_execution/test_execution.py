@@ -245,9 +245,15 @@ class TestExecution(Document):
                     "name"
                 )
                 bug.issue_type = issue_type or "Bug"
+                bug.custom_bug_raised_by = doc.executed_by or frappe.session.user
+                bug.custom_resolution = "Unresolved"
                 
                 if hasattr(doc, 'get_agile_priority'):
                     bug.issue_priority = doc.get_agile_priority()
+                    
+                bug.append("custom_test_cases", {
+                    "test_case": doc.test_case
+                })
             
             # Insert the bug
             bug.insert(ignore_permissions=True)
