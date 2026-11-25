@@ -541,6 +541,7 @@ def send_time_overallocation_alert(project_name, user, time_data):
             recipients=[user],
             cc=cc_list,
             subject=subject,
+            expose_recipients="header",
             message=html,
             delayed=False
         )

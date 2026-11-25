@@ -86,6 +86,37 @@ def get_total_open_task_count():
         }
     }
 
+@frappe.whitelist()
+def get_total_assigned_open_task_count():
+    user = frappe.session.user
+
+    if is_admin_or_system_manager(user):
+        count = frappe.db.count("Task", filters={"status":"Open"})
+    else:
+        count = frappe.db.sql("""
+        SELECT COUNT(DISTINCT t.name)
+        FROM `tabTask` t
+        LEFT JOIN `tabAssigned To Users` atu
+            ON atu.parent = t.name
+        WHERE
+            (
+                atu.user = %s
+                # OR t.reporter = %s
+                # OR t.custom_original_owner = %s
+            ) 
+            AND t.status = 'Open'
+    """, (user, user, user))[0][0]
+    
+    return {
+        "value": count,
+        "fieldtype": "Int",
+        "route": ["List", "Task"],
+        "route_options": {
+            "status": ["=", "Open"],
+            "Assigned To Users.user": ["=", user]
+        }
+    }
+
 
 @frappe.whitelist()
 def get_total_ongoing_task_count():
@@ -114,6 +145,37 @@ def get_total_ongoing_task_count():
         "route": ["List", "Task"],
         "route_options": {
             "status": ["in", ["Working", "Pending Review", "Overdue"]]
+        }
+    }
+
+@frappe.whitelist()
+def get_total_assigned_ongoing_task_count():
+    user = frappe.session.user
+
+    if is_admin_or_system_manager(user):
+        count = frappe.db.count("Task", filters=[["status", "in", ["Working", "Pending Review", "Overdue"]]])
+    else:
+        count = frappe.db.sql("""
+        SELECT COUNT(DISTINCT t.name)
+        FROM `tabTask` t
+        LEFT JOIN `tabAssigned To Users` atu
+            ON atu.parent = t.name
+        WHERE
+            (
+                atu.user = %s
+                # OR t.reporter = %s
+                # OR t.custom_original_owner = %s
+            ) 
+            AND t.status IN ('Working', 'Pending Review', 'Overdue')
+    """, (user, user, user))[0][0]
+    
+    return {
+        "value": count,
+        "fieldtype": "Int",
+        "route": ["List", "Task"],
+        "route_options": {
+            "status": ["in", ["Working", "Pending Review", "Overdue"]],
+            "Assigned To Users.user": ["=", user]
         }
     }
 
@@ -179,4 +241,34 @@ def get_total_overdue_task_count():
         }
     }
 
+@frappe.whitelist()
+def get_total_assigned_overdue_task_count():
+    user = frappe.session.user
+
+    if is_admin_or_system_manager(user):
+        count = frappe.db.count("Task", filters={"status":"Overdue"})
+    else:
+        count = frappe.db.sql("""
+        SELECT COUNT(DISTINCT t.name)
+        FROM `tabTask` t
+        LEFT JOIN `tabAssigned To Users` atu
+            ON atu.parent = t.name
+        WHERE
+            (
+                atu.user = %s
+                # OR t.reporter = %s
+                # OR t.custom_original_owner = %s
+            ) 
+            AND t.status = 'Overdue'
+    """, (user, user, user))[0][0]
+    
+    return {
+        "value": count,
+        "fieldtype": "Int",
+        "route": ["List", "Task"],
+        "route_options": {
+            "status": ["=", "Overdue"],
+            "Assigned To Users.user": ["=", user]
+        }
+    }
         
