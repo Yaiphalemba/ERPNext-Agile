@@ -18,7 +18,7 @@
  "is_hidden": 0,
  "label": "Agile Project",
  "links": [],
- "modified": "2026-10-09 10:01:06.589455",
+ "modified": "2026-11-20 12:42:02.670096",
  "modified_by": "Administrator",
  "module": "Erpnext Agile",
  "name": "Agile Project",
@@ -29,15 +29,15 @@
   },
   {
    "label": "Assigned Open Tasks",
-   "number_card_name": "Total Open Tasks"
+   "number_card_name": "Assigned Open Tasks"
   },
   {
    "label": "Assigned Ongoing Tasks",
-   "number_card_name": "Total Ongoing Tasks"
+   "number_card_name": "Assigned Ongoing Tasks"
   },
   {
    "label": "Assigned Overdue Tasks",
-   "number_card_name": "Total Overdue Tasks"
+   "number_card_name": "Assigned Overdue Tasks"
   }
  ],
  "owner": "Administrator",

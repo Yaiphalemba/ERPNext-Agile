@@ -22,6 +22,18 @@ frappe.ui.form.on('Project', {
         if (frm.doc.__islocal && frm.doc.project_name && frm.doc.enable_agile) {
             frm.set_value('project_key', generate_project_key(frm.doc.project_name));
         }
+    },
+
+    custom_mandatory_timeline: function(frm) {
+        if (frm.doc.custom_mandatory_timeline) {
+            frm.set_df_property('expected_start_date', 'reqd', 1);
+            frm.set_df_property('expected_end_date', 'reqd', 1);
+        } else {
+            frm.set_df_property('expected_start_date', 'reqd', 0);
+            frm.set_df_property('expected_end_date', 'reqd', 0);
+        }
+        // frm.refresh_field('expected_start_date');
+        // frm.refresh_field('expected_end_date');
     }
 });
 
